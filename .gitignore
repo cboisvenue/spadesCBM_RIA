@@ -1,0 +1,28 @@
+Thumbs.db
+
+## R related files
+*.Rdata
+*.RData
+*.Rhistory
+.Rhistory*
+.Ruserdata*
+.Rapp.history
+*.Rproj.user
+/.Rproj.user
+
+## Output files
+.png
+
+## Folders with Data
+data_*/*
+*/data
+*/data*
+output/
+cache/*
+*.db
+*/cache
+
+inputs/
+outputs/
+
+
