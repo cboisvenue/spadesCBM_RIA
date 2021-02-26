@@ -1,5 +1,5 @@
 defineModule(sim, list(
-  name = "CBM_dataPrep_SK",
+  name = "CBM_dataPrep_RIA",
   description = "A data preparation module to format and prepare user-provided input to the SpaDES forest-carbon modelling familly.",
   keywords = NA,
   authors = c(
@@ -47,7 +47,7 @@ defineModule(sim, list(
   inputObjects = bindrows(
     expectsInput(
       objectName = "cbmData", objectClass = "dataset",
-      desc = "S4 object created from selective reading in of cbm_default.db in CBM_efaults module",
+      desc = "S4 object created from selective reading in of cbm_default.db in CBM_defaults module",
       sourceURL = NA
     ),
     expectsInput(
@@ -70,8 +70,10 @@ defineModule(sim, list(
     ),
     expectsInput(
       objectName = "userDist", objectClass = "data.table",
-      desc = "User provided file that identifies disturbances for simulation, if not there it will use userDistFile",
-      sourceURL = "https://drive.google.com/file/d/1Tsm1a1HJr8DIxLURqc9vb1Qis-TK56Xh"
+      desc = "User provided file that identifies disturbances for simulation (distName),
+      raster Id if applicable, and wholeStand toggle (1 = whole stand disturbance, 0 = partial disturbance),
+      if not there it will use userDistFile",
+      sourceURL = "https://drive.google.com/file/d/16XbUzCOUvVH4DOJEMq8NVpdCbo6K6LOA"
     ),
     expectsInput(
       objectName = "ageRasterURL", objectClass = "character", ## TODO: url provided below
@@ -80,7 +82,7 @@ defineModule(sim, list(
     expectsInput(
       objectName = "ageRaster", objectClass = "raster",
       desc = "Raster ages for each pixel",
-      sourceURL = "https://drive.google.com/file/d/1hylk0D1vO19Dpg4zFtnSNhnyYP4j-bEA"
+      sourceURL = "https://drive.google.com/file/d/1bC4Ky3FFXFuRWUrN88XDdqGGKwzxu6SH"
     ),
     expectsInput(
       objectName = "gcIndexRasterURL", objectClass = "character", ## TODO: url provided below
@@ -498,7 +500,7 @@ Init <- function(sim) {
                                  fun = "data.table::fread",
                                  destinationPath = dataPath,
                                  #purge = 7,
-                                 filename2 = "userDist.csv")
+                                 filename2 = "mySpuDmids.csv")
     } else {
       sim$userDist <- fread(sim$userDistFile)
     }
