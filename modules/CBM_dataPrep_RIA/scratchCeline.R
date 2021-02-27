@@ -3,6 +3,8 @@ library(raster)
 library(SpaDES)
 library(data.table)
 
+dataPath <- file.path(getwd(),"modules/CBM_dataPrep_RIA/data")
+
 # some raster tasks I am trying to figure out
 raslist1 <- "https://drive.google.com/file/d/1O6Laf-y7s-N_WSUtbeTHALRLvffZG-Bp"
 
@@ -10,6 +12,11 @@ rasstack <- raster::stack(raslist1)
 
 masterRaster <- Cache(prepInputs,url = "https://drive.google.com/file/d/1ceodWoiKHyK1_fJGDlUMRID3HsneWMJf")
 
+# this is a test to see if the pixelAge2015.tif can be read and match the masterRaster
+ageRaster2015 <- Cache(prepInputs,url = "https://drive.google.com/file/d/1Kbwdee_JkpCSWwaZUzOqILXUXZUq7luq")
+age2015rtm <- postProcess(x = ageRaster2015, rasterToMatch = masterRaster, filename2 = "data/RIA2019/pixelAge2015.tif")
+
+## RIAlandscape.tif from RIA2019
 rasters <- Cache(prepInputs,url = "https://drive.google.com/file/d/1O6Laf-y7s-N_WSUtbeTHALRLvffZG-Bp",
                  fun = "raster::stack", rasterToMatch = masterRaster, useGDAL = FALSE)
 
@@ -26,7 +33,7 @@ clearPlot()
 Plot(rasters$AU)
 
 getwd()
-dataPath <- file.path(getwd(),"modules/CBM_dataPrep_RIA/data")
+
 
 
 
@@ -52,15 +59,16 @@ writeRaster(rasters$AU,file.path(dataPath,"pixelAU.tif"))
 # # checking so I understand
 # vals <- values(burns2015)
 
+
+## Read in scfm fires raster stack
 #NOT working
-scfmFires <- Cache(prepInputs,url = "https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8/",
+scfmFires <- Cache(prepInputs,url = "https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8",
                    fun = "raster::stack", rasterToMatch = masterRaster, useGDAL = FALSE)
 #NOT working
 scfmURL <- "https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8/"
 scfmStack <- raster::stack(scfmURL)
 
-#downloaded the file mannually
-
+#downloaded the file manually
 scfmStack <- raster::stack(file.path(dataPath,"annualFires525yrs.tif"))
 names(scfmStack)
 scfmStack$annualFires525yrs.1

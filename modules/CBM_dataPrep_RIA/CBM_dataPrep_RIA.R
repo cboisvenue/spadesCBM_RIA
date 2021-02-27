@@ -73,7 +73,7 @@ defineModule(sim, list(
       desc = "User provided file that identifies disturbances for simulation (distName),
       raster Id if applicable, and wholeStand toggle (1 = whole stand disturbance, 0 = partial disturbance),
       if not there it will use userDistFile",
-      sourceURL = "https://drive.google.com/file/d/16XbUzCOUvVH4DOJEMq8NVpdCbo6K6LOA"
+      sourceURL = "https://drive.google.com/file/d/1Gr_oIfxR11G1ahynZ5LhjVekOIr2uH8X"
     ),
     expectsInput(
       objectName = "ageRasterURL", objectClass = "character", ## TODO: url provided below
@@ -82,7 +82,7 @@ defineModule(sim, list(
     expectsInput(
       objectName = "ageRaster", objectClass = "raster",
       desc = "Raster ages for each pixel",
-      sourceURL = "https://drive.google.com/file/d/1bC4Ky3FFXFuRWUrN88XDdqGGKwzxu6SH"
+      sourceURL = "https://drive.google.com/file/d/1Kbwdee_JkpCSWwaZUzOqILXUXZUq7luq"
     ),
     expectsInput(
       objectName = "gcIndexRasterURL", objectClass = "character", ## TODO: url provided below
@@ -115,7 +115,7 @@ defineModule(sim, list(
     expectsInput(
       objectName = "disturbanceRasters", objectClass = "vector",
       desc = "Character vector of the disturbance rasters for use in simulations - defaults are the Wulder and White rasters for SK.",
-      sourceURL = "https://drive.google.com/file/d/12YnuQYytjcBej0_kdodLchPg7z9LygCt"
+      sourceURL = "https://drive.google.com/file/d/1ceodWoiKHyK1_fJGDlUMRID3HsneWMJf"
     ),
     expectsInput(
       objectName = "masterRasterURL", objectClass = "character",
@@ -509,10 +509,10 @@ Init <- function(sim) {
   # user provided rasters or spatial information------------------------
 
   # 1. Raster to match (masterRaster). This is the study area.
+  ## RIA DONE not tested
   if (!suppliedElsewhere("masterRaster", sim)) {
     if (!suppliedElsewhere("masterRasterURL", sim)) {
       sim$masterRasterURL <- extractURL("masterRaster")
-      ## TO DO: why is this
       message(
         "User has not supplied a masterRaster or a URL for a masterRaster (masterRasterURL object).\n",
         "masterRaster is going to be read from the default URL given in the inputObjects for ",
@@ -530,6 +530,7 @@ Init <- function(sim) {
   }
 
   # 2. Age raster from inventory
+  ## RIA DONE not tested
   if (!suppliedElsewhere(sim$ageRaster)) {
     if (!suppliedElsewhere(sim$ageRasterURL)) {
       sim$ageRasterURL <- extractURL("ageRaster")
