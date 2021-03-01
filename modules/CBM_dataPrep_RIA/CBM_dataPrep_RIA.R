@@ -68,7 +68,7 @@ defineModule(sim, list(
                    "(key words for searching CBM files, if not there the userDist will be created with defaults"),
       sourceURL = NA
     ),
-    expectsInput(
+    expectsInput( ## URL RIA CORRECT
       objectName = "userDist", objectClass = "data.table",
       desc = "User provided file that identifies disturbances for simulation (distName),
       raster Id if applicable, and wholeStand toggle (1 = whole stand disturbance, 0 = partial disturbance),
@@ -112,10 +112,10 @@ defineModule(sim, list(
       desc = "User file containing: GrowthCurveComponentID,Age,MerchVolume. Default name userGcM3",
       sourceURL = "https://drive.google.com/file/d/1u7o2BzPZ2Bo7hNcC8nEctNpDmp7ce84m"
     ),
-    expectsInput(
+    expectsInput(## URL RIA CORRECT FOR scfmFires
       objectName = "disturbanceRasters", objectClass = "vector",
       desc = "Character vector of the disturbance rasters for use in simulations - defaults are the Wulder and White rasters for SK.",
-      sourceURL = "https://drive.google.com/file/d/1ceodWoiKHyK1_fJGDlUMRID3HsneWMJf"
+      sourceURL = "https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8"
     ),
     expectsInput(
       objectName = "masterRasterURL", objectClass = "character",
@@ -509,7 +509,7 @@ Init <- function(sim) {
   # user provided rasters or spatial information------------------------
 
   # 1. Raster to match (masterRaster). This is the study area.
-  ## RIA DONE not tested
+  ## RIA UPDATE URL
   if (!suppliedElsewhere("masterRaster", sim)) {
     if (!suppliedElsewhere("masterRasterURL", sim)) {
       sim$masterRasterURL <- extractURL("masterRaster")
@@ -530,7 +530,7 @@ Init <- function(sim) {
   }
 
   # 2. Age raster from inventory
-  ## RIA DONE not tested
+  ## RIA UPDATE URL
   if (!suppliedElsewhere(sim$ageRaster)) {
     if (!suppliedElsewhere(sim$ageRasterURL)) {
       sim$ageRasterURL <- extractURL("ageRaster")
@@ -599,18 +599,18 @@ Init <- function(sim) {
   ### TO DO: add a message if no information is provided asking the user if
   ### disturbances will be provided on a yearly basis.
   if (!suppliedElsewhere("disturbanceRasters", sim)) {
-    ### Why is this failing??
-    # distHere <- extractURL(disturbanceRasters)
-    # sim$disturbanceRasters <- list.files(distHere,full.names = TRUE) %>%
-    #   grep(., pattern = ".grd$", value = TRUE)
-    # # if all fails
-
-    #prepInputs(url = extractURL(disturbanceRasters), destinationPath = dataPath) TODO: not working
-
-    sim$disturbanceRasters <- list.files(file.path(dataPath, "disturbance_testArea"), ## TODO: don't hardcode
-      full.names = TRUE
-    ) %>%
-      grep(., pattern = ".grd$", value = TRUE)
+    sim$disturbanceRasters <- prepInputs(
+      url = extractURL("disturbanceRasters"),#"https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8",
+      fun = "raster::brick",
+      rasterToMatch = masterRaster,
+      useGDAL = FALSE)
+      ## TODO this is a brick, with 526 rasters. We need to add here the
+      ## capacity to deal with a bunch of rasters in a folder
+      # distHere <- extractURL(disturbanceRasters)
+      # sim$disturbanceRasters <- list.files(distHere,full.names = TRUE) %>%
+      #   grep(., pattern = ".grd$", value = TRUE)
+      # # if all fails
+    # or just one raster? or polygons?
   }
 
   stopifnot(length(sim$disturbanceRasters) > 0)

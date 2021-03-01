@@ -6,6 +6,7 @@ library(data.table)
 dataPath <- file.path(getwd(),"modules/CBM_dataPrep_RIA/data")
 
 # some raster tasks I am trying to figure out
+## THIS RASTER LIST IS WRONG
 raslist1 <- "https://drive.google.com/file/d/1O6Laf-y7s-N_WSUtbeTHALRLvffZG-Bp"
 
 rasstack <- raster::stack(raslist1)
@@ -61,9 +62,10 @@ writeRaster(rasters$AU,file.path(dataPath,"pixelAU.tif"))
 
 
 ## Read in scfm fires raster stack
-#NOT working
+
+options(reproducible.useGDAL = FALSE)
 scfmFires <- Cache(prepInputs,url = "https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8",
-                   fun = "raster::stack", rasterToMatch = masterRaster, useGDAL = FALSE)
+                   fun = "raster::brick", rasterToMatch = masterRaster, useGDAL = FALSE)
 #NOT working
 scfmURL <- "https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8/"
 scfmStack <- raster::stack(scfmURL)
@@ -72,3 +74,6 @@ scfmStack <- raster::stack(scfmURL)
 scfmStack <- raster::stack(file.path(dataPath,"annualFires525yrs.tif"))
 names(scfmStack)
 scfmStack$annualFires525yrs.1
+
+fires2015 <- postProcess(x = scfmStack$annualFires525yrs.1, rasterToMatch = masterRaster, filename2 = file.path(dataPath,"scfm2015.tif"))
+
