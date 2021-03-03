@@ -76,13 +76,13 @@ defineModule(sim, list(
       sourceURL = "https://drive.google.com/file/d/1Gr_oIfxR11G1ahynZ5LhjVekOIr2uH8X"
     ),
     expectsInput(
-      objectName = "ageRasterURL", objectClass = "character", ## TODO: url provided below
+      objectName = "ageRasterURL", objectClass = "character",
       desc = "URL for ageRaster - optional, need this or a ageRaster"
     ),
     expectsInput(
       objectName = "ageRaster", objectClass = "raster",
       desc = "Raster ages for each pixel",
-      sourceURL = "https://drive.google.com/file/d/1Kbwdee_JkpCSWwaZUzOqILXUXZUq7luq"
+      sourceURL = "ADD URL SPECIFIC TO EACH OF THE RUNS: fireRIs, presentDay, harvest1 and harvest2"
     ),
     expectsInput(
       objectName = "gcIndexRasterURL", objectClass = "character", ## TODO: url provided below
@@ -91,13 +91,13 @@ defineModule(sim, list(
     expectsInput(
       objectName = "gcIndexRaster", objectClass = "raster",
       desc = "Raster ages for each pixel",
-      sourceURL = "https://drive.google.com/file/d/1yunkaYCV2LIdqej45C4F9ir5j1An0KKr"
+      sourceURL = "WILL HAVE TO MAKE THIS FROM GREG'S INFO"
     ),
-    expectsInput(
+    expectsInput(## RIA CORRECT
       objectName = "spuRaster", objectClass = "raster",
       desc = "Raster has spatial units for each pixel"
     ),
-    expectsInput(
+    expectsInput(## RIA CORRECT
       objectName = "ecoRaster", objectClass = "raster",
       desc = "Raster has ecozones for each pixel"
     ),
@@ -112,16 +112,18 @@ defineModule(sim, list(
       desc = "User file containing: GrowthCurveComponentID,Age,MerchVolume. Default name userGcM3",
       sourceURL = "https://drive.google.com/file/d/1u7o2BzPZ2Bo7hNcC8nEctNpDmp7ce84m"
     ),
-    expectsInput(## URL RIA CORRECT FOR scfmFires
+    expectsInput(
+      ## URL RIA FOR scfmFires rasters is this https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8
+      ## URL below is for the data table for the 526 years of scfm fire sims
       objectName = "disturbanceRasters", objectClass = "vector",
       desc = "Character vector of the disturbance rasters for use in simulations - defaults are the Wulder and White rasters for SK.",
-      sourceURL = "https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8"
+      sourceURL = "https://drive.google.com/file/d/1P41fr5fimmxOTGfNRBgjwXetceW6YS1M"
     ),
     expectsInput(
       objectName = "masterRasterURL", objectClass = "character",
       desc = "URL for masterRaster - optional, need this or a masterRaster"
     ),
-    expectsInput(
+    expectsInput( ### WAITING FOR GREG
       objectName = "masterRaster", objectClass = "raster",
       desc = "Raster has NAs where there are no species and the pixel groupID where the pixels were simulated. It is used to map results",
       sourceURL = "https://drive.google.com/file/d/1zUyFH8k6Ef4c_GiWMInKbwAl6m6gvLJW"
@@ -562,7 +564,7 @@ Init <- function(sim) {
   # defaults CBM-parameters across Canada.
   if (!suppliedElsewhere(sim$spuRaster)) {
     canadaSpu <- prepInputs(targetFile = "spUnit_Locator.shp",
-                            url = "https://drive.google.com/file/d/145DuiwA3fat-9q0qQNJ_RqbnpOEQglfc",
+                            url = "https://drive.google.com/file/d/17UH3TDuEA_NQISeavu77HWz_P4tMYb2X",
                             destinationPath = dataPath,
                             alsoExtract = "similar")
     spuShp <- postProcess(canadaSpu,
@@ -578,6 +580,7 @@ Init <- function(sim) {
   # defaults CBM-parameters across Canada.
   if (!suppliedElsewhere(sim$ecoRaster)) {
     ecozones <- prepInputs(
+      # this website https://sis.agr.gc.ca/cansis/index.html is hosted by the Canadian Government
       url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
       alsoExtract = "similar",
       destinationPath = dataPath,
@@ -599,13 +602,24 @@ Init <- function(sim) {
   ### TO DO: add a message if no information is provided asking the user if
   ### disturbances will be provided on a yearly basis.
   if (!suppliedElsewhere("disturbanceRasters", sim)) {
-    sim$disturbanceRasters <- prepInputs(
-      url = extractURL("disturbanceRasters"),#"https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8",
-      fun = "raster::brick",
-      rasterToMatch = masterRaster,
-      useGDAL = FALSE)
+    options(reproducible.useGDAL = FALSE)
+    sim$disturbanceRasters <- Cache(prepInputs,
+                       url = "https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8",
+                       fun = "raster::brick",
+                       rasterToMatch = masterRaster,
+                       datatype = "INT1U",
+                       useGDAL = FALSE)
+
       ## TODO this is a brick, with 526 rasters. We need to add here the
-      ## capacity to deal with a bunch of rasters in a folder
+      ## capacity to deal with a bunch of rasters in a folder, (like in the SK
+      ## runs), a stack of rasters, or polygons?
+    # stack
+      # sim$disturbanceRasters <- Cache(prepInputs,
+      #                               url = "https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8",
+      #                               fun = "raster::stack",
+      #                               rasterToMatch = masterRaster,
+      #                               useGDAL = FALSE)
+    # rasters in a folder
       # distHere <- extractURL(disturbanceRasters)
       # sim$disturbanceRasters <- list.files(distHere,full.names = TRUE) %>%
       #   grep(., pattern = ".grd$", value = TRUE)

@@ -1,5 +1,6 @@
 "file" "checksum" "filesize" "algorithm"
 "annualFires525yrs.tif" "5cf6c7476d8c4b60" "14344987" "xxhash64"
+"historicalFire_1985-2015.tif" "917afcdd39a8d3f4" "7925895" "xxhash64"
 "pixelAge2015.tif" "3f61c6442a15976e" "3703487" "xxhash64"
 "RIA_THLB_rtm.tif" "839a93fe02e17912" "1671114" "xxhash64"
 "RIAlandscape.tif" "33606af051c7bbf9" "20972090" "xxhash64"
