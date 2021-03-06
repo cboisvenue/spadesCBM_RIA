@@ -181,3 +181,85 @@ histFires2 <- prepInputs(
                   url = "https://drive.google.com/file/d/1kxCL-i311yd3cS7QDQ2GwHHtyQFiiXoo/view?usp=sharing",
                   destinationPath = 'inputs')
 
+### TRYING ALL THREE DTs Ian provided
+
+
+library(Require)
+Require(c("data.table", "raster", "reproducible"))
+####get data####
+RIA_RTM <- prepInputs(url = 'https://drive.google.com/file/d/1h7gK44g64dwcoqhij24F2K54hs5e35Ci/view?usp=sharing',
+                      destinationPath = 'inputs') #you probably already have this raster - RIA_RTM.tif on google
+
+
+### growth and yield
+
+## read-in the three files
+au_table <- prepInputs(url = "https://drive.google.com/file/d/1gnFkqDyIvF9LN8f-K_9i95_MaWjXhgfc",
+                       fun = "data.table::fread",
+                       destinationPath = dataPath,
+                       #purge = 7,
+                       filename2 = "au_table.csv")
+
+curve_points_table <- prepInputs(url = "https://drive.google.com/file/d/1MIH4roV7lQdGFFmdLCN8bNZ0eNoakmlL",
+                       fun = "data.table::fread",
+                       destinationPath = dataPath,
+                       #purge = 7,
+                       filename2 = "curve_points_table.csv")
+
+curve_table <- prepInputs(url = "https://drive.google.com/file/d/18wOyyf4QCw6XoSH2yAGDG4jhtXST074l",
+                       fun = "data.table::fread",
+                       destinationPath = dataPath,
+                       #purge = 7,
+                       filename2 = "curve_table.csv")
+library(ggplot2)
+volCurves <- ggplot(data = curve_points_table, aes(x = x, y = y,
+                                                   group = curve_id,
+                                                   colour = curve_id)) +
+                    geom_line() ## TODO: move to plotInit event
+
+quickPlot::dev.useRSGD(FALSE)
+dev()
+clearPlot()
+
+## reading in userDist
+
+userDist <- prepInputs(url = "https://drive.google.com/file/d/1Gr_oIfxR11G1ahynZ5LhjVekOIr2uH8X",
+                          fun = "data.table::fread",
+                          destinationPath = dataPath,
+                          #purge = 7,
+                          filename2 = "mySpuDmids.csv")
+
+#checks on curve_point_table###################################
+
+# curves that have a min age >10
+  ten <- which(curve_points_table[,.(min = min(x)), by = .(curve_id)]$min > 10)
+  moreThan10startCurves <- curve_points_table[,.(min = min(x)), by = .(curve_id)][ten,]
+  names(moreThan10startCurves)
+  #[1] "curve_id" "min"
+  setnames(moreThan10startCurves,"min","x")
+  names(moreThan10startCurves)
+  cols <- c("curve_id","x")
+  checkVolOnLateStart10 <- merge(moreThan10startCurves,curve_points_table, by = cols)
+  # they all seem to have 0s at the start age. This one min age is 14 but all 0s until 25.
+  curve_points_table[curve_id == 801003,][y > 0,]
+  ## still 11 years before there is volume there...
+
+# how many have age 0? and how many of those have vol at age 0? any?
+  curveWithAge0 <- curve_points_table[ x == 0,]
+  # 68
+  curve_points_table[ x == 0 & y > 0,]
+  # none
+  # in the curves with age 0, at what age does vol start?
+  curveWithAge0a <- curve_points_table[curve_id %in% curveWithAge0$curve_id,]
+  # nope can't get this to work...
+  #setDT(curveWithAge0a)[,firstVol := first(y), curve_id]
+  curveWithAge0a[y > 0,][,.(min = min(y)), by = .(curve_id)]
+  ## @Greg ### All start small except for curve 823006 7.5
+
+  ## some curve don't have vole until they are 50
+  firstVolAllcurves <- curve_points_table[y > 0,]
+  ## min age at firstVol
+  range(firstVolAllcurves[,.(minAge = min(x)), by = .(curve_id)]$minAge)
+  firstVolAllcurves[,.(minAge = min(x)), by = .(curve_id)][which(firstVolAllcurves[,.(minAge = min(x)), by = .(curve_id)]$minAge > 20),]
+  ## 103 of the curves have their first volume at age > 20
+

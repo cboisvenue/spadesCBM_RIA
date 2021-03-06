@@ -1,2 +1,6 @@
 "file" "checksum" "filesize" "algorithm"
+"au_table.csv" "0c9d791869b2cb93" "5227" "xxhash64"
+"curve_points_table.csv" "1e8ff56ad70580b7" "1559843" "xxhash64"
+"curve_table.csv" "441a3a91c430d326" "4603" "xxhash64"
+"mySpuDmids.csv" "d4fa49bcc30b57bc" "2086" "xxhash64"
 "scfmAnnualBurn_2015-2540.rds" "c5fbb91d4764d6ec" "5786384" "xxhash64"

@@ -103,14 +103,14 @@ defineModule(sim, list(
     ),
     expectsInput(
       objectName = "userGcM3File", objectClass = "character",## TODO: should be a param
-      desc = paste("User file name for the files containing: GrowthCurveComponentID,Age,MerchVolume.",
+      desc = paste("Pointer to the user file name for the files containing: GrowthCurveComponentID,Age,MerchVolume.",
                    "Default name userGcM3"),
       sourceURL = NA
     ),
-    expectsInput(
+    expectsInput(## RIA CORRECT UNLESS GREG CHANGES THE NAME OF THE UPDATED FILE ##
       objectName = "userGcM3", objectClass = "dataframe",
       desc = "User file containing: GrowthCurveComponentID,Age,MerchVolume. Default name userGcM3",
-      sourceURL = "https://drive.google.com/file/d/1u7o2BzPZ2Bo7hNcC8nEctNpDmp7ce84m"
+      sourceURL = "https://drive.google.com/file/d/1MIH4roV7lQdGFFmdLCN8bNZ0eNoakmlL"
     ),
     expectsInput(
       ## URL RIA FOR scfmFires rasters is this https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8
@@ -338,72 +338,79 @@ Init <- function(sim) {
   ## matching the disturbances with the Disturbance Matrix IDs in CBM-CFS3 defaults
   ################################################################################
   # Matching disturbances to CBM disturbance matrix id---------------------------------
-  # make the disturbance look-up table to the disturbance_matrix_id(s)
-  # making sim$mySpuDmids
 
-  userDist <- sim$userDist
+  ## WBI RIA: skipping the SK building of mySpuDmids.
+  ## In this case the user provided complete userDist.
 
-  # Most cases will only require fire (wildfire) and a clearcut. There are 426
-  # disturbance matrices identified in the archive of CBM
-  # (sim$cbmData@disturbanceMatrix). Matrices are associated with spatial units
-  # (sim$cbmData@disturbanceMatrixAssociation). User can select any disturbance
-  # they want to represent. Some disturbance matrices are based on data but most
-  # are expert opinion in the CBM-CFS3 archive.
-  # Disturbance Matrices are specific to spatial_units_ids--------------
-  spu <- unique(sim$spatialDT$spatial_unit_id)
-  # what disturbances in those spu(s)?
-  # spuDist() function is in CBMutils package
-  # it lists all the possible disturbances in the CBM-CFS3 archive for that/those
-  # spatial unit with the name of the disturbance in the 3rd colum.
-  listDist <- spuDist(spu, sim$dbPath)
 
-  ## Example specific for SK (as per Boisvenue et al 2016)
-  # Disturbances are from White and Wulder and provided as yearly rasters
-  # raster values 1 to 5
-  # #C:\Celine\GitHub\CBM_\data\forIan\SK_data\disturbance_Sask\ReadMe.txt
-  # # Fire =  1
-  # # Harvest = 2
-  # # Lcondition = 3
-  # # Road = 4
-  # # Unclass = 5
-  # Whatever number of disturbances identified that will be used in the
-  # simulation, each disturbance has to have one one disturbance matrix id
-  # associated with it.
-  # make mySpuDmids (distNames,rasterId,spatial_unit_id,disturbance_matrix_id)
-  distName <- c(rep(userDist$distName, length(spu)))
-  rasterId <- c(rep(userDist$rasterId, length(spu)))
-  wholeStand <- c(rep(userDist$wholeStand, length(spu)))
-  spatial_unit_id <- c(sort(rep(spu, length(userDist$distName))))
-  mySpuDmids <- data.table(distName, rasterId, spatial_unit_id, wholeStand)
+                # # make the disturbance look-up table to the disturbance_matrix_id(s)
+                # # making sim$mySpuDmids
+                #
+                # userDist <- sim$userDist
+                #
+                # # Most cases will only require fire (wildfire) and a clearcut. There are 426
+                # # disturbance matrices identified in the archive of CBM
+                # # (sim$cbmData@disturbanceMatrix). Matrices are associated with spatial units
+                # # (sim$cbmData@disturbanceMatrixAssociation). User can select any disturbance
+                # # they want to represent. Some disturbance matrices are based on data but most
+                # # are expert opinion in the CBM-CFS3 archive.
+                # # Disturbance Matrices are specific to spatial_units_ids--------------
+                # spu <- unique(sim$spatialDT$spatial_unit_id)
+                # # what disturbances in those spu(s)?
+                # # spuDist() function is in CBMutils package
+                # # it lists all the possible disturbances in the CBM-CFS3 archive for that/those
+                # # spatial unit with the name of the disturbance in the 3rd colum.
+                # listDist <- spuDist(spu, sim$dbPath)
+                #
+                #
+                # ## Example specific for SK (as per Boisvenue et al 2016)
+                # # Disturbances are from White and Wulder and provided as yearly rasters
+                # # raster values 1 to 5
+                # # #C:\Celine\GitHub\CBM_\data\forIan\SK_data\disturbance_Sask\ReadMe.txt
+                # # # Fire =  1
+                # # # Harvest = 2
+                # # # Lcondition = 3
+                # # # Road = 4
+                # # # Unclass = 5
+                # # Whatever number of disturbances identified that will be used in the
+                # # simulation, each disturbance has to have one one disturbance matrix id
+                # # associated with it.
+                # # make mySpuDmids (distNames,rasterId,spatial_unit_id,disturbance_matrix_id)
+                # distName <- c(rep(userDist$distName, length(spu)))
+                # rasterId <- c(rep(userDist$rasterId, length(spu)))
+                # wholeStand <- c(rep(userDist$wholeStand, length(spu)))
+                # spatial_unit_id <- c(sort(rep(spu, length(userDist$distName))))
+                # mySpuDmids <- data.table(distName, rasterId, spatial_unit_id, wholeStand)
+                #
+                # dmid <- data.frame(spatial_unit_id = integer(), disturbance_matrix_id = integer())
+                #
+                # for (i in 1:length(mySpuDmids$distName)) {
+                #   ### DANGER HARD CODED FIXES
+                #   ## to do: present the user with options that live in listDist for the
+                #   ## specific spu or in sim$cbmData@disturbanceMatrix
+                #   if (mySpuDmids$distName[i] == "clearcut") {
+                #     dmid[i, ] <- cbind(mySpuDmids$spatial_unit_id[i], 409)
+                #   } else {
+                #     getDist <- listDist[grep(mySpuDmids$distName[i], listDist[, 3], ignore.case = TRUE), 1:2]
+                #     getDist <- getDist[getDist$spatial_unit_id == mySpuDmids$spatial_unit_id[i], ]
+                #     dmid[i, ] <- getDist[1, ]
+                #   }
+                # }
+                #
+                # ## bunch of warnings here...
+                # mySpuDmids <- data.table(mySpuDmids, dmid$disturbance_matrix_id)
+                # names(mySpuDmids) <- c("distName", "rasterId", "spatial_unit_id", "wholeStand", "disturbance_matrix_id")
+                # sim$mySpuDmids <- mySpuDmids
+  sim$mySpuDmids <- sim$userDist
 
-  dmid <- data.frame(spatial_unit_id = integer(), disturbance_matrix_id = integer())
-
-  for (i in 1:length(mySpuDmids$distName)) {
-    ### DANGER HARD CODED FIXES
-    ## to do: present the user with options that live in listDist for the
-    ## specific spu or in sim$cbmData@disturbanceMatrix
-    if (mySpuDmids$distName[i] == "clearcut") {
-      dmid[i, ] <- cbind(mySpuDmids$spatial_unit_id[i], 409)
-    } else {
-      getDist <- listDist[grep(mySpuDmids$distName[i], listDist[, 3], ignore.case = TRUE), 1:2]
-      getDist <- getDist[getDist$spatial_unit_id == mySpuDmids$spatial_unit_id[i], ]
-      dmid[i, ] <- getDist[1, ]
-    }
-  }
-
-  ## bunch of warnings here...
-  mySpuDmids <- data.table(mySpuDmids, dmid$disturbance_matrix_id)
-  names(mySpuDmids) <- c("distName", "rasterId", "spatial_unit_id", "wholeStand", "disturbance_matrix_id")
-  sim$mySpuDmids <- mySpuDmids
   # need to match the historic and last past dist to the spatial unit
   # DECISION: both the last pass and the historic disturbance will be the same
-  # for these runs
+  # for the fire retunr interval runs
 
   ## TO DO: in Canada historic DMIDs will always be fire, but the last past may
   ## not, it could be harvest. Make this optional and give the user a message
   ## saying these are the defaults.
 
-  # sim$mySpuDmids <- fread(file.path("data", "mySpuDmids.csv"))
 
   mySpuFires <- sim$mySpuDmids[grep("wildfire", sim$mySpuDmids$distName, ignore.case = TRUE), ]
 
@@ -477,13 +484,14 @@ Init <- function(sim) {
                                  #purge = 7,
                                  filename2 = "userGcM3.csv")
 
-      message(
-        "User has not supplied growth curves (m3 by age or the file name for the growth curves). ",
-        "The default will be used which is for a region in Saskatchewan."
-      )
+      # message(
+      #   "User has not supplied growth curves (m3 by age or the file name for the growth curves). ",
+      #   "The default will be used which is for a region in Saskatchewan."
+      # )
     } else {
       sim$userGcM3 <- fread(sim$userGcM3File)
     }
+    sim$userGcM3[, V1 := NULL]
     names(sim$userGcM3) <- c("GrowthCurveComponentID", "Age", "MerchVolume")
   }
   # 2. Disturbance information - see disturbance raster below

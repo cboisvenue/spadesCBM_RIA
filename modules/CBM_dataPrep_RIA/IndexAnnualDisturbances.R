@@ -74,8 +74,8 @@ IndexRTM <- postProcess(IndexRTM, rasterToMatch = tempTHLB)
 indexDT <- data.table(rtmIndex = getValues(IndexRTM),
                       thlbIndex = getValues(IndexTHLB))
 
-#the NAs in scfmIndex are pixels that are not in THLB (but inside the landscape) - we can remove them
-indexDT <- indexDT[!is.na(scfmIndex)]
+#the NAs in rtmIndex are pixels that are not in THLB (but inside the landscape) - we can remove them
+indexDT <- indexDT[!is.na(rtmIndex)]
 
 
 ###function for annualSubsets
