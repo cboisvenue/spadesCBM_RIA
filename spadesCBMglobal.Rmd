@@ -212,7 +212,7 @@ inputDir <- reproducible::checkPath("inputs", create = TRUE)
 outputDir <- reproducible::checkPath("outputs", create = TRUE)
 scratchDir <- file.path(tempdir(), "scratch", "CBM") %>% reproducible::checkPath(create = TRUE)
 
-times <- list(start = 1990.00, end = 1993.00)
+times <- list(start = 2020.00, end = 2030.00)
 parameters <- list(
   CBM_defaults = list(
     .useCache = TRUE
@@ -225,14 +225,14 @@ parameters <- list(
   ),
   CBM_core = list(
     .useCache = "init", #c(".inputObjects", "init")
-    .plotInterval = 1,
-    .plotInitialTime = 1990,
+    .plotInterval = 5,
+    .plotInitialTime = 2020,
     poolsToPlot = c("totalCarbon"),
     spinupDebug = FALSE ## TODO: temporary
   )
 )
 
-modules <- list("CBM_defaults", "CBM_dataPrep_SK", "CBM_vol2biomass", "CBM_core")
+modules <- list("CBM_defaults", "CBM_dataPrep_RIA", "CBM_vol2biomass_RIA", "CBM_core")
 objects <- list(
   dbPath = file.path(inputDir, "cbm_defaults", "cbm_defaults.db"),
   sqlDir = file.path(inputDir, "cbm_defaults")

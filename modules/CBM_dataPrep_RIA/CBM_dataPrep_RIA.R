@@ -68,36 +68,36 @@ defineModule(sim, list(
                    "(key words for searching CBM files, if not there the userDist will be created with defaults"),
       sourceURL = NA
     ),
-    expectsInput( ## URL RIA CORRECT
+    ## user input here
+    expectsInput( ## URL RIA CORRECT CHECKED
       objectName = "userDist", objectClass = "data.table",
       desc = "User provided file that identifies disturbances for simulation (distName),
       raster Id if applicable, and wholeStand toggle (1 = whole stand disturbance, 0 = partial disturbance),
       if not there it will use userDistFile",
       sourceURL = "https://drive.google.com/file/d/1Gr_oIfxR11G1ahynZ5LhjVekOIr2uH8X"
     ),
-    expectsInput(
+    expectsInput(## URL RIA CORRECT CHECKED
       objectName = "ageRasterURL", objectClass = "character",
-      desc = "URL for ageRaster - optional, need this or a ageRaster"
+      desc = "https://drive.google.com/file/d/16pXx9pufiWY45H8rgCiFl6aFbEcC9GeD"
     ),
     expectsInput(
       objectName = "ageRaster", objectClass = "raster",
-      desc = "Raster ages for each pixel",
-      sourceURL = "ADD URL SPECIFIC TO EACH OF THE RUNS: fireRIs, presentDay, harvest1 and harvest2"
+      desc = "Raster ages for each pixel,ADD URL SPECIFIC TO EACH OF THE RUNS: fireRIs, presentDay, harvest1 and harvest2"
     ),
     expectsInput(
       objectName = "gcIndexRasterURL", objectClass = "character", ## TODO: url provided below
-      desc = "URL for ageRaster - optional, need this or a ageRaster"
+      desc = "https://drive.google.com/file/d/1LKblpqSZTVlaNske-C_LzNFEtubn7Ms7"
     ),
-    expectsInput(
+    expectsInput(## URL RIA CORRECT CHECKED
       objectName = "gcIndexRaster", objectClass = "raster",
       desc = "Raster ages for each pixel",
       sourceURL = "WILL HAVE TO MAKE THIS FROM GREG'S INFO"
     ),
-    expectsInput(## RIA CORRECT
+    expectsInput(## URL RIA CORRECT CHECKED
       objectName = "spuRaster", objectClass = "raster",
       desc = "Raster has spatial units for each pixel"
     ),
-    expectsInput(## RIA CORRECT
+    expectsInput(## URL RIA CORRECT CHECKED
       objectName = "ecoRaster", objectClass = "raster",
       desc = "Raster has ecozones for each pixel"
     ),
@@ -107,26 +107,26 @@ defineModule(sim, list(
                    "Default name userGcM3"),
       sourceURL = NA
     ),
-    expectsInput(## RIA CORRECT UNLESS GREG CHANGES THE NAME OF THE UPDATED FILE ##
+    expectsInput(## URL RIA CORRECT CHECKED
       objectName = "userGcM3", objectClass = "dataframe",
       desc = "User file containing: GrowthCurveComponentID,Age,MerchVolume. Default name userGcM3",
-      sourceURL = "https://drive.google.com/file/d/1MIH4roV7lQdGFFmdLCN8bNZ0eNoakmlL"
+      sourceURL = "https://drive.google.com/file/d/1BYHhuuhSGIILV1gmoo9sNjAfMaxs7qAj"
     ),
-    expectsInput(
+    expectsInput(## URL RIA CORRECT CHECKED
       ## URL RIA FOR scfmFires rasters is this https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8
       ## URL below is for the data table for the 526 years of scfm fire sims
       objectName = "disturbanceRasters", objectClass = "vector",
-      desc = "Character vector of the disturbance rasters for use in simulations - defaults are the Wulder and White rasters for SK.",
+      desc = "RIA 2020 specific - fires rasters were too big for my laptop. Created a data table for ",
       sourceURL = "https://drive.google.com/file/d/1P41fr5fimmxOTGfNRBgjwXetceW6YS1M"
     ),
     expectsInput(
       objectName = "masterRasterURL", objectClass = "character",
-      desc = "URL for masterRaster - optional, need this or a masterRaster"
+      desc = "https://drive.google.com/file/d/1LlE5NXDPKS6Ljv2SvwQnw2A_Kze2uun-"
     ),
-    expectsInput( ### WAITING FOR GREG
+    expectsInput( ## URL RIA CORRECT CHECKED
       objectName = "masterRaster", objectClass = "raster",
-      desc = "Raster has NAs where there are no species and the pixel groupID where the pixels were simulated. It is used to map results",
-      sourceURL = "https://drive.google.com/file/d/1zUyFH8k6Ef4c_GiWMInKbwAl6m6gvLJW"
+      desc = "Raster that defines the extent of the simulation area for th BC NE RIA. It is used to map results and crop other rasters",
+      sourceURL = NA
     )
   ),
   outputObjects = bindrows(
@@ -430,17 +430,17 @@ Init <- function(sim) {
 
 .inputObjects <- function(sim) {
   cacheTags <- c(currentModule(sim), "function:.inputObjects")
-  dataPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
-  message(currentModule(sim), ": using dataPath '", dataPath, "'.")
+  dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
+  message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
   # if we chose to not use the RSQLite library in this module, and extract
   # disturbance matrix id (dmid) from sim$cbmData@disturbanceMatrixAssociation,
   # then $sqlDir and $dbPath are not needed.
   if (!suppliedElsewhere(sim$sqlDir)) {
-    sim$sqlDir <- file.path(dataPath, "cbm_defaults")
+    sim$sqlDir <- file.path(dPath, "cbm_defaults")
   }
   if (!suppliedElsewhere(sim$dbPath)) {
-    sim$dbPath <- file.path(dataPath, "cbm_defaults", "cbm_defaults.db")
+    sim$dbPath <- file.path(dPath, "cbm_defaults", "cbm_defaults.db")
   }
 
   if (!suppliedElsewhere(sim$cbmData)) {
@@ -478,22 +478,25 @@ Init <- function(sim) {
   ## TODO add a data manipulation to adjust if the m3 are not given on a yearly basis
   if (!suppliedElsewhere("userGcM3", sim)) {
     if (!suppliedElsewhere("userGcM3File", sim)) {
+     sim$userGcM3 <- fread(sim$userGcM3File)
+        } else {
       sim$userGcM3 <- prepInputs(url = extractURL("userGcM3"),
                                  fun = "data.table::fread",
-                                 destinationPath = dataPath,
+                                 destinationPath = dPath,
                                  #purge = 7,
-                                 filename2 = "userGcM3.csv")
+                                 filename2 = "curve_points_table.csv")
 
       # message(
       #   "User has not supplied growth curves (m3 by age or the file name for the growth curves). ",
       #   "The default will be used which is for a region in Saskatchewan."
       # )
-    } else {
-      sim$userGcM3 <- fread(sim$userGcM3File)
-    }
+              }
+
+  ## RIA 2020 specific
     sim$userGcM3[, V1 := NULL]
     names(sim$userGcM3) <- c("GrowthCurveComponentID", "Age", "MerchVolume")
   }
+
   # 2. Disturbance information - see disturbance raster below
   # this may be provided by the user, by the defaults or by other modules/family
   # of modules. It is the link between the spatial location of the disturbance
@@ -508,7 +511,7 @@ Init <- function(sim) {
       # warning("Default disturbances will be used. They are fire and clearcut, assigned raster values of 1 and 2 respectively.")
       sim$userDist <- prepInputs(url = extractURL("userDist"),
                                  fun = "data.table::fread",
-                                 destinationPath = dataPath,
+                                 destinationPath = dPath,
                                  #purge = 7,
                                  filename2 = "mySpuDmids.csv")
     } else {
@@ -519,28 +522,28 @@ Init <- function(sim) {
   # user provided rasters or spatial information------------------------
 
   # 1. Raster to match (masterRaster). This is the study area.
-  ## RIA UPDATE URL
+
   if (!suppliedElsewhere("masterRaster", sim)) {
     if (!suppliedElsewhere("masterRasterURL", sim)) {
       sim$masterRasterURL <- extractURL("masterRaster")
-      message(
-        "User has not supplied a masterRaster or a URL for a masterRaster (masterRasterURL object).\n",
-        "masterRaster is going to be read from the default URL given in the inputObjects for ",
-        currentModule(sim)
-      )
+      # message(
+      #   "User has not supplied a masterRaster or a URL for a masterRaster (masterRasterURL object).\n",
+      #   "masterRaster is going to be read from the default URL given in the inputObjects for ",
+      #   currentModule(sim)
+      # )
     }
     sim$masterRaster <- Cache(
       prepInputs,
       url = sim$masterRasterURL,
       fun = "raster::raster",
-      destinationPath = dataPath
+      destinationPath = dPath
     )
 
-    sim$masterRaster[sim$masterRaster == 0] <- NA
+    #sim$masterRaster[sim$masterRaster == 0] <- NA
   }
 
   # 2. Age raster from inventory
-  ## RIA UPDATE URL
+
   if (!suppliedElsewhere(sim$ageRaster)) {
     if (!suppliedElsewhere(sim$ageRasterURL)) {
       sim$ageRasterURL <- extractURL("ageRaster")
@@ -548,7 +551,7 @@ Init <- function(sim) {
     sim$ageRaster <- Cache(prepInputs,
                            url = sim$ageRasterURL,
                            fun = "raster::raster",
-                           destinationPath = dataPath
+                           destinationPath = dPath
     )
     ## TO DO: put in a message to out pointing out the max age (this has to be
     ## sinked to the max age on the growth curve max age for the spinup)
@@ -564,7 +567,7 @@ Init <- function(sim) {
     sim$gcIndexRaster <- Cache(prepInputs,
                                url = sim$gcIndexRasterURL,
                                fun = "raster::raster",
-                               destinationPath = dataPath)
+                               destinationPath = dPath)
   }
 
   # 4. Spatial Unit raster. This takes the masterRaster (study area) and figures
@@ -573,7 +576,7 @@ Init <- function(sim) {
   if (!suppliedElsewhere(sim$spuRaster)) {
     canadaSpu <- prepInputs(targetFile = "spUnit_Locator.shp",
                             url = "https://drive.google.com/file/d/17UH3TDuEA_NQISeavu77HWz_P4tMYb2X",
-                            destinationPath = dataPath,
+                            destinationPath = dPath,
                             alsoExtract = "similar")
     spuShp <- postProcess(canadaSpu,
                           rasterToMatch = sim$masterRaster,
@@ -591,7 +594,7 @@ Init <- function(sim) {
       # this website https://sis.agr.gc.ca/cansis/index.html is hosted by the Canadian Government
       url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
       alsoExtract = "similar",
-      destinationPath = dataPath,
+      destinationPath = dPath,
       rasterToMatch = sim$masterRaster,
       overwrite = TRUE,
       fun = "raster::shapefile",
