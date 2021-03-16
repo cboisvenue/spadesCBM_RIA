@@ -80,6 +80,7 @@ defineModule(sim, list(
                  desc = "Provides equivalent between provincial boundaries,
                  CBM-id for provincial boundaries and CBM-spatial unit ids",
                  sourceURL = NA),
+    ## RIA URL LINK CORRECT (au_table.csv)
     expectsInput(objectName = "gcMetaFile",
                  objectClass = "character",
                  desc = "File name and location for the user provided gcMeta dataframe",
@@ -825,11 +826,11 @@ Event2 <- function(sim) {
   # tables and seems to forget parameter coumns at times. So, we added a check to
   if (!suppliedElsewhere("table3", sim)) {
     sim$table3 <- prepInputs(url = extractURL("table3"),
-                               fun = "data.table::fread",
-                               destinationPath = dPath,
-                               #purge = 7,
-                               filename2 = "curve_points_table.csv")
-    sim$table3 <- fread("https://nfi.nfis.org/resources/biomass_models/appendix2_table3.csv")
+                             fun = "data.table::fread",
+                             destinationPath = dPath,
+                             overwrite = FALSE,
+                             #purge = 7,
+                             filename2 = "appendix2_table3.csv")
     # these are the columns needed in the functions for calculating biomass
     t3hasToHave <- c("juris_id", "ecozone", "canfi_species", "genus", "species",
                      "a", "b", "volm")
@@ -839,30 +840,32 @@ Event2 <- function(sim) {
         "This means parameters are missing. The default (older) parameter file will be used instead."
       )
       sim$table3 <- fread(file.path("modules","CBM_vol2biomass_RIA","data","appendix2_table3.csv"))
-      ## TODO: use url to googleDrive (G:\userDataDefaultsCBM_SK)
     }
   }
   if (!suppliedElsewhere("table4", sim)) {
-    ### HELP: the .csv has a colum with commas! it puts that column in two columns...
-    # table4 <- fread(extractURL("table4"))
-    # work around
-    sim$table4 <- fread("https://nfi.nfis.org/resources/biomass_models/appendix2_table4.csv")
-    t4hasToHave <- c("juris_id", "ecozone", "canfi_species", "genus", "species",
+    sim$table4 <- prepInputs(url = extractURL("table4"),
+                             fun = "data.table::fread",
+                             destinationPath = dPath,
+                             overwrite = FALSE,
+                             #purge = 7,
+                             filename2 = "appendix2_table4.csv")
+     t4hasToHave <- c("juris_id", "ecozone", "canfi_species", "genus", "species",
                      "a", "b", "k", "cap", "volm")
     if(!length(which(colnames(sim$table4) %in% t4hasToHave)) == length(t4hasToHave)){
       message(
         "The parameter table (appendix2_table4) does not have the expected number of columns. ",
         "This means parameters are missing. The default (older) parameter file will be used instead."
       )
-      sim$table4 <- fread(file.path("modules","CBM_vol2biomass_RIA","data","appendix2_table4.csv"))
-      ## TODO: use url to googleDrive (G:\userDataDefaultsCBM_SK)
     }
-
   }
   if (!suppliedElsewhere("table5", sim)) {
-    ### HELP: the .csv has a colum with commas! it puts that column in two
-    # columns... table5 <- fread(extractURL("table5")) work around
-    sim$table5 <- fread("https://nfi.nfis.org/resources/biomass_models/appendix2_table5.csv")
+    sim$table5 <- prepInputs(url = extractURL("table5"),
+                             fun = "data.table::fread",
+                             destinationPath = dPath,
+                             overwrite = FALSE,
+                             #purge = 7,
+                             filename2 = "appendix2_table5.csv")
+
     t5hasToHave <- c("juris_id", "ecozone", "canfi_genus", "genus", "a", "b", "k",
                      "cap", "volm")
     if(!length(which(colnames(sim$table5) %in% t5hasToHave)) == length(t5hasToHave)){
@@ -870,16 +873,17 @@ Event2 <- function(sim) {
         "The parameter table (appendix2_table5) does not have the expected number of columns. ",
         "This means parameters are missing. The default (older) parameter file will be used instead."
       )
-      sim$table5 <- fread(file.path("modules","CBM_vol2biomass_RIA","data","appendix2_table5.csv"))
-      ## TODO: use url to googleDrive (G:\userDataDefaultsCBM_SK)
     }
   }
   if (!suppliedElsewhere("table6", sim)) {
-    ### HELP: the .csv has a colum with commas! it puts that column in two columns...
-    # table6 <- fread(extractURL("table6"))
-    # work around
-    sim$table6 <- fread("https://nfi.nfis.org/resources/biomass_models/appendix2_table6.csv",
-                        fill = TRUE)
+    sim$table6 <- prepInputs(url = extractURL("table6"),
+                             fun = "data.table::fread",
+                             destinationPath = dPath,
+                             overwrite = FALSE,
+                             #purge = 7,
+                             filename2 = "appendix2_table6_v2.csv")
+#    sim$table6 <- fread("https://nfi.nfis.org/resources/biomass_models/appendix2_table6.csv",
+#                        fill = TRUE)
     t6hasToHave <- c("juris_id", "ecozone", "canfi_species", "a1", "a2", "a3", "b1", "b2", "b3",
                      "c1", "c2", "c3" )
     if(!length(which(colnames(sim$table6) %in% t6hasToHave)) == length(t6hasToHave)){
@@ -887,15 +891,18 @@ Event2 <- function(sim) {
         "The parameter table (appendix2_table6) does not have the expected number of columns. ",
         "This means parameters are missing. The default (older) parameter file will be used instead."
       )
-      sim$table6 <- fread(file.path("modules","CBM_vol2biomass_RIA","data","appendix2_table6.csv"))
+ #     sim$table6 <- fread(file.path("modules","CBM_vol2biomass_RIA","data","appendix2_table6.csv"))
       ## TODO: use url to googleDrive (G:\userDataDefaultsCBM_SK)
     }
   }
   if (!suppliedElsewhere("table7", sim)) {
-    ### HELP: the .csv has a colum with commas! it puts that column in two columns...
-    # table7 <- fread(extractURL("table7"))
-    # work around
-    sim$table7 <- fread("https://nfi.nfis.org/resources/biomass_models/appendix2_table7.csv")
+    sim$table7 <- prepInputs(url = extractURL("table7"),
+                             fun = "data.table::fread",
+                             destinationPath = dPath,
+                             overwrite = FALSE,
+                             #purge = 7,
+                             filename2 = "appendix2_table7.csv")
+
     t7hasToHave <- c("juris_id", "ecozone", "canfi_species", "vol_min", "vol_max", "p_sw_low",
                      "p_sb_low", "p_br_low", "p_fl_low", "p_sw_high", "p_sb_high", "p_br_high",
                      "p_fl_high")
@@ -904,8 +911,6 @@ Event2 <- function(sim) {
         "The parameter table (appendix2_table7) does not have the expected number of columns. ",
         "This means parameters are missing. The default (older) parameter file will be used instead."
       )
-      sim$table7 <- fread(file.path("modules","CBM_vol2biomass_RIA","data","appendix2_table7.csv"))
-      ## TODO: use url to googleDrive (G:\userDataDefaultsCBM_SK)
     }
   }
 
@@ -913,163 +918,37 @@ Event2 <- function(sim) {
     ## this is where the pixelGroups and their spu eco etc.
     message("No spatial information was provided for the growth curves.
             The default values (SK simulations) will be used to limit the number of growth curves used.")
-    sim$gcids <- c(
-      52, 52, 58, 52, 28, 29, 31, 34, 37, 40, 49, 50, 52, 55, 58,
-      61, 28, 29, 31, 34, 35, 37, 40, 49, 50, 52, 55, 58, 61, 28, 29,
-      31, 34, 37, 40, 49, 50, 52, 55, 56, 58, 61, 28, 29, 31, 34, 40,
-      49, 50, 52, 55, 58, 61, 28, 34, 49, 52, 55, 40, 28, 31, 34, 40,
-      49, 50, 52, 55, 61, 28, 31, 34, 40, 49, 50, 52, 55, 61, 52, 55,
-      58, 28, 29, 31, 34, 37, 40, 49, 50, 52, 55, 58, 61, 28, 31, 34,
-      37, 40, 49, 50, 52, 55, 58, 61, 28, 31, 34, 37, 40, 49, 50, 52,
-      55, 61, 28, 31, 34, 40, 49, 52, 55, 61, 28, 61, 52, 61, 62, 28,
-      31, 34, 40, 49, 50, 52, 55, 61, 31, 34, 49, 52, 55, 28, 31, 34,
-      40, 49, 50, 52, 55, 58, 61, 62, 28, 29, 31, 34, 40, 49, 50, 52,
-      55, 61, 28, 34, 40, 49, 50, 52, 55, 61, 62, 28, 34, 40, 61, 49,
-      31, 40, 49, 61, 28, 29, 31, 34, 40, 49, 50, 52, 58, 61, 28, 31,
-      34, 40, 49, 50, 52, 55, 61, 49, 52, 55, 28, 31, 34, 40, 49, 50,
-      52, 55, 58, 61, 28, 31, 34, 40, 49, 50, 52, 55, 61, 40, 49, 50,
-      52, 61, 28, 31, 31, 61, 28, 31, 34, 49, 50, 55, 61, 28, 31, 34,
-      49, 61, 28, 34, 52, 61, 31, 49, 52, 55, 55, 40, 28, 49, 28, 31,
-      34, 49, 52, 28, 31, 58, 61, 28, 31, 34, 49, 50, 61, 52, 49, 52,
-      55, 58, 31, 34, 37, 49, 52, 55, 52, 55, 58, 31, 34, 49, 52, 55,
-      56, 58, 31, 34, 49, 52, 55, 56, 58, 61, 49, 52, 55, 52, 55, 28,
-      34, 49, 55, 28, 31, 34, 37, 52, 55, 49, 52, 55, 28, 31, 34, 37,
-      49, 52, 55, 58, 28, 31, 34, 37, 49, 52, 55, 58, 28, 31, 34, 37,
-      49, 52, 55, 34, 37, 50, 52, 52, 28, 31, 34, 37, 52, 55, 28, 31,
-      34, 37, 49, 52, 55, 58, 52, 55, 28, 31, 34, 37, 40, 49, 52, 55,
-      58, 28, 31, 34, 37, 40, 49, 52, 55, 58, 61, 28, 31, 34, 37, 49,
-      52, 55, 58, 28, 31, 34, 37, 52, 55, 31, 52, 55, 31, 28, 31, 34,
-      37, 40, 49, 52, 55, 58, 28, 31, 34, 37, 40, 49, 50, 52, 55, 58,
-      52, 55, 28, 31, 34, 37, 49, 50, 52, 55, 58, 61, 28, 31, 34, 37,
-      40, 49, 50, 52, 55, 58, 28, 31, 34, 37, 40, 49, 50, 52, 55, 58,
-      28, 31, 34, 37, 49, 52, 55, 58, 34, 49, 55, 28, 31, 28, 31, 34,
-      49, 52, 55, 58, 28, 31, 34, 37, 49, 50, 52, 55, 58, 61, 49, 52,
-      28, 31, 34, 37, 40, 49, 50, 52, 55, 58, 28, 29, 31, 34, 35, 37,
-      40, 49, 50, 52, 55, 58, 61, 28, 31, 34, 37, 40, 49, 50, 52, 55,
-      58, 61, 28, 31, 34, 49, 52, 55, 58, 52, 28, 28, 34, 49, 55, 58,
-      61, 28, 34, 37, 49, 50, 52, 55, 58, 61, 28, 31, 34, 37, 40, 49,
-      50, 52, 55, 58, 61, 28, 31, 34, 37, 49, 50, 52, 55, 58, 61, 28,
-      31, 34, 49, 50, 52, 55, 58, 61, 28, 40, 49, 55, 58, 49, 34, 28,
-      31, 34, 49, 50, 52, 55, 58, 28, 31, 34, 37, 40, 49, 50, 52, 55,
-      58, 61, 28, 29, 31, 34, 37, 40, 49, 50, 52, 55, 58, 61, 28, 29,
-      31, 34, 37, 40, 49, 50, 52, 55, 56, 58, 61, 28, 29, 31, 34, 37,
-      40, 49, 50, 52, 55, 58, 61, 28, 29, 31, 34, 40, 49, 50, 52, 55,
-      61, 31, 50, 49, 52, 61, 28, 31, 34, 49, 50, 52, 55, 58, 61, 28,
-      31, 34, 37, 40, 49, 50, 52, 55, 58, 61, 52, 28, 31, 34, 37, 40,
-      49, 50, 52, 55, 58, 61, 28, 29, 31, 34, 37, 40, 49, 50, 52, 55,
-      58, 61, 28, 31, 34, 40, 49, 50, 52, 55, 58, 61, 28, 34, 49, 50,
-      52, 55, 58, 61, 49, 50, 55, 61, 49, 52, 55, 58, 61, 28, 29, 31,
-      34, 40, 49, 50, 52, 55, 58, 61, 28, 29, 31, 34, 37, 40, 49, 50,
-      52, 55, 58, 61
-    )
+    sim$gcids <- c(801000, 801001, 801002, 802000, 802001, 802002, 801003, 803000,
+                   801008, 803002, 802008, 801006, 802006, 802003, 803003, 803001,
+                   803008, 803006, 803004, 802004, 801004, 802007, 801005, 803007,
+                   802005, 801007, 803005, 4002000, 4001000, 4003000, 4001002, 4001001,
+                   1601005, 4003005, 4002003, 4001003, 4002005, 4003001, 4002001,
+                   1601011, 4001005, 1603005, 1603007, 1601004, 1602007, 1601002,
+                   4002002, 1602002, 1602004, 1601007, 1603004, 1602009, 1603009,
+                   4003002, 4003003, 1603011, 1602011, 1603002, 1602005, 1601009,
+                   1601001, 1601000, 1602001, 1602000, 1603000, 1601006, 1602006,
+                   1603001, 1603006, 4001006, 4002006, 4003006, 1601010, 1603010,
+                   2401000, 2401003, 2401005, 2401002, 2402000, 2402003, 2403003,
+                   2402001, 2402004, 2403001, 2401001, 2401006, 1602010, 2401004,
+                   2403004, 4002004, 4001004, 4003004, 1601003, 2403000, 1602003,
+                   2402007, 1601008, 1602008, 2401007, 2402005, 2403005, 1603003,
+                   1603008, 2402002, 2403006, 2402006, 2403002, 4103005, 4101000,
+                   4102000, 4103003, 4103006, 4101003, 4101006, 4102003, 4102005,
+                   4101005, 4101008, 4103000, 4101009, 4102007, 4101007, 4103008,
+                   4102009, 4103007, 4103009, 4102002, 4103002, 4101002, 4102006,
+                   2403007, 4103001, 4102008, 4102001, 4101001, 4102004, 4103004,
+                   4101004)
   }
 
   if (!suppliedElsewhere("ecozones", sim)) {
     message("No spatial information was provided for the growth curves.
             The default values (SK simulations) will be used to determine which ecozones these curves are in.")
-    sim$ecozones <- c(
-      9, 9, 9, 9, 6, 6, 6, 6, 6, 6, 9, 9, 9, 9, 9, 9, 6, 6, 6, 6,
-      6, 6, 6, 9, 9, 9, 9, 9, 9, 6, 6, 6, 6, 6, 6, 9, 9, 9, 9, 9, 9,
-      9, 6, 6, 6, 6, 6, 9, 9, 9, 9, 9, 9, 6, 6, 9, 9, 9, 6, 6, 6, 6,
-      6, 9, 9, 9, 9, 9, 6, 6, 6, 6, 9, 9, 9, 9, 9, 9, 9, 9, 6, 6, 6,
-      6, 6, 6, 9, 9, 9, 9, 9, 9, 6, 6, 6, 6, 6, 9, 9, 9, 9, 9, 9, 6,
-      6, 6, 6, 6, 9, 9, 9, 9, 9, 6, 6, 6, 6, 9, 9, 9, 9, 6, 9, 9, 9,
-      9, 6, 6, 6, 6, 9, 9, 9, 9, 9, 6, 6, 9, 9, 9, 6, 6, 6, 6, 9, 9,
-      9, 9, 9, 9, 9, 6, 6, 6, 6, 6, 9, 9, 9, 9, 9, 6, 6, 6, 9, 9, 9,
-      9, 9, 9, 6, 6, 6, 9, 9, 6, 6, 9, 9, 6, 6, 6, 6, 6, 9, 9, 9, 9,
-      9, 6, 6, 6, 6, 9, 9, 9, 9, 9, 9, 9, 9, 6, 6, 6, 6, 9, 9, 9, 9,
-      9, 9, 6, 6, 6, 6, 9, 9, 9, 9, 9, 6, 9, 9, 9, 9, 6, 6, 6, 9, 6,
-      6, 6, 9, 9, 9, 9, 6, 6, 6, 9, 9, 6, 6, 9, 9, 6, 9, 9, 9, 9, 6,
-      6, 9, 6, 6, 6, 9, 9, 6, 6, 9, 9, 6, 6, 6, 9, 9, 9, 9, 9, 9, 9,
-      9, 6, 6, 6, 9, 9, 9, 9, 9, 9, 6, 6, 9, 9, 9, 9, 9, 6, 6, 9, 9,
-      9, 9, 9, 9, 9, 9, 9, 9, 9, 6, 6, 9, 9, 6, 6, 6, 6, 9, 9, 9, 9,
-      9, 6, 6, 6, 6, 9, 9, 9, 9, 6, 6, 6, 6, 9, 9, 9, 9, 6, 6, 6, 6,
-      9, 9, 9, 6, 6, 9, 9, 9, 6, 6, 6, 6, 9, 9, 6, 6, 6, 6, 9, 9, 9,
-      9, 9, 9, 6, 6, 6, 6, 6, 9, 9, 9, 9, 6, 6, 6, 6, 6, 9, 9, 9, 9,
-      9, 6, 6, 6, 6, 9, 9, 9, 9, 6, 6, 6, 6, 9, 9, 6, 9, 9, 6, 6, 6,
-      6, 6, 6, 9, 9, 9, 9, 6, 6, 6, 6, 6, 9, 9, 9, 9, 9, 9, 9, 6, 6,
-      6, 6, 9, 9, 9, 9, 9, 9, 6, 6, 6, 6, 6, 9, 9, 9, 9, 9, 6, 6, 6,
-      6, 6, 9, 9, 9, 9, 9, 6, 6, 6, 6, 9, 9, 9, 9, 6, 9, 9, 6, 6, 6,
-      6, 6, 9, 9, 9, 9, 6, 6, 6, 6, 9, 9, 9, 9, 9, 9, 9, 9, 6, 6, 6,
-      6, 6, 9, 9, 9, 9, 9, 6, 6, 6, 6, 6, 6, 6, 9, 9, 9, 9, 9, 9, 6,
-      6, 6, 6, 6, 9, 9, 9, 9, 9, 9, 6, 6, 6, 9, 9, 9, 9, 9, 6, 6, 6,
-      9, 9, 9, 9, 6, 6, 6, 9, 9, 9, 9, 9, 9, 6, 6, 6, 6, 6, 9, 9, 9,
-      9, 9, 9, 6, 6, 6, 6, 9, 9, 9, 9, 9, 9, 6, 6, 6, 9, 9, 9, 9, 9,
-      9, 6, 6, 9, 9, 9, 9, 6, 6, 6, 6, 9, 9, 9, 9, 9, 6, 6, 6, 6, 6,
-      9, 9, 9, 9, 9, 9, 6, 6, 6, 6, 6, 6, 9, 9, 9, 9, 9, 9, 6, 6, 6,
-      6, 6, 6, 9, 9, 9, 9, 9, 9, 9, 6, 6, 6, 6, 6, 6, 9, 9, 9, 9, 9,
-      9, 6, 6, 6, 6, 6, 9, 9, 9, 9, 9, 6, 9, 9, 9, 9, 6, 6, 6, 9, 9,
-      9, 9, 9, 9, 6, 6, 6, 6, 6, 9, 9, 9, 9, 9, 9, 9, 6, 6, 6, 6, 6,
-      9, 9, 9, 9, 9, 9, 6, 6, 6, 6, 6, 6, 9, 9, 9, 9, 9, 9, 6, 6, 6,
-      6, 9, 9, 9, 9, 9, 9, 6, 6, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-      9, 9, 9, 6, 6, 6, 6, 6, 9, 9, 9, 9, 9, 9, 6, 6, 6, 6, 6, 6, 9,
-      9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-      9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 6, 9, 9, 9, 9, 9, 9, 9, 9,
-      9, 9, 9, 6, 6, 6, 6, 9, 9, 9, 6, 9, 6, 6, 6, 9, 9, 9, 9, 6, 6,
-      9, 6, 6, 6, 9, 9, 9, 6, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-      9, 9, 9, 6, 9, 9, 9, 9, 9, 9, 6, 9, 6, 9, 9, 9, 9, 9, 9, 9, 9,
-      9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-      9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-      9, 9, 9, 9, 9, 9, 9, 9, 6, 6, 9, 9, 9, 9, 9, 6, 6, 6, 9, 9, 9,
-      9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 6, 9, 6, 9, 9, 9, 9, 9, 9, 9, 9,
-      6, 6, 6, 6, 9, 9, 9, 6, 6, 9, 9, 9, 9, 9, 6, 9, 9, 9, 9, 9, 9,
-      6, 9, 9, 9, 9, 9, 9, 9, 9, 9, 6, 9, 9, 9, 9, 9, 9, 9, 6, 9, 9,
-      9, 6, 9, 9, 9, 6, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-      9
-    )
+    sim$ecozones <- c(12, 4, 14, 13, 9)
   }
   if (!suppliedElsewhere("spatialUnits", sim)) {
     message("No spatial information was provided for the growth curves.
             The default values (SK simulations) will be used to determine which CBM-spatial units these curves are in.")
-    sim$spatialUnits <- c(
-      28, 28, 28, 28, 27, 27, 27, 27, 27, 27, 28, 28, 28, 28, 28,
-      28, 27, 27, 27, 27, 27, 27, 27, 28, 28, 28, 28, 28, 28, 27, 27,
-      27, 27, 27, 27, 28, 28, 28, 28, 28, 28, 28, 27, 27, 27, 27, 27,
-      28, 28, 28, 28, 28, 28, 27, 27, 28, 28, 28, 27, 27, 27, 27, 27,
-      28, 28, 28, 28, 28, 27, 27, 27, 27, 28, 28, 28, 28, 28, 28, 28,
-      28, 27, 27, 27, 27, 27, 27, 28, 28, 28, 28, 28, 28, 27, 27, 27,
-      27, 27, 28, 28, 28, 28, 28, 28, 27, 27, 27, 27, 27, 28, 28, 28,
-      28, 28, 27, 27, 27, 27, 28, 28, 28, 28, 27, 28, 28, 28, 28, 27,
-      27, 27, 27, 28, 28, 28, 28, 28, 27, 27, 28, 28, 28, 27, 27, 27,
-      27, 28, 28, 28, 28, 28, 28, 28, 27, 27, 27, 27, 27, 28, 28, 28,
-      28, 28, 27, 27, 27, 28, 28, 28, 28, 28, 28, 27, 27, 27, 28, 28,
-      27, 27, 28, 28, 27, 27, 27, 27, 27, 28, 28, 28, 28, 28, 27, 27,
-      27, 27, 28, 28, 28, 28, 28, 28, 28, 28, 27, 27, 27, 27, 28, 28,
-      28, 28, 28, 28, 27, 27, 27, 27, 28, 28, 28, 28, 28, 27, 28, 28,
-      28, 28, 27, 27, 27, 28, 27, 27, 27, 28, 28, 28, 28, 27, 27, 27,
-      28, 28, 27, 27, 28, 28, 27, 28, 28, 28, 28, 27, 27, 28, 27, 27,
-      27, 28, 28, 27, 27, 28, 28, 27, 27, 27, 28, 28, 28, 28, 28, 28,
-      28, 28, 27, 27, 27, 28, 28, 28, 28, 28, 28, 27, 27, 28, 28, 28,
-      28, 28, 27, 27, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 27,
-      27, 28, 28, 27, 27, 27, 27, 28, 28, 28, 28, 28, 27, 27, 27, 27,
-      28, 28, 28, 28, 27, 27, 27, 27, 28, 28, 28, 28, 27, 27, 27, 27,
-      28, 28, 28, 27, 27, 28, 28, 28, 27, 27, 27, 27, 28, 28, 27, 27,
-      27, 27, 28, 28, 28, 28, 28, 28, 27, 27, 27, 27, 27, 28, 28, 28,
-      28, 27, 27, 27, 27, 27, 28, 28, 28, 28, 28, 27, 27, 27, 27, 28,
-      28, 28, 28, 27, 27, 27, 27, 28, 28, 27, 28, 28, 27, 27, 27, 27,
-      27, 27, 28, 28, 28, 28, 27, 27, 27, 27, 27, 28, 28, 28, 28, 28,
-      28, 28, 27, 27, 27, 27, 28, 28, 28, 28, 28, 28, 27, 27, 27, 27,
-      27, 28, 28, 28, 28, 28, 27, 27, 27, 27, 27, 28, 28, 28, 28, 28,
-      27, 27, 27, 27, 28, 28, 28, 28, 27, 28, 28, 27, 27, 27, 27, 27,
-      28, 28, 28, 28, 27, 27, 27, 27, 28, 28, 28, 28, 28, 28, 28, 28,
-      27, 27, 27, 27, 27, 28, 28, 28, 28, 28, 27, 27, 27, 27, 27, 27,
-      27, 28, 28, 28, 28, 28, 28, 27, 27, 27, 27, 27, 28, 28, 28, 28,
-      28, 28, 27, 27, 27, 28, 28, 28, 28, 28, 27, 27, 27, 28, 28, 28,
-      28, 27, 27, 27, 28, 28, 28, 28, 28, 28, 27, 27, 27, 27, 27, 28,
-      28, 28, 28, 28, 28, 27, 27, 27, 27, 28, 28, 28, 28, 28, 28, 27,
-      27, 27, 28, 28, 28, 28, 28, 28, 27, 27, 28, 28, 28, 28, 27, 27,
-      27, 27, 28, 28, 28, 28, 28, 27, 27, 27, 27, 27, 28, 28, 28, 28,
-      28, 28, 27, 27, 27, 27, 27, 27, 28, 28, 28, 28, 28, 28, 27, 27,
-      27, 27, 27, 27, 28, 28, 28, 28, 28, 28, 28, 27, 27, 27, 27, 27,
-      27, 28, 28, 28, 28, 28, 28, 27, 27, 27, 27, 27, 28, 28, 28, 28,
-      28, 27, 28, 28, 28, 28, 27, 27, 27, 28, 28, 28, 28, 28, 28, 27,
-      27, 27, 27, 27, 28, 28, 28, 28, 28, 28, 28, 27, 27, 27, 27, 27,
-      28, 28, 28, 28, 28, 28, 27, 27, 27, 27, 27, 27, 28, 28, 28, 28,
-      28, 28, 27, 27, 27, 27, 28, 28, 28, 28, 28, 28, 27, 27, 28, 28,
-      28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 27, 27, 27,
-      27, 27, 28, 28, 28, 28, 28, 28, 27, 27, 27, 27, 27, 27, 28, 28,
-      28, 28, 28, 28
-    )
+    sim$spatialUnits <- c(38, 39, 40, 42, 31, 34, 36, 41, 44, 46, 50, 52, 54)
   }
 
   # 1. growth and yield information
@@ -1080,6 +959,8 @@ Event2 <- function(sim) {
     if (!suppliedElsewhere("userGcM3File", sim)) {
       sim$userGcM3File <- extractURL("userGcM3File")
     } else {
+      sim$userGcM3File <- extractURL("userGcM3")
+
       sim$userGcM3 <- prepInputs(url = sim$userGcM3File,
                                  fun = "data.table::fread",
                                  destinationPath = dPath,
@@ -1102,7 +983,7 @@ Event2 <- function(sim) {
     if (!suppliedElsewhere("gcMetaFile", sim)) {
       sim$gcMetaFile <- extractURL("gcMetaFile")
     } else {
-      sim$userGcM3 <- prepInputs(url = sim$gcMetaFile,
+      sim$gcMeta <- prepInputs(url = sim$gcMetaFile,
                                  fun = "data.table::fread",
                                  destinationPath = dPath,
                                  #purge = 7,

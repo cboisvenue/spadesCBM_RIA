@@ -4,7 +4,7 @@ library(SpaDES)
 library(data.table)
 
 dataPath <- file.path(getwd(),"modules/CBM_dataPrep_RIA/data")
-
+dPath <- file.path(getwd(),"modules/CBM_vol2biomass_RIA/data")
 ### Raster messin' ########################################################################
 # some raster tasks I am trying to figure out
 ## THIS RASTER LIST IS WRONG
@@ -236,6 +236,7 @@ masterRaster <- fasterize::fasterize(masterShape, raster = RIA_RTM, field = "thl
 #fasterize requires an sf object for the shapefile (masterShape), which is another reason we pass sf::st_read instead of raster::shapefile
 
 
+
 masterShape <- prepInputs(
   url = "https://drive.google.com/file/d/1j8P780gwsSiEekANMm7qIphoVMVm74BJ",
   destinationPath = dataPath,
@@ -249,19 +250,40 @@ masterShape <- prepInputs(
   filename2 = TRUE)
 ### CONCLUSION: can't, Ian will build the masterRaster
 
+### THE REAL ONEs
+masterRaster <- prepInputs(
+  url = 'https://drive.google.com/file/d/1h7gK44g64dwcoqhij24F2K54hs5e35Ci/view?usp=sharing',
+  destinationPath = dPath)
+
 ## age raster
 ageRaster2020 <- prepInputs(
   url = "https://drive.google.com/file/d/16pXx9pufiWY45H8rgCiFl6aFbEcC9GeD",
   fun = "raster::raster",
   destinationPath = dataPath
 )
-## au rasrter
+## au raster
 gcIdRaster <- prepInputs(
   url = "https://drive.google.com/file/d/1LKblpqSZTVlaNske-C_LzNFEtubn7Ms7",
   fun = "raster::raster",
   purge = 7,
-  destinationPath = dataPath
+  destinationPath = dPath
 )
+
+ecozones <- prepInputs(
+  # this website https://sis.agr.gc.ca/cansis/index.html is hosted by the Canadian Government
+  url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
+  alsoExtract = "similar",
+  destinationPath = dPath,
+  rasterToMatch = masterRaster,
+  overwrite = TRUE,
+  fun = "raster::shapefile",
+  filename2 = TRUE
+) %>%
+  cropInputs(., rasterToMatch = masterRaster)
+  ecoRaster <- fasterize::fasterize(sf::st_as_sf(ecozones),
+                                      raster = masterRaster,
+                                      field = "ECOZONE")
+
 
 ## age raster? ### CONCLUSION: this .dbf is 16GB, my laptop can't handle it.
 # check out what is in the .dbf
@@ -277,7 +299,7 @@ gregDbf <- as.data.table(read.dbf(
 
 userDist <- prepInputs(url = "https://drive.google.com/file/d/1Gr_oIfxR11G1ahynZ5LhjVekOIr2uH8X",
                        fun = "data.table::fread",
-                       destinationPath = dataPath,
+                       destinationPath = dPath,
                        #purge = 7,
                        filename2 = "mySpuDmids.csv")
 ## End user dist####################################
@@ -438,12 +460,15 @@ vri_sample <- prepInputs(url = "https://drive.google.com/file/d/1GPnavp64rN36-5L
 
 vriNames <-  prepInputs(url = "https://drive.google.com/file/d/1Pkh8Xo5o_aAufGCbukxeaWuNg_5U6IUQ",
                         fun = "data.table::fread",
-                        destinationPath = dataPath,
+                        destinationPath = dPath,
                         #purge = 7,
                         filename2 = "samplVRI.csv")
 # there are biomass calculations for each of the stands...chance for data assimilation??
 grep("BIO",vriNames$V2)
 #[1] 185 187
+# V1         V2
+# 1: 184 BRANCH_BIO
+# 2: 186 BARK_BIOMA
 
 auCurve1Curve2 <- prepInputs(url = "https://drive.google.com/file/d/103z0_z3ACjEf70d-x8m8Zv1uxbZk5RXd",
                              fun = "data.table::fread",
