@@ -236,7 +236,7 @@ Init <- function(sim) {
   eco <- unique(sim$ecozones)
   # }
   thisAdmin <- sim$cbmAdmin[sim$cbmAdmin$SpatialUnitID %in% spu & sim$cbmAdmin$EcoBoundaryID %in% eco, ]
-
+  browser()
   # "s" table for small table3, 4, 5, 6, 7 - tables limited to the targeted
   # ecozones and jurisdictions
   stable3 <- as.data.table(sim$table3[sim$table3$juris_id %in% thisAdmin$abreviation &
@@ -917,7 +917,7 @@ Event2 <- function(sim) {
   if (!suppliedElsewhere("gcids", sim)) {
     ## this is where the pixelGroups and their spu eco etc.
     message("No spatial information was provided for the growth curves.
-            The default values (SK simulations) will be used to limit the number of growth curves used.")
+            The default values (RIA NE BC) will be used to limit the number of growth curves used.")
     sim$gcids <- c(801000, 801001, 801002, 802000, 802001, 802002, 801003, 803000,
                    801008, 803002, 802008, 801006, 802006, 802003, 803003, 803001,
                    803008, 803006, 803004, 802004, 801004, 802007, 801005, 803007,
@@ -942,13 +942,13 @@ Event2 <- function(sim) {
 
   if (!suppliedElsewhere("ecozones", sim)) {
     message("No spatial information was provided for the growth curves.
-            The default values (SK simulations) will be used to determine which ecozones these curves are in.")
-    sim$ecozones <- c(12, 4, 14, 13, 9)
+            The default values (RIA NE BC) will be used to determine which ecozones these curves are in.")
+    sim$ecozones <- c(12, 4, 9, 14, 13)
   }
   if (!suppliedElsewhere("spatialUnits", sim)) {
     message("No spatial information was provided for the growth curves.
-            The default values (SK simulations) will be used to determine which CBM-spatial units these curves are in.")
-    sim$spatialUnits <- c(38, 39, 40, 42, 31, 34, 36, 41, 44, 46, 50, 52, 54)
+            The default values (RIA NE BC) will be used to determine which CBM-spatial units these curves are in.")
+    sim$spatialUnits <- c(46, 44, 54, 50, 38, 31, 40, 34, 39, 42, 41, 36)
   }
 
   # 1. growth and yield information
@@ -956,10 +956,10 @@ Event2 <- function(sim) {
   # curve ID, columns should be GrowthCurveComponentID	Age	MerchVolume
   ## TODO add a data manipulation to adjust if the m3 are not given on a yearly basis
   if (!suppliedElsewhere("userGcM3", sim)) {
+
     if (!suppliedElsewhere("userGcM3File", sim)) {
-      sim$userGcM3File <- extractURL("userGcM3File")
-    } else {
       sim$userGcM3File <- extractURL("userGcM3")
+    }
 
       sim$userGcM3 <- prepInputs(url = sim$userGcM3File,
                                  fun = "data.table::fread",
@@ -971,8 +971,6 @@ Event2 <- function(sim) {
       #   "User has not supplied growth curves (m3 by age or the file name for the growth curves). ",
       #   "The default will be used which is for a region in Saskatchewan."
       # )
-    }
-
     ## RIA 2020 specific
     sim$userGcM3[, V1 := NULL]
     names(sim$userGcM3) <- c("GrowthCurveComponentID", "Age", "MerchVolume")

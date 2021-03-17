@@ -69,6 +69,13 @@ defineModule(sim, list(
       sourceURL = NA
     ),
     ## user input here
+    #studyAreaUrl <- "https://drive.google.com/file/d/1LxacDOobTrRUppamkGgVAUFIxNT4iiHU/"
+    expectsInput( ## URL RIA CORRECT CHECKED
+      objectName = "studyArea", objectClass = "polygon",
+      desc = "Limiting the study area to BC",
+      sourceURL = "https://drive.google.com/file/d/1LxacDOobTrRUppamkGgVAUFIxNT4iiHU/"
+    ),
+
     expectsInput( ## URL RIA CORRECT CHECKED
       objectName = "userDist", objectClass = "data.table",
       desc = "User provided file that identifies disturbances for simulation (distName),
@@ -78,7 +85,8 @@ defineModule(sim, list(
     ),
     expectsInput(## URL RIA CORRECT CHECKED
       objectName = "ageRasterURL", objectClass = "character",
-      desc = "https://drive.google.com/file/d/16pXx9pufiWY45H8rgCiFl6aFbEcC9GeD"
+      desc = "Pointer to the age raster on a cloud drive",
+      sourceURL = "https://drive.google.com/file/d/16pXx9pufiWY45H8rgCiFl6aFbEcC9GeD"
     ),
     expectsInput(
       objectName = "ageRaster", objectClass = "raster",
@@ -86,12 +94,13 @@ defineModule(sim, list(
     ),
     expectsInput(
       objectName = "gcIndexRasterURL", objectClass = "character", ## TODO: url provided below
-      desc = "https://drive.google.com/file/d/1LKblpqSZTVlaNske-C_LzNFEtubn7Ms7"
+      desc = "Pointer to URL for spatial link from growth curve to pixels",
+      sourceURL =  "https://drive.google.com/file/d/1LKblpqSZTVlaNske-C_LzNFEtubn7Ms7"
     ),
     expectsInput(## URL RIA CORRECT CHECKED
       objectName = "gcIndexRaster", objectClass = "raster",
-      desc = "Raster ages for each pixel",
-      sourceURL = "WILL HAVE TO MAKE THIS FROM GREG'S INFO"
+      desc = "Raster ages for each pixel"
+      #sourceURL = "WILL HAVE TO MAKE THIS FROM GREG'S INFO"
     ),
     expectsInput(## URL RIA CORRECT CHECKED
       objectName = "spuRaster", objectClass = "raster",
@@ -103,7 +112,7 @@ defineModule(sim, list(
     ),
     expectsInput(
       objectName = "userGcM3File", objectClass = "character",## TODO: should be a param
-      desc = paste("Pointer to the user file name for the files containing: GrowthCurveComponentID,Age,MerchVolume.",
+      desc = paste("User-provided pointer to the file containing: GrowthCurveComponentID,Age,MerchVolume.",
                    "Default name userGcM3"),
       sourceURL = NA
     ),
@@ -119,14 +128,15 @@ defineModule(sim, list(
       desc = "RIA 2020 specific - fires rasters were too big for my laptop. Created a data table for ",
       sourceURL = "https://drive.google.com/file/d/1P41fr5fimmxOTGfNRBgjwXetceW6YS1M"
     ),
-    expectsInput(
-      objectName = "masterRasterURL", objectClass = "character",
-      desc = "https://drive.google.com/file/d/1LlE5NXDPKS6Ljv2SvwQnw2A_Kze2uun-"
-    ),
     expectsInput( ## URL RIA CORRECT CHECKED
+      objectName = "masterRasterURL", objectClass = "character",
+      desc = "Pointer to the raster on a cloud drive",
+      sourceURL = "https://drive.google.com/file/d/1LlE5NXDPKS6Ljv2SvwQnw2A_Kze2uun-"
+    ),
+    expectsInput(
       objectName = "masterRaster", objectClass = "raster",
-      desc = "Raster that defines the extent of the simulation area for th BC NE RIA. It is used to map results and crop other rasters",
-      sourceURL = NA
+      desc = "Raster that defines the extent of the simulation area for th BC NE RIA. It is used to map results and crop other rasters"#
+      #sourceURL = NA
     )
   ),
   outputObjects = bindrows(
@@ -477,22 +487,22 @@ Init <- function(sim) {
   # curve ID, columns should be GrowthCurveComponentID	Age	MerchVolume
   ## TODO add a data manipulation to adjust if the m3 are not given on a yearly basis
   if (!suppliedElsewhere("userGcM3", sim)) {
+
     if (!suppliedElsewhere("userGcM3File", sim)) {
-     sim$userGcM3 <- fread(sim$userGcM3File)
-        } else {
-      sim$userGcM3 <- prepInputs(url = extractURL("userGcM3"),
-                                 fun = "data.table::fread",
-                                 destinationPath = dPath,
-                                 #purge = 7,
-                                 filename2 = "curve_points_table.csv")
+      sim$userGcM3File <- extractURL("userGcM3")
+    }
 
-      # message(
-      #   "User has not supplied growth curves (m3 by age or the file name for the growth curves). ",
-      #   "The default will be used which is for a region in Saskatchewan."
-      # )
-              }
+    sim$userGcM3 <- prepInputs(url = sim$userGcM3File,
+                               fun = "data.table::fread",
+                               destinationPath = dPath,
+                               #purge = 7,
+                               filename2 = "curve_points_table.csv")
 
-  ## RIA 2020 specific
+    # message(
+    #   "User has not supplied growth curves (m3 by age or the file name for the growth curves). ",
+    #   "The default will be used which is for a region in Saskatchewan."
+    # )
+    ## RIA 2020 specific
     sim$userGcM3[, V1 := NULL]
     names(sim$userGcM3) <- c("GrowthCurveComponentID", "Age", "MerchVolume")
   }
@@ -503,21 +513,15 @@ Init <- function(sim) {
   # (like a raster value) and the disturbance name.
   if (!suppliedElsewhere(sim$userDist)) {
     if (!suppliedElsewhere(sim$userDistFile)) {
-      message("There is no disturbance information provided; defaults for the Saskatchewan example run will be used.")
-      # DO THIS: make a default of the basic ones
-      # distName <- c("fire", "clearcut")
-      # rasterId <- c(1,2)
-      # sim$userDist <- data.table(distName,rasterId)
-      # warning("Default disturbances will be used. They are fire and clearcut, assigned raster values of 1 and 2 respectively.")
-      sim$userDist <- prepInputs(url = extractURL("userDist"),
+      sim$userDistFile <- extractURL("userDist")
+    }
+    sim$userDist <- prepInputs(url = sim$userDistFile,
                                  fun = "data.table::fread",
                                  destinationPath = dPath,
                                  #purge = 7,
                                  filename2 = "mySpuDmids.csv")
-    } else {
-      sim$userDist <- fread(sim$userDistFile)
     }
-  }
+
 
   # user provided rasters or spatial information------------------------
 
@@ -525,13 +529,14 @@ Init <- function(sim) {
 
   if (!suppliedElsewhere("masterRaster", sim)) {
     if (!suppliedElsewhere("masterRasterURL", sim)) {
-      sim$masterRasterURL <- extractURL("masterRaster")
+      sim$masterRasterURL <- extractURL("masterRasterURL")
       # message(
       #   "User has not supplied a masterRaster or a URL for a masterRaster (masterRasterURL object).\n",
       #   "masterRaster is going to be read from the default URL given in the inputObjects for ",
       #   currentModule(sim)
       # )
     }
+
     sim$masterRaster <- Cache(
       prepInputs,
       url = sim$masterRasterURL,
@@ -542,11 +547,22 @@ Init <- function(sim) {
     #sim$masterRaster[sim$masterRaster == 0] <- NA
   }
 
+  # 1.1 studyArea (b/c of a grided problem below when I build the eco and spu rasters)
+  if (!suppliedElsewhere("studyArea", sim)){
+    sim$studyArea <- prepInputs(url = extractURL("studyArea"),
+                                destinationPath = dPath) %>%
+      sf::st_as_sf(.) %>%
+      .[.$TSA_NUMBER %in% c("40", "08", "41", "24", "16"),] %>%
+      sf::st_buffer(., 0) %>%
+      sf::as_Spatial(.) %>%
+      raster::aggregate(.)
+  }
+
   # 2. Age raster from inventory
 
   if (!suppliedElsewhere(sim$ageRaster)) {
     if (!suppliedElsewhere(sim$ageRasterURL)) {
-      sim$ageRasterURL <- extractURL("ageRaster")
+      sim$ageRasterURL <- extractURL("ageRasterURL")
     }
     sim$ageRaster <- Cache(prepInputs,
                            url = sim$ageRasterURL,
@@ -562,7 +578,7 @@ Init <- function(sim) {
   # 3. What growth curve should be applied to what pixels?
   if (!suppliedElsewhere(sim$gcIndexRaster)) {
     if (!suppliedElsewhere(sim$gcIndexRasterURL)) {
-      sim$gcIndexRasterURL <- extractURL("gcIndexRaster")
+      sim$gcIndexRasterURL <- extractURL("gcIndexRasterURL")
     }
     sim$gcIndexRaster <- Cache(prepInputs,
                                url = sim$gcIndexRasterURL,
@@ -574,37 +590,69 @@ Init <- function(sim) {
   # out what CBM-specific spatial units each pixels. This determines some
   # defaults CBM-parameters across Canada.
   if (!suppliedElsewhere(sim$spuRaster)) {
-    canadaSpu <- prepInputs(targetFile = "spUnit_Locator.shp",
-                            url = "https://drive.google.com/file/d/17UH3TDuEA_NQISeavu77HWz_P4tMYb2X",
-                            destinationPath = dPath,
-                            alsoExtract = "similar")
-    spuShp <- postProcess(canadaSpu,
-                          rasterToMatch = sim$masterRaster,
-                          targetCRS = crs(sim$masterRaster),
-                          useCache = FALSE, filename2 = NULL
-    )
-    sim$spuRaster <- fasterize::fasterize(sf::st_as_sf(spuShp), raster = sim$masterRaster, field = "spu_id")
+  #   canadaSpu <- prepInputs(targetFile = "spUnit_Locator.shp",
+  #                           url = "https://drive.google.com/file/d/17UH3TDuEA_NQISeavu77HWz_P4tMYb2X",
+  #                           destinationPath = dPath,
+  #                           alsoExtract = "similar")
+  #   spuShp <- postProcess(canadaSpu,
+  #                         rasterToMatch = sim$masterRaster,
+  #                         targetCRS = crs(sim$masterRaster),
+  #                         useCache = FALSE, filename2 = NULL
+  #   )
+  #   sim$spuRaster <- fasterize::fasterize(sf::st_as_sf(spuShp), raster = sim$masterRaster, field = "spu_id")
+  #
+    spuShp <- prepInputs(studyArea = sim$studyArea,
+                         useSAcrs = TRUE,
+                         url = "https://drive.google.com/file/d/17UH3TDuEA_NQISeavu77HWz_P4tMYb2X",
+                         destinationPath = dPath)
+    spuShp <- spTransform(spuShp, crs(sim$masterRaster))
+
+    sim$spuRaster <- fasterize::fasterize(sf::st_as_sf(spuShp),
+                                          raster = sim$masterRaster, field = "spu_id")
   }
+
+  # # 5. Ecozone raster. This takes the masterRaster (study area) and figures
+  # # out what ecozones each pixels are in. This determines some
+  # # defaults CBM-parameters across Canada.
+  # if (!suppliedElsewhere(sim$ecoRaster)) {
+  #   ecozones <- prepInputs(
+  #     # this website https://sis.agr.gc.ca/cansis/index.html is hosted by the Canadian Government
+  #     url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
+  #     alsoExtract = "similar",
+  #     destinationPath = dPath,
+  #     rasterToMatch = sim$masterRaster,
+  #     overwrite = TRUE,
+  #     fun = "raster::shapefile",
+  #     filename2 = TRUE
+  #   ) %>%
+  #     cropInputs(., rasterToMatch = sim$masterRaster)
+  #   sim$ecoRaster <- fasterize::fasterize(sf::st_as_sf(ecozones),
+  #                                         raster = sim$masterRaster,
+  #                                         field = "ECOZONE"
+  #   )
+  # }
 
   # 5. Ecozone raster. This takes the masterRaster (study area) and figures
   # out what ecozones each pixels are in. This determines some
   # defaults CBM-parameters across Canada.
   if (!suppliedElsewhere(sim$ecoRaster)) {
-    ecozones <- prepInputs(
-      # this website https://sis.agr.gc.ca/cansis/index.html is hosted by the Canadian Government
-      url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
-      alsoExtract = "similar",
-      destinationPath = dPath,
-      rasterToMatch = sim$masterRaster,
-      overwrite = TRUE,
-      fun = "raster::shapefile",
-      filename2 = TRUE
-    ) %>%
-      cropInputs(., rasterToMatch = sim$masterRaster)
-    sim$ecoRaster <- fasterize::fasterize(sf::st_as_sf(ecozones),
-      raster = sim$masterRaster,
-      field = "ECOZONE"
-    )
+    browser()
+          ecozones <- prepInputs(
+                # this website https://sis.agr.gc.ca/cansis/index.html is hosted by the Canadian Government
+                url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
+                alsoExtract = "similar",
+                destinationPath = dPath,
+                studyArea = sim$studyArea,
+                useSAcrs = TRUE,
+                overwrite = TRUE,
+                fun = "raster::shapefile",
+                filename2 = TRUE
+                ) %>%
+              cropInputs(., rasterToMatch = sim$masterRaster)
+  sim$ecoRaster <- fasterize::fasterize(sf::st_as_sf(ecozones),
+                                        raster = sim$masterRaster,
+                                        field = "ECOZONE"
+                                        )
   }
 
   # 6. Disturbance rasters. The default example is a list of rasters, one for
@@ -613,17 +661,50 @@ Init <- function(sim) {
   ### TO DO: add a message if no information is provided asking the user if
   ### disturbances will be provided on a yearly basis.
   if (!suppliedElsewhere("disturbanceRasters", sim)) {
-    options(reproducible.useGDAL = FALSE)
-    sim$disturbanceRasters <- Cache(prepInputs,
-                       url = "https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8",
-                       fun = "raster::brick",
-                       rasterToMatch = masterRaster,
-                       datatype = "INT1U",
-                       useGDAL = FALSE)
+    ## this case is reading in a sparseDT.
+    # RTM that the datatable was created with
+    RIA_RTM <- prepInputs(url = 'https://drive.google.com/file/d/1h7gK44g64dwcoqhij24F2K54hs5e35Ci/view?usp=sharing',
+                          destinationPath = dPath) #you probably already have this raster - RIA_RTM.tif on google
+    # need the masterRaster (sim$masterRaster)
+    # sparseDT
+    scfmAnnualBurns <- prepInputs(url = 'https://drive.google.com/file/d/1P41fr5fimmxOTGfNRBgjwXetceW6YS1M/view?usp=sharing',
+                                  destinationPath = 'inputs',
+                                  overwrite = TRUE,
+                                  fun = 'readRDS')
 
-      ## TODO this is a brick, with 526 rasters. We need to add here the
-      ## capacity to deal with a bunch of rasters in a folder, (like in the SK
-      ## runs), a stack of rasters, or polygons?
+    IndexRTM <- setValues(RIA_RTM, 1:ncell(RIA_RTM))
+
+    #postProcess to match tempTHLB
+    IndexTHLB <- setValues(sim$masterRaster, 1:ncell(sim$masterRaster))
+
+    #postProcess the RTM
+    IndexRTM <- postProcess(IndexRTM, rasterToMatch = sim$masterRaster)
+    #build matching data.table
+
+    indexDT <- data.table(rtmIndex = getValues(IndexRTM),
+                          thlbIndex = getValues(IndexTHLB))
+
+    #the NAs in rtmIndex are pixels that are not in THLB (but inside the landscape) - we can remove them
+    indexDT <- indexDT[!is.na(rtmIndex)]
+
+    ## the function indexAnnualFire() will have to be used in the annual event
+    ## of the CBM_core module
+
+
+
+    # options(reproducible.useGDAL = FALSE)
+    # sim$disturbanceRasters <- Cache(prepInputs,
+    #                    url = "https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8",
+    #                    fun = "raster::brick",
+    #                    rasterToMatch = sim$masterRaster,
+    #                    datatype = "INT1U",
+    #                    useGDAL = FALSE)
+
+      ## TODO this is a brick, with 526 rasters that low RAM system cannot
+      ## handle. Instead a sparseDT was create and is read-in here. We need to
+      ## add here the capacity to deal with a bunch of rasters in a folder,
+      ## (like in the SK runs), a stack of rasters (below), raster brick (above)
+      ## or polygons? OR a sparseDT
     # stack
       # sim$disturbanceRasters <- Cache(prepInputs,
       #                               url = "https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8",
@@ -638,7 +719,7 @@ Init <- function(sim) {
     # or just one raster? or polygons?
   }
 
-  stopifnot(length(sim$disturbanceRasters) > 0)
+  #stopifnot(length(sim$disturbanceRasters) > 0)
 
   # ! ----- STOP EDITING ----- ! #
 

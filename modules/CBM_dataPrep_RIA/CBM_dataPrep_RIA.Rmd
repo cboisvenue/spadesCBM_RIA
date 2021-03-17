@@ -43,21 +43,22 @@ Note:
 library(igraph)
 library(SpaDES.core)
 
-moduleDir <- getwd()
+moduleDir <- "modules"
 inputDir <- file.path(moduleDir, "inputs") %>% reproducible::checkPath(create = TRUE)
 outputDir <- file.path(moduleDir, "outputs")
 cacheDir <- file.path(outputDir, "cache")
 times <- list(start = 0, end = 10)
+
 parameters <- list(
-  #CBM_dataPrep = list(.useCache = ".inputObjects")
+  #CBM_dataPrep_RIA = list(.useCache = ".inputObjects")
  #.progress = list(type = "text", interval = 1), # for a progress bar
  ## If there are further modules, each can have its own set of parameters:
  #module1 = list(param1 = value1, param2 = value2),
  #module2 = list(param1 = value1, param2 = value2)
  )
-modules <- list("CBM_dataPrep")
+modules <- list("CBM_dataPrep_RIA")
 objects <- list(
-  userDistFile = file.path(moduleDir,"CBM_dataPrep","data","userDist.csv")
+  #userDistFile = file.path(moduleDir,"CBM_dataPrep_RIA","data","userDist.csv")
 )
 paths <- list(
  cachePath = cacheDir,
@@ -66,10 +67,10 @@ paths <- list(
  outputPath = outputDir
  )
 
-myInputs <- simInit(times = times, params = parameters, modules = modules,
+myPrepInputs <- simInit(times = times, params = parameters, modules = modules,
                  objects = objects, paths = paths)
 
-outInputs <- spades(myInputs)
+outPrepInputs <- spades(myInputs)
 ```
 
 # Events

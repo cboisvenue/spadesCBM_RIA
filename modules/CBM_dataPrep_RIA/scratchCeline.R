@@ -317,7 +317,7 @@ au_table <- prepInputs(url = "https://drive.google.com/file/d/1YmQ6sNucpEmF8gYkR
 
 curve_points_table <- prepInputs(url = "https://drive.google.com/file/d/1BYHhuuhSGIILV1gmoo9sNjAfMaxs7qAj",
                        fun = "data.table::fread",
-                       destinationPath = dataPath,
+                       destinationPath = dPath,
                        overwrite = TRUE,
                        #purge = 7,
                        filename2 = "curve_points_table.csv")
@@ -475,4 +475,81 @@ auCurve1Curve2 <- prepInputs(url = "https://drive.google.com/file/d/103z0_z3ACjE
                              destinationPath = dataPath,
                              #purge = 7,
                              filename2 = "samplVRI.csv")
+
+### why are NWT and YK in my thisAdmin
+
+# trying to match this
+# sim$cbmAdmin[sim$cbmAdmin$SpatialUnitID %in% spu & sim$cbmAdmin$EcoBoundaryID %in% eco, ]
+
+# myPrepInputs .inputObjects is run
+# myBiomass.inputObjects is run
+
+spu <- unique(values(myPrepInputs$spuRaster))
+spu <- spu[which(!is.na(spu))]
+eco <- unique(values(myPrepInputs$ecoRaster))
+eco <- eco[which(!is.na(eco))]
+
+thisAdmin <- myBiomass$cbmAdmin[myBiomass$cbmAdmin$SpatialUnitID %in% spu & myBiomass$cbmAdmin$EcoBoundaryID %in% eco, ]
+
+
+## grid were crossing teh border
+## solution from Ian
+# at studyArea to .inputObjects
+# use this in the .inputObjects
+if (!suppliedElsewhere("studyArea", sim)){
+  studyAreaUrl <- "https://drive.google.com/file/d/1LxacDOobTrRUppamkGgVAUFIxNT4iiHU/"
+  sim$studyArea <- prepInputs(url = studyAreaUrl,
+                              destinationPath = dPath) %>%
+    sf::st_as_sf(.) %>%
+    .[.$TSA_NUMBER %in% c("40", "08", "41", "24", "16"),] %>%
+    sf::st_buffer(., 0) %>%
+    sf::as_Spatial(.) %>%
+    raster::aggregate(.)
+}
+
+# one you have the sim$studyAre, use these
+spuShp <- prepInputs(studyArea = sim$studyArea,
+                     useSAcrs = TRUE,
+                     url = "https://drive.google.com/file/d/17UH3TDuEA_NQISeavu77HWz_P4tMYb2X",
+                     destinationPath = dPath)
+spuShp <- spTransform(spuShp, crs(sim$masterRaster)
+                      sim$spuRaster <- fasterize::fasterize(sf::st_as_sf(spuShp), raster = sim$masterRaster, field = "spu_id")
+
+
+# 5. Ecozone raster. This takes the masterRaster (study area) and figures
+# out what ecozones each pixels are in. This determines some
+# defaults CBM-parameters across Canada.
+                      ecozones <- prepInputs(
+                        # this website https://sis.agr.gc.ca/cansis/index.html is hosted by the Canadian Government
+                        url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
+                        alsoExtract = "similar",
+                        destinationPath = dPath,
+                        studyArea = sim$studyArea,
+                        useSAcrs = TRUE,
+                        overwrite = TRUE,
+                        fun = "raster::shapefile",
+                        filename2 = TRUE
+                      ) %>%
+                        cropInputs(., rasterToMatch = sim$masterRaster)
+                      sim$ecoRaster <- fasterize::fasterize(sf::st_as_sf(ecozones),
+                                                            raster = sim$masterRaster,
+                                                            field = "ECOZONE"
+                      )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
