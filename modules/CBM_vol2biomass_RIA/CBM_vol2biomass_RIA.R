@@ -236,7 +236,7 @@ Init <- function(sim) {
   eco <- unique(sim$ecozones)
   # }
   thisAdmin <- sim$cbmAdmin[sim$cbmAdmin$SpatialUnitID %in% spu & sim$cbmAdmin$EcoBoundaryID %in% eco, ]
-  browser()
+
   # "s" table for small table3, 4, 5, 6, 7 - tables limited to the targeted
   # ecozones and jurisdictions
   stable3 <- as.data.table(sim$table3[sim$table3$juris_id %in% thisAdmin$abreviation &
@@ -323,35 +323,48 @@ Init <- function(sim) {
   # id and species. This format is necessary to process the curves and use the
   # resulting increments
   gcMeta <- sim$gcMeta
+  ##TODO: RIA and SK don't need the same processing of this file. Need to
+  ##generalize this process
+   #   # help the user go from their growth curve id and leading species to the six
+  #   # columns: names(gcMeta)
+  #   # [1] "growth_curve_id"           "growth_curve_component_id"
+  #   # [3] "species"                   "canfi_species"
+  #   # [5] "genus"                     "forest_type_id"
+  #   # the data frame canfi_species.csv (in userData_Defaults_spadesCBM -
+  #   # https://drive.google.com/drive/folders/1OBDTp1v_3b3D3Yvg1pHLiW6A_GRklgpD?usp=sharing)
+  #   # has all the possible options for canfi_species (number), genus (4 letter
+  #   # code) and species (three letter code).
 
-  # checking how many columns in gcMeta, if not 6, columns need to be added
-  if (!ncol(gcMeta) == 6) {
-    # help the user go from their growth curve id and leading species to the six
-    # columns: names(gcMeta)
-    # [1] "growth_curve_id"           "growth_curve_component_id"
-    # [3] "species"                   "canfi_species"
-    # [5] "genus"                     "forest_type_id"
-    # the data frame canfi_species.csv (in userData_Defaults_spadesCBM -
-    # https://drive.google.com/drive/folders/1OBDTp1v_3b3D3Yvg1pHLiW6A_GRklgpD?usp=sharing)
-    # has all the possible options for canfi_species (number), genus (4 letter
-    # code) and species (three letter code).
-    gcMeta2 <- gcMeta[, .(growth_curve_id, species)]
-    gcMeta2[, growth_curve_component_id := growth_curve_id]
-    # check if all the species are in the canfi_species table
-    ### THIS HAS NOT BEEN TESTED YET
-    if (nrow(gcMeta2) == length(which(gcMeta$species %in% sim$canfi_species$name))) {
-      spsMatch <- sim$canfi_species[
-        , which(name %in% gcMeta2$species),
-        .(canfi_species, genus, name, forest_type_id)
-      ]
-      names(spsMatch) <- c("canfi_species", "genus", "species", "forest_type_id")
-      setkey(gcMeta2, species)
-      setkey(spsMatch, species)
-      gcMeta3 <- merge(gcMeta2, spsMatch) # I do not think the order of the columns matter
-      gcMeta <- gcMeta3
-    }
-    ### PUT SOMETHING HERE IF THE SPECIES DONT MATCH...NOT SURE WHAT - ERROR MESSAGE?
-  }
+  ## this was for SK
+  # # checking how many columns in gcMeta, if not 6, columns need to be added
+  # if (!ncol(gcMeta) == 6) {
+  #   gcMeta2 <- gcMeta[, .(growth_curve_id, canfi_species)]
+  #   gcMeta2[, growth_curve_component_id := growth_curve_id]
+  #   # check if all the species are in the canfi_species table
+  #   ### THIS HAS NOT BEEN TESTED YET
+  #   if (nrow(gcMeta2) == length(which(gcMeta$species %in% sim$canfi_species$name))) {
+  #     spsMatch <- sim$canfi_species[
+  #       , which(name %in% gcMeta2$species),
+  #       .(canfi_species, genus, name, forest_type_id)
+  #     ]
+  #     names(spsMatch) <- c("canfi_species", "genus", "species", "forest_type_id")
+  #     setkey(gcMeta2, species)
+  #     setkey(spsMatch, species)
+  #     gcMeta3 <- merge(gcMeta2, spsMatch) # I do not think the order of the columns matter
+  #     gcMeta <- gcMeta3
+  #   }
+  #   ### PUT SOMETHING HERE IF THE SPECIES DONT MATCH...NOT SURE WHAT - ERROR MESSAGE?
+  # }
+
+  ## This is for the RIA fire return interval runsL using unmanged curves (VDYP)
+  browser()
+  riaGcMeta <- gcMeta[,.(au_id, canfi_species, unmanaged_curve_id)]
+  # this will be slightly different when au_id are not eqaul to
+  # unmanaged_curve_id. For VDYP, those are equal.
+  setnames(riaGcMeta,
+           c("au_id","unmanaged_curve_id"),
+             c("growth_curve_component_id", "growth_curve_id"))
+
 
   # assuming gcMeta has now 6 columns, it needs a 7th: spatial_unit_id. This
   # will be used in the convertM3biom() fnct to link to the right ecozone
@@ -943,12 +956,12 @@ Event2 <- function(sim) {
   if (!suppliedElsewhere("ecozones", sim)) {
     message("No spatial information was provided for the growth curves.
             The default values (RIA NE BC) will be used to determine which ecozones these curves are in.")
-    sim$ecozones <- c(12, 4, 9, 14, 13)
+    sim$ecozones <- c(4, 12, 9, 14)
   }
   if (!suppliedElsewhere("spatialUnits", sim)) {
     message("No spatial information was provided for the growth curves.
             The default values (RIA NE BC) will be used to determine which CBM-spatial units these curves are in.")
-    sim$spatialUnits <- c(46, 44, 54, 50, 38, 31, 40, 34, 39, 42, 41, 36)
+    sim$spatialUnits <- c(38, 31, 40, 39, 42, 34)
   }
 
   # 1. growth and yield information
@@ -978,10 +991,11 @@ Event2 <- function(sim) {
 
   # 2. meta info about growth and yield curves
   if (!suppliedElsewhere("gcMeta", sim)) {
+
     if (!suppliedElsewhere("gcMetaFile", sim)) {
       sim$gcMetaFile <- extractURL("gcMetaFile")
-    } else {
-      sim$gcMeta <- prepInputs(url = sim$gcMetaFile,
+      }
+    sim$gcMeta <- prepInputs(url = sim$gcMetaFile,
                                  fun = "data.table::fread",
                                  destinationPath = dPath,
                                  #purge = 7,
@@ -991,7 +1005,6 @@ Event2 <- function(sim) {
       #   "User has not supplied growth curves (m3 by age or the file name for the growth curves). ",
       #   "The default will be used which is for a region in Saskatchewan."
       # )
-    }
   }
 
 

@@ -636,7 +636,6 @@ Init <- function(sim) {
   # out what ecozones each pixels are in. This determines some
   # defaults CBM-parameters across Canada.
   if (!suppliedElsewhere(sim$ecoRaster)) {
-    browser()
           ecozones <- prepInputs(
                 # this website https://sis.agr.gc.ca/cansis/index.html is hosted by the Canadian Government
                 url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
@@ -654,6 +653,8 @@ Init <- function(sim) {
                                         field = "ECOZONE"
                                         )
   }
+  ### if there are too many momery issues, this raster can be dowloaded here:
+  ### https://landr-team-group.slack.com/files/UCNUAJ6HK/F01RR6YRR5G/ecozoneraster.tif
 
   # 6. Disturbance rasters. The default example is a list of rasters, one for
   # each year. But these can be provided by another family of modules in the

@@ -536,7 +536,53 @@ spuShp <- spTransform(spuShp, crs(sim$masterRaster)
                                                             field = "ECOZONE"
                       )
 
+## Ian says try this
+                      dPath <- tempdir()
+                      studyAreaUrl <- "https://drive.google.com/file/d/1LxacDOobTrRUppamkGgVAUFIxNT4iiHU/"
 
+studyArea <- prepInputs(url = studyAreaUrl,
+                        destinationPath = dPath) %>%
+                        sf::st_as_sf(.) %>%
+                        .[.$TSA_NUMBER %in% c("40", "08", "41", "24", "16"),] %>%
+                        sf::st_buffer(., 0) %>%
+                        sf::as_Spatial(.) %>%
+                        raster::aggregate(.)
+                      spuShp <- prepInputs(studyArea = studyArea,
+                                           useSAcrs = TRUE,
+                                           url = "https://drive.google.com/file/d/17UH3TDuEA_NQISeavu77HWz_P4tMYb2X",
+                                           destinationPath = dPath)
+                      spuShp <- spTransform(spuShp, crs(masterRaster))
+                      spuRaster <- fasterize::fasterize(sf::st_as_sf(spuShp), raster = masterRaster, field = "spu_id")
+
+ecozones <- prepInputs(
+                        # this website https://sis.agr.gc.ca/cansis/index.html is hosted by the Canadian Government
+                        url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
+                        alsoExtract = "similar",
+                        destinationPath = dPath,
+                        studyArea = studyArea,
+                        useSAcrs = TRUE,
+                        #useCache = FALSE,
+                        overwrite = TRUE,
+                        fun = "raster::shapefile",
+                        filename2 = TRUE
+                      ) %>%
+                        cropInputs(., rasterToMatch = masterRaster)
+                      ecoRaster <- fasterize::fasterize(sf::st_as_sf(ecozones),
+                                                        raster = masterRaster,
+                                                        field = "ECOZONE")
+
+
+                      ecozones <- prepInputs(
+                        # this website https://sis.agr.gc.ca/cansis/index.html is hosted by the Canadian Government
+                        url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
+                        alsoExtract = "similar",
+                        destinationPath = dPath,
+                        studyArea = studyArea,
+                        useSAcrs = TRUE,
+                        overwrite = TRUE,
+                        fun = "raster::shapefile",
+                        filename2 = TRUE
+                      )
 
 
 
