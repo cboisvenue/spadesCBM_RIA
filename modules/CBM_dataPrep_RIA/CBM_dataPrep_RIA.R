@@ -6,12 +6,12 @@ defineModule(sim, list(
     person("Celine", "Boisvenue", email = "Celine.Boisvenue@canada.ca", role = c("aut", "cre"))
   ),
   childModules = character(0),
-  version = list(SpaDES.core = "1.0.2", CBM_dataPrep_SK = "0.0.1"),
+  version = list(SpaDES.core = "1.0.2", CBM_dataPrep_RIA = "0.0.1"),
   spatialExtent = raster::extent(rep(NA_real_, 4)),
   timeframe = as.POSIXlt(c(NA, NA)),
   timeunit = "year",
   citation = list("citation.bib"),
-  documentation = list("README.txt", "CBM_dataPrep_SK.Rmd"),
+  documentation = list("README.txt", "CBM_dataPrep_RIA.Rmd"),
   reqdPkgs = list(
     "data.table", "fasterize", "magrittr", "raster", "RSQLite", "sf",
     "PredictiveEcology/CBMutils (>= 0.0.6)",
@@ -93,13 +93,14 @@ defineModule(sim, list(
       desc = "Raster ages for each pixel,ADD URL SPECIFIC TO EACH OF THE RUNS: fireRIs, presentDay, harvest1 and harvest2"
     ),
     expectsInput(
-      objectName = "gcIndexRasterURL", objectClass = "character", ## TODO: url provided below
-      desc = "Pointer to URL for spatial link from growth curve to pixels",
-      sourceURL =  "https://drive.google.com/file/d/1LKblpqSZTVlaNske-C_LzNFEtubn7Ms7"
-    ),
-    expectsInput(## URL RIA CORRECT CHECKED
+    #   objectName = "gcIndexRasterURL", objectClass = "character", ## TODO: url provided below
+    #   desc = "Pointer to URL for spatial link from growth curve to pixels",
+    #   sourceURL =  "https://drive.google.com/file/d/1LKblpqSZTVlaNske-C_LzNFEtubn7Ms7"
+    # ),
+    # expectsInput(## URL RIA CORRECT CHECKED
       objectName = "gcIndexRaster", objectClass = "raster",
-      desc = "Raster ages for each pixel"
+      desc = "Raster ages for each pixel",
+      sourceURL =  "https://drive.google.com/file/d/1LKblpqSZTVlaNske-C_LzNFEtubn7Ms7"
       #sourceURL = "WILL HAVE TO MAKE THIS FROM GREG'S INFO"
     ),
     expectsInput(## URL RIA CORRECT CHECKED
@@ -201,7 +202,7 @@ defineModule(sim, list(
   )
 ))
 
-doEvent.CBM_dataPrep_SK <- function(sim, eventTime, eventType, debug = FALSE) {
+doEvent.CBM_dataPrep_RIA <- function(sim, eventTime, eventType, debug = FALSE) {
   switch(
     eventType,
     init = {
@@ -212,7 +213,7 @@ doEvent.CBM_dataPrep_SK <- function(sim, eventTime, eventType, debug = FALSE) {
       sim <- Init(sim)
 
       # schedule future event(s)
-      sim <- scheduleEvent(sim, P(sim)$.saveInitialTime, "CBM_dataPrep_SK", "save")
+      sim <- scheduleEvent(sim, P(sim)$.saveInitialTime, "CBM_dataPrep_RIA", "save")
     },
     save = {
       # ! ----- EDIT BELOW ----- ! #
@@ -224,7 +225,7 @@ doEvent.CBM_dataPrep_SK <- function(sim, eventTime, eventType, debug = FALSE) {
       # schedule future event(s)
 
       # e.g.,
-      # sim <- scheduleEvent(sim, time(sim) + P(sim)$.saveInterval, "CBM_dataPrep_SK", "save")
+      # sim <- scheduleEvent(sim, time(sim) + P(sim)$.saveInterval, "CBM_dataPrep_RIA", "save")
 
       # ! ----- STOP EDITING ----- ! #
     },
@@ -256,10 +257,10 @@ Init <- function(sim) {
   ## TODO: these aren't required
   omit <- which(objectNamesExpected %in% c("userDistFile", "userGcM3File"))
   available <- available[-omit]
-
+  browser()
   if (any(!available)) {
     stop(
-      "The inputObjects for CBM_core are not all available:",
+      "The inputObjects for CBM_dataPrep are not all available:",
       "These are missing:", paste(objectNamesExpected[!available], collapse = ", "),
       ". \n\nHave you run ",
       paste0("CBM_", c("defaults"), collapse = ", "),
@@ -272,7 +273,7 @@ Init <- function(sim) {
   spuRaster <- sim$spuRaster # made in the .inputObjects
   ecoRaster <- sim$ecoRaster # made in the .inputObjects
   ## End rasters------------------------------------------------------------------
-
+browser()
 
   ## Create the data table of all pixels and all values for the study area----------------
   level2DT <- data.table(
@@ -566,6 +567,7 @@ Init <- function(sim) {
     }
     sim$ageRaster <- Cache(prepInputs,
                            url = sim$ageRasterURL,
+                           rasterToMatch = sim$masterRaster,
                            fun = "raster::raster",
                            destinationPath = dPath
     )
@@ -577,11 +579,9 @@ Init <- function(sim) {
 
   # 3. What growth curve should be applied to what pixels?
   if (!suppliedElsewhere(sim$gcIndexRaster)) {
-    if (!suppliedElsewhere(sim$gcIndexRasterURL)) {
-      sim$gcIndexRasterURL <- extractURL("gcIndexRasterURL")
-    }
-    sim$gcIndexRaster <- Cache(prepInputs,
-                               url = sim$gcIndexRasterURL,
+      sim$gcIndexRaster <- Cache(prepInputs,
+                               url = extractURL("gcIndexRaster"),
+                               rasterToMatch = sim$masterRaster,
                                fun = "raster::raster",
                                destinationPath = dPath)
   }
@@ -655,7 +655,10 @@ Init <- function(sim) {
   }
   ### if there are too many momery issues, this raster can be dowloaded here:
   ### https://landr-team-group.slack.com/files/UCNUAJ6HK/F01RR6YRR5G/ecozoneraster.tif
-
+  sim$ecoRaster <- prepInputs(
+                  url = "https://drive.google.com/file/d/1jfuoCudnIAtjrFSqfQPz3cF5L0WQ0o95",
+                  rasterToMatch = masterRaster,
+                  destinationPath ="C:/Celine/github/spadesCBM_RIA/modules/CBM_dataPrep_RIA/data")
   # 6. Disturbance rasters. The default example is a list of rasters, one for
   # each year. But these can be provided by another family of modules in the
   # annual event.

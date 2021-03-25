@@ -29,5 +29,6 @@
 "spUnit_Locator.shp" "0a1e272c99667a4c" "50073960" "xxhash64"
 "spUnit_Locator.shx" "9a761e2862995ffd" "5676" "xxhash64"
 "spUnit_Locator.zip" "48875d539f6a68b5" "31279695" "xxhash64"
+"TSAspuEco.csv" "5ab67fb5f3c776f8" "314" "xxhash64"
 "VRI_AU.tif" "04adfd045c7a1f98" "4980562" "xxhash64"
 "VRInames.csv" "7576e59928b7f08e" "4048" "xxhash64"

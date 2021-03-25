@@ -70,7 +70,7 @@ paths <- list(
 myPrepInputs <- simInit(times = times, params = parameters, modules = modules,
                  objects = objects, paths = paths)
 
-outPrepInputs <- spades(myInputs)
+outPrepInputs <- spades(myPrepInputs)
 ```
 
 # Events

@@ -71,6 +71,11 @@ defineModule(sim, list(
       sourceURL = "https://nfi.nfis.org/resources/biomass_models/appendix2_table7.csv"
     ),
     expectsInput(
+      objectName = "TSAspuEco", objectClass = "dataframe",
+      desc = "Links TSA, ecozone and spatial unit ids",## TODO: URL doesn't seem to work
+      sourceURL = "https://drive.google.com/file/d/1_iRjcK7PbbFjCZWzpOp-jf0rIXmaMHtB"
+    ),
+    expectsInput(
       objectName = "cbmAdmin", objectClass = "dataframe",
       desc = "Provides equivalent between provincial boundaries, CBM-id for provincial boundaries and CBM-spatial unit ids",
       sourceURL = "https://drive.google.com/file/d/1xdQt9JB5KRIw72uaN5m3iOk8e34t9dyz"
@@ -211,6 +216,7 @@ Init <- function(sim) {
   sim$volCurves <- ggplot(data = sim$userGcM3, aes(x = Age, y = MerchVolume, group = GrowthCurveComponentID, colour = GrowthCurveComponentID)) +
     geom_line() ## TODO: move to plotInit event
   message("User: please look at the curve you provided via sim$volCurves")
+
   ## not all curves provided are used in the simulation - and ***FOR NOW*** each
   ## pixels only gets assigned one growth curve (no transition, no change in
   ## productivity).
@@ -220,13 +226,14 @@ Init <- function(sim) {
   # }else{
   userGcM3 <- sim$userGcM3[GrowthCurveComponentID %in% unique(sim$gcids), ]
   # }
-
+  browser()
   # START reducing Biomass model parameter tables -----------------------------------------------
   # reducing the parameter tables to the jurisdiction or ecozone we have in the study area
   ## To run module independently, the gcID used in this translation can be specified here
   # if(!suppliedElsewhere("spatialUnits",sim)){
   #   spu  <- ### USER TO PROVIDE SPU FOR EACH gcID###########
   # }else{
+
   spu <- unique(sim$spatialUnits)
   # }
   # if(!suppliedElsewhere("ecozones",sim)){
@@ -358,28 +365,34 @@ Init <- function(sim) {
   # }
 
   ## This is for the RIA fire return interval runsL using unmanged curves (VDYP)
-  browser()
-  riaGcMeta <- gcMeta[,.(au_id, canfi_species, unmanaged_curve_id)]
+
+  riaGcMeta <- gcMeta[,.(au_id, tsa, canfi_species, unmanaged_curve_id)]
   # this will be slightly different when au_id are not eqaul to
   # unmanaged_curve_id. For VDYP, those are equal.
   setnames(riaGcMeta,
-           c("au_id","unmanaged_curve_id"),
-             c("growth_curve_component_id", "growth_curve_id"))
+           c("au_id", "tsa", "unmanaged_curve_id"),
+             c("growth_curve_component_id", "TSAid","growth_curve_id"))
 
 
   # assuming gcMeta has now 6 columns, it needs a 7th: spatial_unit_id. This
   # will be used in the convertM3biom() fnct to link to the right ecozone
   # and it only needs the gc we are using in this sim.
+  browser()
   gcThisSim <- as.data.table(unique(cbind(sim$spatialUnits, sim$gcids)))
   names(gcThisSim) <- c("spatial_unit_id", "growth_curve_component_id")
   setkey(gcThisSim, growth_curve_component_id)
-  setkey(gcMeta, growth_curve_component_id)
-  gcMeta <- merge(gcMeta, gcThisSim)
+  setkey(riaGcMeta, growth_curve_component_id) #changed from gcMeta to riaGcMeta
+  gcMeta <- merge(riaGcMeta, gcThisSim) #changed from gcMeta to riaGcMeta
 
   ### TODO CHECK - this in not tested
-  if (!unique(unique(userGcM3$GrowthCurveComponentID) == unique(gcMeta$growth_curve_component_id))) {
+  if (!length(unique(unique(userGcM3$GrowthCurveComponentID)) ==
+              length(unique(gcMeta$growth_curve_component_id)))) {
     stop("There is a missmatch in the growth curves of the userGcM3 and the gcMeta")
   }
+# RIA still missing columns in gcMeta: species genus and forest_type_id
+  gcMeta <- merge.data.table(gcMeta, sim$canfi_species, by = "canfi_species", all.x = TRUE)
+  gcMeta[, species := NULL]
+  setnames(gcMeta, "name", "species")
 
   # START processing curves from m3/ha to tonnes of C/ha then to annual increments
   # per above ground biomass pools -------------------------------------------
@@ -397,16 +410,19 @@ Init <- function(sim) {
     speciesMeta <- gcMeta[species == fullSpecies[i], ]
     # for each species name, process one gcID at a time
     for (j in 1:length(unique(speciesMeta$growth_curve_component_id))) {
+      browser()
       meta <- speciesMeta[j, ]
       id <- userGcM3$GrowthCurveComponentID[which(userGcM3$GrowthCurveComponentID == meta$growth_curve_component_id)][-1]
       ## IMPORTANT BOURDEWYN PARAMETERS FOR NOT HANDLE AGE 0 ##
-      age <- userGcM3[GrowthCurveComponentID == meta$growth_curve_component_id, Age][-1]
+      age <- userGcM3[GrowthCurveComponentID == meta$growth_curve_component_id, Age]
+      age <- age[which(age>0)]
       # series of fncts results in curves of merch, foliage and other (SW or HW)
       cumBiom <- as.matrix(convertM3biom(
         meta = meta, gCvalues = userGcM3, spsMatch = gcMeta,
         ecozones = thisAdmin, params3 = unique(stable3), params4 = unique(stable4),
         params5 = unique(stable5), params6 = unique(stable6), params7 = unique(stable7)
       ))
+      browser()
       # going from tonnes of biomass/ha to tonnes of carbon/ha here
       cumBiom <- cumBiom * 0.5 ## this value is in sim$cbmData@biomassToCarbonRate
       # calculating the increments per year for each of the three pools (merch,
@@ -962,7 +978,7 @@ Event2 <- function(sim) {
   if (!suppliedElsewhere("spatialUnits", sim)) {
     message("No spatial information was provided for the growth curves.
             The default values (RIA NE BC) will be used to determine which CBM-spatial units these curves are in.")
-    sim$spatialUnits <- c(38, 31, 40, 39, 42, 34)
+    sim$spatialUnits <- c(38, 40, 39, 42)
   }
 
   # 1. growth and yield information
@@ -1007,18 +1023,25 @@ Event2 <- function(sim) {
       #   "The default will be used which is for a region in Saskatchewan."
       # )
   }
+  # 3. RIA: Match between TSA, spu, and eco, needed to run this independently of
+  # CBM_dataPrep_RIA.r
+  if (!suppliedElsewhere("TSAspuEco", sim)) {
 
+    sim$TSAspuEco <- prepInputs(url = extractURL("TSAspuEco"),
+                             fun = "data.table::fread",
+                             destinationPath = dPath,
+                             #purge = 7,
+                             filename2 = "TSAspuEco.csv")
+  }
 
-
-
-  # cbmAdmin: this is needed to match species and parameters. Boudewyn et al 2007
+  # 4. cbmAdmin: this is needed to match species and parameters. Boudewyn et al 2007
   # abbreviation and cbm spatial units and ecoBoudnary id is provided with the
   # adminName to avoid confusion.
   if (!suppliedElsewhere("cbmAdmin", sim)) {
     sim$cbmAdmin <- fread(file.path(dPath, "cbmAdmin.csv")) ## TODO: use prepInputs with url
   }
 
-  # canfi_species: for the BOudewyn parameters, the species have to be matched
+  # 5. canfi_species: for the BOudewyn parameters, the species have to be matched
   # with the ones in the Boudewyn tables. The choices HAVE to be one of these.
   # This contains three columns, canfi_species, genus and species form the
   # publication and I added (manually) one more: forest_type_id. That variable is a CBM-CFS3
