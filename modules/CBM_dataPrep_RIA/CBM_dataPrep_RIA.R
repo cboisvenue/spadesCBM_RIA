@@ -75,6 +75,11 @@ defineModule(sim, list(
       desc = "Limiting the study area to BC",
       sourceURL = "https://drive.google.com/file/d/1LxacDOobTrRUppamkGgVAUFIxNT4iiHU/"
     ),
+    expectsInput(
+      objectName = "cbmAdmin", objectClass = "dataframe",
+      desc = "Provides equivalent between provincial boundaries, CBM-id for provincial boundaries and CBM-spatial unit ids",
+      sourceURL = "https://drive.google.com/file/d/1xdQt9JB5KRIw72uaN5m3iOk8e34t9dyz"
+    ),
 
     expectsInput( ## URL RIA CORRECT CHECKED
       objectName = "userDist", objectClass = "data.table",
@@ -523,6 +528,16 @@ browser()
                                  filename2 = "mySpuDmids.csv")
     }
 
+  ## cbmAdmin needed to create spuRaster below (a bit convoluted ## TODO )
+  if (!suppliedElsewhere("cbmAdmin", sim)) {
+    sim$cbmAdmin <- prepInputs(url = extractURL("cbmAdmin"),
+                               fun = "data.table::fread",
+                               destinationPath = dPath,
+                               #purge = 7,
+                               filename2 = "mySpuDmids.csv")
+    #fread(file.path(dPath, "cbmAdmin.csv")) ## TODO: use prepInputs with url
+  }
+
 
   # user provided rasters or spatial information------------------------
 
@@ -571,7 +586,7 @@ browser()
                            fun = "raster::raster",
                            destinationPath = dPath
     )
-    ## TO DO: put in a message to out pointing out the max age (this has to be
+    ## TODO: put in a message to out pointing out the max age (this has to be
     ## sinked to the max age on the growth curve max age for the spinup)
     # maxAge <- max(sim$ageRaster)
     # message(max age on the raster is XX)
@@ -586,10 +601,60 @@ browser()
                                destinationPath = dPath)
   }
 
-  # 4. Spatial Unit raster. This takes the masterRaster (study area) and figures
+  # 4. Ecozone raster. This takes the masterRaster (study area) and figures
+  # out what ecozones each pixels are in. This determines some
+  # defaults CBM-parameters across Canada.
+  if (!suppliedElsewhere(sim$ecoRaster)) {
+    #         ecozones <- prepInputs(
+    #               # this website https://sis.agr.gc.ca/cansis/index.html is hosted by the Canadian Government
+    #               url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
+    #               alsoExtract = "similar",
+    #               destinationPath = dPath,
+    #               studyArea = sim$studyArea,
+    #               useSAcrs = TRUE,
+    #               overwrite = TRUE,
+    #               fun = "raster::shapefile",
+    #               filename2 = TRUE
+    #               ) %>%
+    #             cropInputs(., rasterToMatch = sim$masterRaster)
+    # sim$ecoRaster <- fasterize::fasterize(sf::st_as_sf(ecozones),
+    #                                       raster = sim$masterRaster,
+    #                                       field = "ECOZONE"
+    #                                       )
+    # }
+    ### if there are too many momery issues, this raster can be dowloaded here:
+    ### https://landr-team-group.slack.com/files/UCNUAJ6HK/F01RR6YRR5G/ecozoneraster.tif
+    sim$ecoRaster <- prepInputs(
+      url = "https://drive.google.com/file/d/1jfuoCudnIAtjrFSqfQPz3cF5L0WQ0o95",
+      rasterToMatch = sim$masterRaster,
+      destinationPath = dPath
+      #"C:/Celine/github/spadesCBM_RIA/modules/CBM_dataPrep_RIA/data")
+    )
+  }
+  # 5. Spatial Unit raster. This takes the masterRaster (study area) and figures
   # out what CBM-specific spatial units each pixels. This determines some
   # defaults CBM-parameters across Canada.
   if (!suppliedElsewhere(sim$spuRaster)) {
+    ## NEW
+    CanadaAdmin <- prepInputs(
+      url = 'https://drive.google.com/file/d/1xS8erWSuoMiYm3RNNNJnt9r251wT6I4J/view?usp=sharing',
+      destination = "inputs",
+      dPath = dPath,
+      fun = "st_read",
+      studyArea = sim$studyArea,
+      useSAcrs = TRUE)
+    CanadaAdminras <- fasterize(CanadaAdmin, raster = sim$masterRaster, field = "AdmnBID")
+    #make SPU raster
+
+    SPUras <- data.table(pixelID = 1:ncell(sim$masterRaster),
+                         AdminBoundaryID = getValues(CanadaAdminras),
+                         ecozone = getValues(sim$ecoRaster))
+    SPUras <- sim$cbmAdmin[SPUras, on = c("AdminBoundaryID" = "AdminBoundaryID",
+                                   "EcoBoundaryID" = "ecozone")]
+
+    SPUras <- setValues(sim$masterRaster, SPUras$SpatialUnitID)
+  }
+    ## NEW to here
   #   canadaSpu <- prepInputs(targetFile = "spUnit_Locator.shp",
   #                           url = "https://drive.google.com/file/d/17UH3TDuEA_NQISeavu77HWz_P4tMYb2X",
   #                           destinationPath = dPath,
@@ -601,15 +666,15 @@ browser()
   #   )
   #   sim$spuRaster <- fasterize::fasterize(sf::st_as_sf(spuShp), raster = sim$masterRaster, field = "spu_id")
   #
-    spuShp <- prepInputs(studyArea = sim$studyArea,
-                         useSAcrs = TRUE,
-                         url = "https://drive.google.com/file/d/17UH3TDuEA_NQISeavu77HWz_P4tMYb2X",
-                         destinationPath = dPath)
-    spuShp <- spTransform(spuShp, crs(sim$masterRaster))
-
-    sim$spuRaster <- fasterize::fasterize(sf::st_as_sf(spuShp),
-                                          raster = sim$masterRaster, field = "spu_id")
-  }
+  #   spuShp <- prepInputs(studyArea = sim$studyArea,
+  #                        useSAcrs = TRUE,
+  #                        url = "https://drive.google.com/file/d/17UH3TDuEA_NQISeavu77HWz_P4tMYb2X",
+  #                        destinationPath = dPath)
+  #   spuShp <- spTransform(spuShp, crs(sim$masterRaster))
+  #
+  #   sim$spuRaster <- fasterize::fasterize(sf::st_as_sf(spuShp),
+  #                                         raster = sim$masterRaster, field = "spu_id")
+  # }
 
   # # 5. Ecozone raster. This takes the masterRaster (study area) and figures
   # # out what ecozones each pixels are in. This determines some
@@ -632,33 +697,7 @@ browser()
   #   )
   # }
 
-  # 5. Ecozone raster. This takes the masterRaster (study area) and figures
-  # out what ecozones each pixels are in. This determines some
-  # defaults CBM-parameters across Canada.
-  if (!suppliedElsewhere(sim$ecoRaster)) {
-          ecozones <- prepInputs(
-                # this website https://sis.agr.gc.ca/cansis/index.html is hosted by the Canadian Government
-                url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
-                alsoExtract = "similar",
-                destinationPath = dPath,
-                studyArea = sim$studyArea,
-                useSAcrs = TRUE,
-                overwrite = TRUE,
-                fun = "raster::shapefile",
-                filename2 = TRUE
-                ) %>%
-              cropInputs(., rasterToMatch = sim$masterRaster)
-  sim$ecoRaster <- fasterize::fasterize(sf::st_as_sf(ecozones),
-                                        raster = sim$masterRaster,
-                                        field = "ECOZONE"
-                                        )
-  }
-  ### if there are too many momery issues, this raster can be dowloaded here:
-  ### https://landr-team-group.slack.com/files/UCNUAJ6HK/F01RR6YRR5G/ecozoneraster.tif
-  sim$ecoRaster <- prepInputs(
-                  url = "https://drive.google.com/file/d/1jfuoCudnIAtjrFSqfQPz3cF5L0WQ0o95",
-                  rasterToMatch = masterRaster,
-                  destinationPath ="C:/Celine/github/spadesCBM_RIA/modules/CBM_dataPrep_RIA/data")
+
   # 6. Disturbance rasters. The default example is a list of rasters, one for
   # each year. But these can be provided by another family of modules in the
   # annual event.
