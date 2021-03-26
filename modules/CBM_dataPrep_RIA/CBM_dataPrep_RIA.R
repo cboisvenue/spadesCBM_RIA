@@ -625,9 +625,10 @@ browser()
     ### if there are too many momery issues, this raster can be dowloaded here:
     ### https://landr-team-group.slack.com/files/UCNUAJ6HK/F01RR6YRR5G/ecozoneraster.tif
     sim$ecoRaster <- prepInputs(
-      url = "https://drive.google.com/file/d/1jfuoCudnIAtjrFSqfQPz3cF5L0WQ0o95",
-      rasterToMatch = sim$masterRaster,
-      destinationPath = dPath
+      url = "https://drive.google.com/file/d/1bYCrFQPg_uf3xiQSia9eAjiVSMKbOVrm/view?usp=sharing",
+      destinationPath = dPath,
+      targetFile = "ecoRas.tif",
+      fun = "raster"
       #"C:/Celine/github/spadesCBM_RIA/modules/CBM_dataPrep_RIA/data")
     )
   }
@@ -636,15 +637,10 @@ browser()
   # defaults CBM-parameters across Canada.
   if (!suppliedElsewhere(sim$spuRaster)) {
     ## NEW
-    CanadaAdmin <- prepInputs(
-      url = 'https://drive.google.com/file/d/1xS8erWSuoMiYm3RNNNJnt9r251wT6I4J/view?usp=sharing',
-      destination = "inputs",
-      dPath = dPath,
-      fun = "st_read",
-      studyArea = sim$studyArea,
-      useSAcrs = TRUE)
-    CanadaAdminras <- fasterize(CanadaAdmin, raster = sim$masterRaster, field = "AdmnBID")
-    #make SPU raster
+    CanadaAdminras <- prepInputs(url = 'https://drive.google.com/file/d/1bYCrFQPg_uf3xiQSia9eAjiVSMKbOVrm/view?usp=sharing',
+                                 targetFile = "canadaAdminRas.tif",
+                                 fun = "raster",
+                                 destinationPath = dPath)
 
     SPUras <- data.table(pixelID = 1:ncell(sim$masterRaster),
                          AdminBoundaryID = getValues(CanadaAdminras),
@@ -652,7 +648,7 @@ browser()
     SPUras <- sim$cbmAdmin[SPUras, on = c("AdminBoundaryID" = "AdminBoundaryID",
                                    "EcoBoundaryID" = "ecozone")]
 
-    SPUras <- setValues(sim$masterRaster, SPUras$SpatialUnitID)
+    sim$spuRaster <- setValues(sim$masterRaster, SPUras$SpatialUnitID)
   }
     ## NEW to here
   #   canadaSpu <- prepInputs(targetFile = "spUnit_Locator.shp",
