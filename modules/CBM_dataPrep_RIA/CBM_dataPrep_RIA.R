@@ -625,7 +625,7 @@ browser()
     ### if there are too many momery issues, this raster can be dowloaded here:
     ### https://landr-team-group.slack.com/files/UCNUAJ6HK/F01RR6YRR5G/ecozoneraster.tif
     sim$ecoRaster <- prepInputs(
-      url = "https://drive.google.com/file/d/1bYCrFQPg_uf3xiQSia9eAjiVSMKbOVrm/view?usp=sharing",
+      url = "https://drive.google.com/file/d/1mnPIi1YfBZ6ej3VnBf_cm5D3nmR0WMBB/view?usp=sharing",
       destinationPath = dPath,
       targetFile = "ecoRas.tif",
       fun = "raster"
@@ -637,7 +637,7 @@ browser()
   # defaults CBM-parameters across Canada.
   if (!suppliedElsewhere(sim$spuRaster)) {
     ## NEW
-    CanadaAdminras <- prepInputs(url = 'https://drive.google.com/file/d/1bYCrFQPg_uf3xiQSia9eAjiVSMKbOVrm/view?usp=sharing',
+    CanadaAdminras <- prepInputs(url = 'https://drive.google.com/file/d/1mnPIi1YfBZ6ej3VnBf_cm5D3nmR0WMBB/view?usp=sharing',
                                  targetFile = "canadaAdminRas.tif",
                                  fun = "raster",
                                  destinationPath = dPath)
