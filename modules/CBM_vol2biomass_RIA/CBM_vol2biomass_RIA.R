@@ -78,7 +78,7 @@ defineModule(sim, list(
     expectsInput(
       objectName = "cbmAdmin", objectClass = "dataframe",
       desc = "Provides equivalent between provincial boundaries, CBM-id for provincial boundaries and CBM-spatial unit ids",
-      sourceURL = "https://drive.google.com/file/d/1xdQt9JB5KRIw72uaN5m3iOk8e34t9dyz"
+      sourceURL = "https://drive.google.com/file/d/1NwVPqMho8fOcf9mVVzm5SlfDbbyQmQlh/view?usp=sharing"
     ),
     expectsInput(objectName = "gcMeta",
                  objectClass = "dataframe",
@@ -1035,10 +1035,14 @@ Event2 <- function(sim) {
   }
 
   # 4. cbmAdmin: this is needed to match species and parameters. Boudewyn et al 2007
-  # abbreviation and cbm spatial units and ecoBoudnary id is provided with the
+  # abbreviation and cbm spatial units and ecoBoundnary id is provided with the
   # adminName to avoid confusion.
   if (!suppliedElsewhere("cbmAdmin", sim)) {
-    sim$cbmAdmin <- fread(file.path(dPath, "cbmAdmin.csv")) ## TODO: use prepInputs with url
+    sim$cbmAdmin <-  prepInputs(url = extractURL("cbmAdmin"),
+                                fun = "data.table::fread",
+                                destinationPath = dPath,
+                                #purge = 7,
+                                filename2 = "cbmAdmin.csv")
   }
 
   # 5. canfi_species: for the BOudewyn parameters, the species have to be matched
