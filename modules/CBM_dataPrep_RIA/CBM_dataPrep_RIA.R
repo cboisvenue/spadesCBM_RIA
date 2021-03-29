@@ -637,13 +637,14 @@ browser()
   # defaults CBM-parameters across Canada.
   if (!suppliedElsewhere(sim$spuRaster)) {
     ## NEW
-    CanadaAdminras <- prepInputs(url = 'https://drive.google.com/file/d/1mnPIi1YfBZ6ej3VnBf_cm5D3nmR0WMBB/view?usp=sharing',
-                                 targetFile = "canadaAdminRas.tif",
-                                 fun = "raster",
-                                 destinationPath = dPath)
+    # browser()
+    # CanadaAdminras <- prepInputs(url = 'https://drive.google.com/file/d/1mnPIi1YfBZ6ej3VnBf_cm5D3nmR0WMBB/view?usp=sharing',
+    #                              targetFile = "canadaAdminRas.tif",
+    #                              fun = "raster",
+    #                              destinationPath = dPath)
 
     SPUras <- data.table(pixelID = 1:ncell(sim$masterRaster),
-                         AdminBoundaryID = getValues(CanadaAdminras),
+                         AdminBoundaryID = 11,
                          ecozone = getValues(sim$ecoRaster))
     SPUras <- sim$cbmAdmin[SPUras, on = c("AdminBoundaryID" = "AdminBoundaryID",
                                    "EcoBoundaryID" = "ecozone")]
