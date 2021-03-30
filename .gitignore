@@ -28,3 +28,9 @@ outputs/
 
 
 *.tif
+
+data/
+
+*.zip
+
+sampleVRI.csv

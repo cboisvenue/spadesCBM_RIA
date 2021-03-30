@@ -377,9 +377,9 @@ Init <- function(sim) {
   # assuming gcMeta has now 6 columns, it needs a 7th: spatial_unit_id. This
   # will be used in the convertM3biom() fnct to link to the right ecozone
   # and it only needs the gc we are using in this sim.
-  browser()
-  gcThisSim <- as.data.table(unique(cbind(sim$spatialUnits, sim$gcids)))
-  names(gcThisSim) <- c("spatial_unit_id", "growth_curve_component_id")
+  browser() #spatialDt <- fread("C:/Celine/github/spadesCBM_RIA/modules/CBM_dataPrep_RIA/data/startingSpatialDT.csv")
+  gcThisSim <- unique(spatialDt[,.(growth_curve_component_id, spatial_unit_id, ecozones)])#as.data.table(unique(cbind(sim$spatialUnits, sim$gcids)))
+  #names(gcThisSim) <- c("growth_curve_component_id","e")
   setkey(gcThisSim, growth_curve_component_id)
   setkey(riaGcMeta, growth_curve_component_id) #changed from gcMeta to riaGcMeta
   gcMeta <- merge(riaGcMeta, gcThisSim) #changed from gcMeta to riaGcMeta
