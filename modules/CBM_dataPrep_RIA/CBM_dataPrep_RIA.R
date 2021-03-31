@@ -45,6 +45,7 @@ defineModule(sim, list(
     )
   ),
   inputObjects = bindrows(
+    # cbm defaults
     expectsInput(
       objectName = "cbmData", objectClass = "dataset",
       desc = "S4 object created from selective reading in of cbm_default.db in CBM_defaults module",
@@ -62,25 +63,18 @@ defineModule(sim, list(
     ),
     expectsInput(objectName = "dbPath", objectClass = "character", desc = NA, sourceURL = NA),
     expectsInput(objectName = "sqlDir", objectClass = "character", desc = NA, sourceURL = NA),
+   expectsInput(
+      objectName = "cbmAdmin", objectClass = "dataframe",
+      desc = "Provides equivalent between provincial boundaries, CBM-id for provincial boundaries and CBM-spatial unit ids",
+      sourceURL = "https://drive.google.com/file/d/1xdQt9JB5KRIw72uaN5m3iOk8e34t9dyz"
+    ),
+    # user provided tables
     expectsInput(
       objectName = "userDistFile", objectClass = "character", ## TODO: should be a param
       desc = paste("User provided file name that identifies disturbances for simulation",
                    "(key words for searching CBM files, if not there the userDist will be created with defaults"),
       sourceURL = NA
     ),
-    ## user input here
-    #studyAreaUrl <- "https://drive.google.com/file/d/1LxacDOobTrRUppamkGgVAUFIxNT4iiHU/"
-    expectsInput( ## URL RIA CORRECT CHECKED
-      objectName = "studyArea", objectClass = "polygon",
-      desc = "Limiting the study area to BC",
-      sourceURL = "https://drive.google.com/file/d/1LxacDOobTrRUppamkGgVAUFIxNT4iiHU/"
-    ),
-    expectsInput(
-      objectName = "cbmAdmin", objectClass = "dataframe",
-      desc = "Provides equivalent between provincial boundaries, CBM-id for provincial boundaries and CBM-spatial unit ids",
-      sourceURL = "https://drive.google.com/file/d/1xdQt9JB5KRIw72uaN5m3iOk8e34t9dyz"
-    ),
-
     expectsInput( ## URL RIA CORRECT CHECKED
       objectName = "userDist", objectClass = "data.table",
       desc = "User provided file that identifies disturbances for simulation (distName),
@@ -88,35 +82,7 @@ defineModule(sim, list(
       if not there it will use userDistFile",
       sourceURL = "https://drive.google.com/file/d/1Gr_oIfxR11G1ahynZ5LhjVekOIr2uH8X"
     ),
-    expectsInput(## URL RIA CORRECT CHECKED
-      objectName = "ageRasterURL", objectClass = "character",
-      desc = "Pointer to the age raster on a cloud drive",
-      sourceURL = "https://drive.google.com/file/d/16pXx9pufiWY45H8rgCiFl6aFbEcC9GeD"
-    ),
-    expectsInput(
-      objectName = "ageRaster", objectClass = "raster",
-      desc = "Raster ages for each pixel,ADD URL SPECIFIC TO EACH OF THE RUNS: fireRIs, presentDay, harvest1 and harvest2"
-    ),
-    expectsInput(
-    #   objectName = "gcIndexRasterURL", objectClass = "character", ## TODO: url provided below
-    #   desc = "Pointer to URL for spatial link from growth curve to pixels",
-    #   sourceURL =  "https://drive.google.com/file/d/1LKblpqSZTVlaNske-C_LzNFEtubn7Ms7"
-    # ),
-    # expectsInput(## URL RIA CORRECT CHECKED
-      objectName = "gcIndexRaster", objectClass = "raster",
-      desc = "Raster ages for each pixel",
-      sourceURL =  "https://drive.google.com/file/d/1LKblpqSZTVlaNske-C_LzNFEtubn7Ms7"
-      #sourceURL = "WILL HAVE TO MAKE THIS FROM GREG'S INFO"
-    ),
-    expectsInput(## URL RIA CORRECT CHECKED
-      objectName = "spuRaster", objectClass = "raster",
-      desc = "Raster has spatial units for each pixel"
-    ),
-    expectsInput(## URL RIA CORRECT CHECKED
-      objectName = "ecoRaster", objectClass = "raster",
-      desc = "Raster has ecozones for each pixel"
-    ),
-    expectsInput(
+        expectsInput(
       objectName = "userGcM3File", objectClass = "character",## TODO: should be a param
       desc = paste("User-provided pointer to the file containing: GrowthCurveComponentID,Age,MerchVolume.",
                    "Default name userGcM3"),
@@ -127,24 +93,28 @@ defineModule(sim, list(
       desc = "User file containing: GrowthCurveComponentID,Age,MerchVolume. Default name userGcM3",
       sourceURL = "https://drive.google.com/file/d/1BYHhuuhSGIILV1gmoo9sNjAfMaxs7qAj"
     ),
+    # user provided rasters or raster related info
+    expectsInput(
+      objectName = "masterRaster", objectClass = "raster",
+      desc = "Raster built in based on user provided info. Will be used as the raster to match for all operations"
+    ),
+    expectsInput(
+      objectName = "allPixDT", objectClass = "data.table",
+      desc = "Data table built for all pixels (incluing NAs) for the four essential raster-based information,
+      growth curve location (gcID), ages, ecozones and spatial unit id (CBM-parameter link)"
+    ),
     expectsInput(## URL RIA CORRECT CHECKED
       ## URL RIA FOR scfmFires rasters is this https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8
       ## URL below is for the data table for the 526 years of scfm fire sims
-      objectName = "disturbanceRasters", objectClass = "vector",
-      desc = "RIA 2020 specific - fires rasters were too big for my laptop. Created a data table for ",
+      objectName = "disturbanceRasters", objectClass = "dataframe",
+      desc = "RIA 2020 specific - fires rasters were too big forlow RAM machines. Created a data table for with pixel burnt and year of burn",
       sourceURL = "https://drive.google.com/file/d/1P41fr5fimmxOTGfNRBgjwXetceW6YS1M"
     ),
-    expectsInput( ## URL RIA CORRECT CHECKED
-      objectName = "masterRasterURL", objectClass = "character",
-      desc = "Pointer to the raster on a cloud drive",
-      sourceURL = "https://drive.google.com/file/d/1LlE5NXDPKS6Ljv2SvwQnw2A_Kze2uun-"
-    ),
-    expectsInput(
-      objectName = "masterRaster", objectClass = "raster",
-      desc = "Raster that defines the extent of the simulation area for th BC NE RIA. It is used to map results and crop other rasters"#
-      #sourceURL = NA
+   expectsInput(
+     objectName = "distIndexDT", objectClass = "data.table",
+     desc = "Data table built in case the disturbanceRaster data.table was built on a different raster then the one we use for simulations"
     )
-  ),
+   ),
   outputObjects = bindrows(
     createsOutput(objectName = "pools", objectClass = "matrix", desc = NA),
     createsOutput(
@@ -272,13 +242,13 @@ Init <- function(sim) {
       "?"
     )
   }
+#
+#   age <- sim$ageRaster
+#   gcIndex <- sim$gcIndexRaster
+#   spuRaster <- sim$spuRaster # made in the .inputObjects
+#   ecoRaster <- sim$ecoRaster # made in the .inputObjects
+#   ## End rasters------------------------------------------------------------------
 
-  age <- sim$ageRaster
-  gcIndex <- sim$gcIndexRaster
-  spuRaster <- sim$spuRaster # made in the .inputObjects
-  ecoRaster <- sim$ecoRaster # made in the .inputObjects
-  ## End rasters------------------------------------------------------------------
-browser()
 
   ## Create the data table of all pixels and all values for the study area----------------
   level2DT <- data.table(
@@ -287,7 +257,7 @@ browser()
     ecozones = ecoRaster[]
   )
   # keep only the pixels that have all the information: the pixels that will be simulated
-  level2DT <- level2DT[!is.na(ages) & !is.na(growth_curve_id)]
+  level2DT <- sim$allPixelsDT[!is.na(ages) & !is.na(growth_curve_id)]
   spatialDT <- level2DT
   ## END data.table of all pixels---------------------------------------------------------
 
@@ -445,7 +415,6 @@ browser()
 }
 
 .inputObjects <- function(sim) {
-  browser()
   cacheTags <- c(currentModule(sim), "function:.inputObjects")
   dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
@@ -542,173 +511,70 @@ browser()
 
   # user provided rasters or spatial information------------------------
   #1. VRI rasters gcID and age
-  ## HERE
-  browser()
-  RIArtm <- prepInputs(url = "https://drive.google.com/file/d/1h7gK44g64dwcoqhij24F2K54hs5e35Ci/view?usp=sharing")
-
+  # study area raster
+  RIArtm <- prepInputs(url = "https://drive.google.com/file/d/1h7gK44g64dwcoqhij24F2K54hs5e35Ci/view?usp=sharing",
+                       destinationPath = dPath)
+  # forest inventory info. this makes a raster stack of the two main rasters, gcIDRaster and ageRaster
   RIA_VRIstack <- Cache(prepInputsVRI,VRIurl = "https://drive.google.com/file/d/1LXSX8M46EnsTCM3wGhkiMgqWcqTubC12",
-                        dPath = "C:/Celine/github/spadesCBM_RIA/modules/CBM_dataPrep_RIA/data",
+                        dPath = dPath,
                         rasterToMatch = RIArtm
   )
+  names(RIA_VRIstack) <- c("gcIDRaster", "ageRaster")
 
-  # # 1. Raster to match (masterRaster). This is the study area.
-  #
-  # if (!suppliedElsewhere("masterRaster", sim)) {
-  #   if (!suppliedElsewhere("masterRasterURL", sim)) {
-  #     sim$masterRasterURL <- extractURL("masterRasterURL")
-  #     # message(
-  #     #   "User has not supplied a masterRaster or a URL for a masterRaster (masterRasterURL object).\n",
-  #     #   "masterRaster is going to be read from the default URL given in the inputObjects for ",
-  #     #   currentModule(sim)
-  #     # )
-  #   }
-  #
-  #   sim$masterRaster <- Cache(
-  #     prepInputs,
-  #     url = sim$masterRasterURL,
-  #     fun = "raster::raster",
-  #     destinationPath = dPath
-  #   )
-  #
-  #   #sim$masterRaster[sim$masterRaster == 0] <- NA
-  # }
-  #
-  # # 1.1 studyArea (b/c of a grided problem below when I build the eco and spu rasters)
-  # if (!suppliedElsewhere("studyArea", sim)){
-  #   sim$studyArea <- prepInputs(url = extractURL("studyArea"),
-  #                               destinationPath = dPath) %>%
-  #     sf::st_as_sf(.) %>%
-  #     .[.$TSA_NUMBER %in% c("40", "08", "41", "24", "16"),] %>%
-  #     sf::st_buffer(., 0) %>%
-  #     sf::as_Spatial(.) %>%
-  #     raster::aggregate(.)
-  # }
-  #
-  # # 2. Age raster from inventory
-  #
-  # if (!suppliedElsewhere(sim$ageRaster)) {
-  #   if (!suppliedElsewhere(sim$ageRasterURL)) {
-  #     sim$ageRasterURL <- extractURL("ageRasterURL")
-  #   }
-  #   sim$ageRaster <- Cache(prepInputs,
-  #                          url = sim$ageRasterURL,
-  #                          # rasterToMatch = sim$masterRaster,
-  #                          fun = "raster::raster",
-  #                          destinationPath = dPath
-  #   )
-  #   ## TODO: put in a message to out pointing out the max age (this has to be
-  #   ## sinked to the max age on the growth curve max age for the spinup)
-  #   # maxAge <- max(sim$ageRaster)
-  #   # message(max age on the raster is XX)
-  # }
-  #
-  # # 3. What growth curve should be applied to what pixels?
-  # if (!suppliedElsewhere(sim$gcIndexRaster)) {
-  #     sim$gcIndexRaster <- Cache(prepInputs,
-  #                              url = extractURL("gcIndexRaster"),
-  #                              #rasterToMatch = sim$masterRaster,
-  #                              fun = "raster::raster",
-  #                              destinationPath = dPath)
-  # }
-  #
-  # # 4. Ecozone raster. This takes the masterRaster (study area) and figures
-  # # out what ecozones each pixels are in. This determines some
-  # # defaults CBM-parameters across Canada.
-  # if (!suppliedElsewhere(sim$ecoRaster)) {
-  #   #         ecozones <- prepInputs(
-  #   #               # this website https://sis.agr.gc.ca/cansis/index.html is hosted by the Canadian Government
-  #   #               url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
-  #   #               alsoExtract = "similar",
-  #   #               destinationPath = dPath,
-  #   #               studyArea = sim$studyArea,
-  #   #               useSAcrs = TRUE,
-  #   #               overwrite = TRUE,
-  #   #               fun = "raster::shapefile",
-  #   #               filename2 = TRUE
-  #   #               ) %>%
-  #   #             cropInputs(., rasterToMatch = sim$masterRaster)
-  #   # sim$ecoRaster <- fasterize::fasterize(sf::st_as_sf(ecozones),
-  #   #                                       raster = sim$masterRaster,
-  #   #                                       field = "ECOZONE"
-  #   #                                       )
-  #   # }
-  #   ### if there are too many momery issues, this raster can be dowloaded here:
-  #   ### https://landr-team-group.slack.com/files/UCNUAJ6HK/F01RR6YRR5G/ecozoneraster.tif
-  #   sim$ecoRaster <- prepInputs(
-  #     url = "https://drive.google.com/file/d/1mnPIi1YfBZ6ej3VnBf_cm5D3nmR0WMBB/view?usp=sharing",
-  #     destinationPath = dPath,
-  #     targetFile = "ecoRas.tif",
-  #     fun = "raster"
-  #     #"C:/Celine/github/spadesCBM_RIA/modules/CBM_dataPrep_RIA/data")
-  #   )
-  # }
-  # # 5. Spatial Unit raster. This takes the masterRaster (study area) and figures
-  # # out what CBM-specific spatial units each pixels. This determines some
-  # # defaults CBM-parameters across Canada.
-  # if (!suppliedElsewhere(sim$spuRaster)) {
-  #   ## NEW
-  #   CanadaAdminras <- prepInputs(url = 'https://drive.google.com/file/d/1mnPIi1YfBZ6ej3VnBf_cm5D3nmR0WMBB/view?usp=sharing',
-  #                                 targetFile = "canadaAdminRas.tif",
-  #                                 fun = "raster",
-  #                                 destinationPath = dPath)
-  #
-  #   SPUras <- data.table(pixelID = 1:ncell(sim$masterRaster),
-  #                        AdminBoundaryID = values(CanadaAdminras),
-  #                        ecozone = getValues(sim$ecoRaster))
-  #   SPUras <- sim$cbmAdmin[SPUras, on = c("AdminBoundaryID" = "AdminBoundaryID",
-  #                                  "EcoBoundaryID" = "ecozone")]
-  #
-  #   sim$spuRaster <- setValues(sim$masterRaster, SPUras$SpatialUnitID)
-  # }
-  #   ## NEW to here
-  # #   canadaSpu <- prepInputs(targetFile = "spUnit_Locator.shp",
-  # #                           url = "https://drive.google.com/file/d/17UH3TDuEA_NQISeavu77HWz_P4tMYb2X",
-  # #                           destinationPath = dPath,
-  # #                           alsoExtract = "similar")
-  # #   spuShp <- postProcess(canadaSpu,
-  # #                         rasterToMatch = sim$masterRaster,
-  # #                         targetCRS = crs(sim$masterRaster),
-  # #                         useCache = FALSE, filename2 = NULL
-  # #   )
-  # #   sim$spuRaster <- fasterize::fasterize(sf::st_as_sf(spuShp), raster = sim$masterRaster, field = "spu_id")
-  # #
-  # #   spuShp <- prepInputs(studyArea = sim$studyArea,
-  # #                        useSAcrs = TRUE,
-  # #                        url = "https://drive.google.com/file/d/17UH3TDuEA_NQISeavu77HWz_P4tMYb2X",
-  # #                        destinationPath = dPath)
-  # #   spuShp <- spTransform(spuShp, crs(sim$masterRaster))
-  # #
-  # #   sim$spuRaster <- fasterize::fasterize(sf::st_as_sf(spuShp),
-  # #                                         raster = sim$masterRaster, field = "spu_id")
-  # # }
-  #
-  # # # 5. Ecozone raster. This takes the masterRaster (study area) and figures
-  # # # out what ecozones each pixels are in. This determines some
-  # # # defaults CBM-parameters across Canada.
-  # # if (!suppliedElsewhere(sim$ecoRaster)) {
-  # #   ecozones <- prepInputs(
-  # #     # this website https://sis.agr.gc.ca/cansis/index.html is hosted by the Canadian Government
-  # #     url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
-  # #     alsoExtract = "similar",
-  # #     destinationPath = dPath,
-  # #     rasterToMatch = sim$masterRaster,
-  # #     overwrite = TRUE,
-  # #     fun = "raster::shapefile",
-  # #     filename2 = TRUE
-  # #   ) %>%
-  # #     cropInputs(., rasterToMatch = sim$masterRaster)
-  # #   sim$ecoRaster <- fasterize::fasterize(sf::st_as_sf(ecozones),
-  # #                                         raster = sim$masterRaster,
-  # #                                         field = "ECOZONE"
-  # #   )
-  # # }
-  #
-  #
-  # # 6. Disturbance rasters. The default example is a list of rasters, one for
+  #2. Seperate the rasters in the stack
+  gcIDRaster <- RIA_VRIstack$gcIDRaster
+  ageRaster <- RIA_VRIstack$ageRaster
+
+
+  #3. Make a masterRaster and make sure there are no NAs
+  masterRaster <- raster::raster(gcIDRaster)
+  ageWData <- !is.na(ageRaster[])
+  gcIDWData <- !is.na(gcIDRaster[])
+  masterRaster[ageWData] <- gcIDRaster[ageWData]
+  gcIDRaster[!ageWData] <- NA
+
+  dt <- data.table(gcID = gcIDRaster[], age = ageRaster[])
+
+  # assertion -- if there are both NAs or both have data, then the colums with be the same, so sum is either 0 or 2
+  bb <- apply(dt, 1, function(x) sum(is.na(x)))
+  if (!all(names(table(bb)) %in% c("0", "2")))
+    stop("should be only 0 or 2s")
+
+  #4. Make the ecozone Raster (ecoRaster)"http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip"
+  ecozone <- Cache(prepInputsEcozones, url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
+                   dPath = dPath,
+                   masterRaster = masterRaster)
+
+  #5. Get just BC
+  provs <- getData("GADM", country = "CAN", level = 1)
+
+  bc <- provs[provs$NAME_1 == "British Columbia",]
+
+  #6. mathc the SPU values to the ecozone values
+
+  cbmAdminThisSA <- sim$cbmAdmin[adminName == "British Columbia", ]
+
+  rows <- match(ecozone[], cbmAdminThisSA$EcoBoundaryID)
+  spatialUnitID <- cbmAdminThisSA[rows,"SpatialUnitID"]
+
+  dtRasters <- data.table(growth_curve_component_id = gcIDRaster[], ages = ageRaster[], ecozones = ecozone[], spatial_unit_id = spatialUnitID)
+
+  # assertion -- if there are both NAs or both have data, then the colums with be the same, so sum is either 0 or 2
+  bbb <- apply(dtRasters, 1, function(x) sum(is.na(x)))
+  if (!all(names(table(bbb)) %in% c("0", "4")))
+    stop("should be only 0 or 4s")
+
+  #7. Passed assertion? Make the rasters.
+  sim$masterRaster <- masterRaster
+
+  sim$allPixDT <- data.table(cbind(dtRasters, pixelIndex = 1:ncell(gcIDRaster), growth_curve_id = gcIDRaster[]))
+
+
+  # 8. Disturbance rasters. The default example (SK) is a list of rasters, one for
   # # each year. But these can be provided by another family of modules in the
   # # annual event.
-  ### TO DO: add a message if no information is provided asking the user if
-  ### disturbances will be provided on a yearly basis.
+  ### TODO give options to the user to provide a raster a data table, a raster list or a raster stack
+  ## NOTES for RIA fire only runs: the
   if (!suppliedElsewhere("disturbanceRasters", sim)) {
     ## this case is reading in a sparseDT.
     # RTM that the datatable was created with
@@ -732,9 +598,10 @@ browser()
 
     indexDT <- data.table(rtmIndex = getValues(IndexRTM),
                           thlbIndex = getValues(IndexTHLB))
+    sim$distIndexDT <- indexDT[!is.na(rtmIndex)]
 
     #the NAs in rtmIndex are pixels that are not in THLB (but inside the landscape) - we can remove them
-    indexDT <- indexDT[!is.na(rtmIndex)]
+    sim$disturbanceRasters <- scfmAnnualBurns
 
     ## the function indexAnnualFire() will have to be used in the annual event
     ## of the CBM_core module
