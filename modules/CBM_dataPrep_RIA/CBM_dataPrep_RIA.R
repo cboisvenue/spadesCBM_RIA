@@ -543,6 +543,7 @@ browser()
   # user provided rasters or spatial information------------------------
   #1. VRI rasters gcID and age
   ## HERE
+  browser()
   RIArtm <- prepInputs(url = "https://drive.google.com/file/d/1h7gK44g64dwcoqhij24F2K54hs5e35Ci/view?usp=sharing")
 
   RIA_VRIstack <- Cache(prepInputsVRI,VRIurl = "https://drive.google.com/file/d/1LXSX8M46EnsTCM3wGhkiMgqWcqTubC12",
