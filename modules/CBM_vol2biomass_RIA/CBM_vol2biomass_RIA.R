@@ -16,7 +16,8 @@ defineModule(sim, list(
   citation = list("citation.bib"),
   documentation = deparse(list("README.txt", "CBM_vol2biomass_RIA.Rmd")),
   reqdPkgs = list(
-    "ggplot2", "ggpubr", "mgcv", "quickPlot", "PredictiveEcology/CBMutils (>= 0.0.6)"
+    "ggplot2", "ggpubr", "mgcv", "quickPlot", "PredictiveEcology/CBMutils (>= 0.0.6)",
+    "robustbase", "ggforce"
   ),
   parameters = rbind(
     # defineParameter("paramName", "paramClass", value, min, max, "parameter description"),
@@ -95,7 +96,7 @@ defineModule(sim, list(
                  objectClass = "dataframe",
                  desc = "File containing the possible species in the Boudewyn table - note
                  that if Boudewyn et al added species, this should be updated. Also note that such an update is very unlikely",
-                 sourceURL = ""),
+                 sourceURL = "https://drive.google.com/file/d/1l9b9V7czTZdiCIFX3dsvAsKpQxmN-Epo"),
     expectsInput(
       objectName = "userGcM3File", objectClass = "character",## TODO: should be a param
       desc = paste("Pointer to the user file name for the files containing: GrowthCurveComponentID,Age,MerchVolume.",
@@ -213,6 +214,25 @@ doEvent.CBM_vol2biomass_RIA <- function(sim, eventTime, eventType) {
 Init <- function(sim) {
   # user provides userGcM3: incoming cumulative m3/ha
   # plot
+  # Test for steps of 1 in the yield curves
+  ageJumps <- sim$userGcM3[, list(jumps = unique(diff(as.numeric(Age)))), by = "GrowthCurveComponentID"]
+  idsWithJumpGT1 <- ageJumps[jumps > 1]$GrowthCurveComponentID
+  if (length(idsWithJumpGT1)) {
+    missingAboveMin <- sim$userGcM3[, approx(Age, MerchVolume, xout = setdiff(seq(0, max(Age)), Age)),
+                          by = "GrowthCurveComponentID"]
+    setnames(missingAboveMin, c("x", "y"), c("Age", "MerchVolume"))
+    missingAboveMin <- na.omit(missingAboveMin)
+    sim$userGcM3 <- rbindlist(list(sim$userGcM3, missingAboveMin))
+    setorderv(sim$userGcM3, c("GrowthCurveComponentID", "Age"))
+
+    # Assertion
+    ageJumps <- sim$userGcM3[, list(jumps = unique(diff(as.numeric(Age)))), by = "GrowthCurveComponentID"]
+    idsWithJumpGT1 <- ageJumps[jumps > 1]$GrowthCurveComponentID
+    if (length(idsWithJumpGT1) > 0)
+      stop("There are still yield curves that are not annually resolved")
+  }
+
+
   sim$volCurves <- ggplot(data = sim$userGcM3, aes(x = Age, y = MerchVolume, group = GrowthCurveComponentID, colour = GrowthCurveComponentID)) +
     geom_line() ## TODO: move to plotInit event
   message("User: please look at the curve you provided via sim$volCurves")
@@ -226,7 +246,6 @@ Init <- function(sim) {
   # }else{
   userGcM3 <- sim$userGcM3[GrowthCurveComponentID %in% unique(sim$gcids), ]
   # }
-  browser()
   # START reducing Biomass model parameter tables -----------------------------------------------
   # reducing the parameter tables to the jurisdiction or ecozone we have in the study area
   ## To run module independently, the gcID used in this translation can be specified here
@@ -377,8 +396,8 @@ Init <- function(sim) {
   # assuming gcMeta has now 6 columns, it needs a 7th: spatial_unit_id. This
   # will be used in the convertM3biom() fnct to link to the right ecozone
   # and it only needs the gc we are using in this sim.
-  browser() #spatialDt <- fread("C:/Celine/github/spadesCBM_RIA/modules/CBM_dataPrep_RIA/data/startingSpatialDT.csv")
-  gcThisSim <- unique(spatialDt[,.(growth_curve_component_id, spatial_unit_id, ecozones)])#as.data.table(unique(cbind(sim$spatialUnits, sim$gcids)))
+  #spatialDt <- fread("C:/Celine/github/spadesCBM_RIA/modules/CBM_dataPrep_RIA/data/startingSpatialDT.csv")
+  gcThisSim <- unique(sim$spatialDT[,.(growth_curve_component_id, spatial_unit_id, ecozones)])#as.data.table(unique(cbind(sim$spatialUnits, sim$gcids)))
   #names(gcThisSim) <- c("growth_curve_component_id","e")
   setkey(gcThisSim, growth_curve_component_id)
   setkey(riaGcMeta, growth_curve_component_id) #changed from gcMeta to riaGcMeta
@@ -394,6 +413,11 @@ Init <- function(sim) {
   gcMeta[, species := NULL]
   setnames(gcMeta, "name", "species")
 
+  ################
+  warning("Modifying canfi_species 1211 ecozone to 1203")
+  gcMeta[canfi_species == 1211, canfi_species := 1203]
+
+
   # START processing curves from m3/ha to tonnes of C/ha then to annual increments
   # per above ground biomass pools -------------------------------------------
 
@@ -403,79 +427,258 @@ Init <- function(sim) {
   # Matching is 1st on species, then on gcId which gives us location (admin,
   # spatial unit and ecozone)
   fullSpecies <- unique(gcMeta$species) ## RIA: change this to the canfi_sps or match??
-  cumPools <- NULL
 
-  for (i in 1:length(fullSpecies)) {
-    # matching on species name
-    speciesMeta <- gcMeta[species == fullSpecies[i], ]
-    # for each species name, process one gcID at a time
-    for (j in 1:length(unique(speciesMeta$growth_curve_component_id))) {
-      browser()
-      meta <- speciesMeta[j, ]
-      id <- userGcM3$GrowthCurveComponentID[which(userGcM3$GrowthCurveComponentID == meta$growth_curve_component_id)][-1]
-      ## IMPORTANT BOURDEWYN PARAMETERS FOR NOT HANDLE AGE 0 ##
-      age <- userGcM3[GrowthCurveComponentID == meta$growth_curve_component_id, Age]
-      age <- age[which(age>0)]
-      # series of fncts results in curves of merch, foliage and other (SW or HW)
-      cumBiom <- as.matrix(convertM3biom(
-        meta = meta, gCvalues = userGcM3, spsMatch = gcMeta,
-        ecozones = thisAdmin, params3 = unique(stable3), params4 = unique(stable4),
-        params5 = unique(stable5), params6 = unique(stable6), params7 = unique(stable7)
-      ))
-      browser()
-      # going from tonnes of biomass/ha to tonnes of carbon/ha here
-      cumBiom <- cumBiom * 0.5 ## this value is in sim$cbmData@biomassToCarbonRate
-      # calculating the increments per year for each of the three pools (merch,
-      # foliage and other (SW or HW))
-      # inc <- diff(cumBiom)
-      # CBM processes half the growth before turnover and OvermatureDecline, and
-      # half after.
-      # names(outInputs$allProcesses)
-      # [1] "Disturbance"       "Growth1"           "DomTurnover"       "BioTurnover"
-      # [5] "OvermatureDecline" "Growth2"           "DomDecay"          "SlowDecay"
-      # [9] "SlowMixing"
-      cumBiom <- cbind(id, age, cumBiom)
-
-      cumPools <- rbind(cumPools, cumBiom)
-    }
-  }
+  cumPools <- Cache(cumPoolsCreate, fullSpecies, gcMeta, userGcM3,
+                             stable3, stable4, stable5, stable6, stable7, thisAdmin)
+  # {
+  #   # matching on species name
+  #   speciesMeta <- gcMeta[species == fullSpecies[i], ]
+  #   # for each species name, process one gcID at a time
+  #   for (j in 1:NROW(unique(speciesMeta, on = c("growth_curve_component_id", "ecozones")))) {
+  #
+  #     meta <- speciesMeta[j, ]
+  #     ecozone <- meta$ecozones
+  #     id <- userGcM3$GrowthCurveComponentID[which(userGcM3$GrowthCurveComponentID == meta$growth_curve_component_id)][-1]
+  #     ## IMPORTANT BOURDEWYN PARAMETERS FOR NOT HANDLE AGE 0 ##
+  #     age <- userGcM3[GrowthCurveComponentID == meta$growth_curve_component_id, Age]
+  #     age <- age[which(age>0)]
+  #     # series of fncts results in curves of merch, foliage and other (SW or HW)
+  #
+  #     cumBiom <- as.matrix(convertM3biom(
+  #       meta = meta, gCvalues = userGcM3, spsMatch = gcMeta,
+  #       ecozones = thisAdmin, params3 = unique(stable3), params4 = unique(stable4),
+  #       params5 = unique(stable5), params6 = unique(stable6), params7 = unique(stable7)
+  #     ))
+  #
+  #     # going from tonnes of biomass/ha to tonnes of carbon/ha here
+  #     cumBiom <- cumBiom * 0.5 ## this value is in sim$cbmData@biomassToCarbonRate
+  #     # calculating the increments per year for each of the three pools (merch,
+  #     # foliage and other (SW or HW))
+  #     # inc <- diff(cumBiom)
+  #     # CBM processes half the growth before turnover and OvermatureDecline, and
+  #     # half after.
+  #     # names(outInputs$allProcesses)
+  #     # [1] "Disturbance"       "Growth1"           "DomTurnover"       "BioTurnover"
+  #     # [5] "OvermatureDecline" "Growth2"           "DomDecay"          "SlowDecay"
+  #     # [9] "SlowMixing"
+  #     id_ecozone <- paste0(id, "_", ecozone)
+  #     cumBiom <- cbind(id, age, cumBiom, ecozone, id_ecozone)
+  #
+  #     cumPools <- rbind(cumPools, cumBiom)
+  #   }
+  # }
 
   # Check models that are directly out of the Boudewyn-translation----------------------------
   # Usually, these need to be, at a minimum, smoothed out.
 
   # plotting the curves of the direct translation ------------------------
   # adding the zeros back in
-  cumPools <- as.data.table(cumPools)
-  id <- unique(cumPools$id)
-  add0s <- cbind(id,
-    age = rep(0, length(id)), totMerch = rep(0, length(id)),
-    fol = rep(0, length(id)), other = rep(0, length(id))
-  )
-  cumPoolsRaw <- rbind(cumPools, add0s)
-  cumPoolsRaw <- cumPoolsRaw[order(id, age)]
+  # cumPools <- as.data.table(cumPools)
+  cumPools[, numAge := as.numeric(age)]
+  minAgeId <- cumPools[,.(minAge = max(0, min(numAge) - 1)), by = .(id_ecozone)]
+
+  fill0s <- minAgeId[,.(age = seq(from = 0, to = minAge, by = 1)), by = .(id_ecozone)]
+  # might not need this
+  length0s <- fill0s[,.(toMinAge = length(age)), by = .(id_ecozone)]
+
+  # these are going to be 0s
+  carbonVars <- data.table(id_ecozone = unique(fill0s$id_ecozone),
+                                    totMerch = 0,
+                                    fol = 0,
+                                    other = 0 )
+
+  fiveOf7cols <- fill0s[carbonVars, on = "id_ecozone"]
+
+  otherVars <- cumPools[,.(id = unique(id), ecozone = unique(ecozone)), by = .(id_ecozone)]
+  add0s <- fiveOf7cols[otherVars, on = "id_ecozone"]
+  cumPools[,numAge := NULL]
+
+  cumPoolsRaw <- rbind(cumPools,add0s)
+  set(cumPoolsRaw, NULL, "ageNumeric", as.numeric(cumPoolsRaw$age))
+  setorder(cumPoolsRaw, id_ecozone, ageNumeric)
 
   # plotting and save the plots of the raw-translation in the sim$
-  rawPlots <- m3ToBiomIncOnlyPlots(inc = cumPoolsRaw)
+  sim$plotsRawCumulativeBiomass <- Cache(m3ToBiomIncOnlyPlots, inc = cumPoolsRaw, ncol = 5, nrow = 5)
+
+  # Fixing of non-smooth curves
+  a <- copy(cumPoolsRaw)
+  # a <- cumPoolsRaw[id_ecozone == "1603008_12"]
+  #a <- cumPoolsRaw[id_ecozone == "1601001_12"]
+  # a <- cumPoolsRaw[id_ecozone == "1601000_12"]
+  # a <- cumPoolsRaw[id_ecozone == "4103001_9"]
+  # a <- cumPoolsRaw[id_ecozone == "801005_12"]
+  browser()
+  colsToUse <- c("totMerch", "fol", "other")
+  a[, (colsToUse) := lapply(.SD, as.numeric), .SDcols = colsToUse]
+
+  plot.it <- FALSE
+  outInd <- character()
+  browser()
+  colsToUseNew <- paste0(colsToUse, "_New")
+  a[id_ecozone == "4101001_9", (colsToUseNew) := {
+    N <- .N
+    # Find blip, first minimum after that blip, and real maximum
+    # blipInd -- calculate 2nd derivative (using diff(diff())), pad with 2 zeros (b/c diff removes 1 value each time)
+    blipInd <- which.max(abs(c(0, 0, diff(diff(totMerch)))))
+    # firstMin is the lowest value to the right of blipInd -- if it is next index, fine, or if well right, also fine
+    firstMin <- which.min(totMerch[seq(blipInd+1, N - 40)]) + blipInd
+    # realMax is the first maximum after the first minimum after the blipInd
+    realMax <- which.max(totMerch[seq(firstMin+1, N)]) + firstMin
+    firstInflection <- tail(which(0.12 * totMerch[realMax] > totMerch), 1)
+
+    ## ORig
+    ind <- seq(N)
+    # wts <- ifelse( abs(ind - realMax) < 40 , 100, 4)
+    # not100s <- wts != 100
+    # wts[not100s] <- ifelse( abs(ind[not100s] - blipInd) < 30 , 1, 4)
+    # wts[totMerch < 10] <- 10
+    wts <- rep(1L, N)
+    wts[unique(pmin(N, realMax + -10:10))] <- 100
+    wts[ind > (realMax + 40) ] <- 0
+    # Chapman Richards
+    outInd <<- .BY
+    SD <- .SD
+    print(outInd)
+    SD <- copy(.SD)
+    # EGREGIOUS PROBLEMS HERE
+    SD[, override := .I > firstInflection & .I < firstMin]
+    SD[override == TRUE, (colsToUse) := NA]
+    SD[is.na(totMerch),
+       (colsToUse) := list(
+         approx(SD$ageNumeric, SD$totMerch, xout = SD$ageNumeric[is.na(SD$totMerch)])$y,
+         approx(SD$ageNumeric, SD$fol, xout = SD$ageNumeric[is.na(SD$fol)])$y,
+         approx(SD$ageNumeric, SD$other, xout = SD$ageNumeric[is.na(SD$other)])$y
+       )
+    ]
+    browser()
+    #browser(expr = .BY == "803006_12")
+    newVals <- lapply(colsToUse, function(c2u) {
+      Astart <- get(c2u)[realMax]
+      for(ii in 1:2000) {
+        nlsout <- try(nlrob(as.formula(paste(c2u, "~ A * (1 - exp(-k * ageNumeric))^p")),
+                            data = SD, #maxit = 200,
+                            weights = wts,
+                            # control = nls.control(maxiter = 150, tol = 1e-05, minFactor = 1e-8),
+                            start = list(A = Astart, k = runif(1, 0.0001, 0.1), p = runif(1, 1, 60)),
+                            trace = FALSE), silent = TRUE)
+        if (!is(nlsout, "try-error"))
+          break
+      }
+      fittedNew <- fitted(nlsout)
+      diffr <- c(diff(ifelse(get(c2u) > fittedNew, 1, -1)), 0)
+      lastCrossing <- tail(which(diffr != 0), 1)
+      newVals <- ifelse(ind >= lastCrossing, get(c2u), fittedNew)
+      newVals
+    })
+
+    newVals
+  }, by = "id_ecozone"]
+
+  # a[, totMerch := totMerchNew]
+  Cache(m3ToBiomIncOnlyPlots, inc = a, ncol = 5, nrow = 5, filenameBase = "cumPools_smoothed_postChapmanRichards")
+
+  # # Find blip, first minimum after that blip, and real maximum
+  # # blipInd -- calculate 2nd derivative (using diff(diff())), pad with 2 zeros (b/c diff removes 1 value each time)
+  # blipInd <- which.min(c(0, 0, diff(diff(a$totMerch))))
+  # # firstMin is the lowest value to the right of blipInd -- if it is next index, fine, or if well right, also fine
+  # firstMin <- which.min(a$totMerch[seq(blipInd+1, NROW(a))]) + blipInd
+  # # realMax is the first maximum after the first minimum after the blipInd
+  # realMax <- which.max(a$totMerch[seq(firstMin+1, NROW(a))]) + firstMin
+  #
+  # # put weights on the values that are within X of the realMax index
+  # a[, wts := ifelse( abs(.I - realMax) < 30 , 100, 1)]
+  # a[wts != 100, wts := ifelse( abs(.I - blipInd) < 30 , 0, 1)]
+  # a[totMerch < 4, wts := 10]
+  # # Chapman Richards
+  # nlsout <- nlrob(totMerch ~ A * (1 - exp(-k * ageNumeric))^p,
+  #                 data = a, #maxit = 200,
+  #                 weights = wts,
+  #                 # control = nls.control(maxiter = 150, tol = 1e-05, minFactor = 1e-8),
+  #                 start = list(A = a[realMax]$totMerch, k = 0.03, p = 4),
+  #                 trace = TRUE)
+  # a[ , fitted := fitted(nlsout)]
+  # a[, diffr := c(diff(ifelse(totMerch > fitted, 1, -1)), 0)]
+  # lastCrossing <- tail(which(a$diffr != 0), 1)
+  # a[, totMerchNew := ifelse(.I >= lastCrossing, totMerch, fitted)]
+  # a[is.na(fitted), totMerchNew := totMerch]
+  plot(a$totMerch, pch = 19, type = "l", col = "blue")
+  lines(a$fitted, col = "red")
+  lines(a$totMerchNew, col = "green")
+
+
+
+
+
+  a[totMerch, totMerch]
+
+  a[, totMerch := as.numeric(totMerch)]
+  a[totMerch > 0, firstDeriv := c(0, diff(totMerch))]
+  a[totMerch > 0, secondDeriv := c(0, diff(firstDeriv))]
+
+
+  a[, hasBlip := {
+    c(0, diff(totMerch)) < 0 & (.I < which.max(totMerch))
+    }]
+
+
+
+  a[, wtsTotMerch := ifelse(totMerch < 1, 100, 1)]
+  a[wtsTotMerch == 1, wtsTotMerch := ifelse(.I < which.max(totMerch), 5, 1)]
+  # wtsMerch <- c(
+  #   10, rep(5, (which(a$totMerch == max(a$totMerch))[1] - 1)),
+  #   rep(1, (length(a$age) - which(a$totMerch == max(a$totMerch))[1]))
+  # )
+  wtsIncrMerch <- c(
+    10, rep(5, (which(a$totMerch == max(a$totMerch))[1] - 1)),
+    rep(1, (length(a$age) - which(a$totMerch == max(a$totMerch))[1]))
+  )
+  k <- 5
+  a[, incrTotMerch := c(0, diff(a$totMerch))]
+  aa <- copy(a)
+  a <- aa[totMerch > 2]
+  bb <- 1:NROW(a)
+  gamMerch <- gam(
+    a$totMerch ~ s(a$ageNumeric, k = k),# by = bb),
+                  weight = a$wtsTotMerch,
+                  method = "REML")
+  # gamIncrMerch <- gam(a$incrTotMerch ~ s(a$ageNumeric, k = k),
+  #                 weight = wtsIncrMerch,
+  #                 method = "REML")
+  a[, gamTotMerch := fitted(gamMerch)]
+  a[, incrGamMerch := c(0, diff(gamTotMerch))]
+  # gamIncrMerch <- gam(a$incrTotMerch ~ s(a$ageNumeric, k = k),
+  #                     weight = wtsIncrMerch,
+  #                     method = "REML")
+  par(mfrow = c(1,2))
+  plot(a$age, a$totMerch, type = "l")
+  lines(a$age, fitted(gamMerch), col = "blue", type = "l")
+  plot(a$age, a$incrTotMerch, type = "l")
+  lines(a$age, fitted(gamIncrMerch), col = "blue", type = "l")
+  lines(a$age, a$incrGamMerch, col = "red", type = "l")
+
+
+
+
   # From: http://www.sthda.com/english/articles/32-r-graphics-essentials/126-combine-multiple-ggplots-in-one-graph/
 
   # do.call(ggarrange, rawPlots)
-  sim$plotsRawCumulativeBiomass <- do.call(
-    ggarrange,
-    append(
-      rawPlots,
-      list(
-        common.legend = TRUE,
-        legend = "right",
-        labels = names(rawPlots),
-        font.label = list(size = 10, color = "black", face = "bold"),
-        label.x = 0.5
-      )
-    )
-  )
-  # dev.new()
-  annotate_figure(sim$plotsRawCumulativeBiomass,
-                  top = text_grob("Cumulative merch fol other by gc id", face = "bold", size = 14)
-  )
+  # sim$plotsRawCumulativeBiomass <- Cache(do.call,
+  #   ggarrange,
+  #   append(
+  #     rawPlots,
+  #     list(
+  #       common.legend = TRUE,
+  #       legend = "right",
+  #       labels = names(rawPlots),
+  #       font.label = list(size = 7, color = "black", face = "bold"),
+  #       label.x = 0.5
+  #     )
+  #   )
+  # )
+  # # dev.new()
+  # annotate_figure(rawPlots, #sim$plotsRawCumulativeBiomass,
+  #                 top = text_grob("Cumulative merch fol other by gc id", face = "bold", size = 14)
+  # )
   message("User: please inspect the translation of your growth curves via sim$plotsRawCumulativeBiomass.")
 
   # sim$gg
@@ -602,6 +805,7 @@ Init <- function(sim) {
   # message("User: please inspect the halved increments that are used in your simulation via sim$checkInc.")
 
   ## CHOICE 2.on increment curves ###################################################
+  browser()
 
   setkey(cumPoolsRaw, id)
   # half the increments are use at the begining of simulations and half later in
@@ -1057,7 +1261,11 @@ Event2 <- function(sim) {
   # 3  3       Hardwood
   # 4  9 Not Applicable
   if (!suppliedElsewhere("canfi_species", sim)) {
-    sim$canfi_species <- fread(file.path(dPath, "canfi_species.csv")) ## TODO: use prepInputs with url
+    sim$canfi_species <- prepInputs(url = extractURL("canfi_species"),
+                                    fun = "data.table::fread",
+                                    destinationPath = dPath,
+                                    #purge = 7,
+                                    filename2 = "canfi_species.csv")
   }
 
   # ! ----- STOP EDITING ----- ! #

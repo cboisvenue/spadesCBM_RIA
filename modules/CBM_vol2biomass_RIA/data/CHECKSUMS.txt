@@ -5,6 +5,7 @@
 "appendix2_table6.csv" "dfd2d42774c87558" "269729" "xxhash64"
 "appendix2_table7.csv" "7a43ad63892e93d0" "278837" "xxhash64"
 "au_table.csv" "94e820d36e2a20a3" "6117" "xxhash64"
+"canfi_species.csv" "0bbd72f7dfb15c67" "3174" "xxhash64"
 "curve_points_table.csv" "b41538175ccb59b2" "1551663" "xxhash64"
 "ecozone_shp.zip" "9e487cfdf945a241" "1513120" "xxhash64"
 "ecozones.dbf" "4d293b7306909306" "2908" "xxhash64"

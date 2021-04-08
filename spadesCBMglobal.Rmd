@@ -217,10 +217,10 @@ parameters <- list(
   CBM_defaults = list(
     .useCache = TRUE
   ),
-  CBM_dataPrep_SK = list(
+  CBM_dataPrep_RIA = list(
     .useCache = TRUE
   ),
-  CBM_vol2biomass = list(
+  CBM_vol2biomass_RIA = list(
     .useCache = TRUE
   ),
   CBM_core = list(
@@ -246,9 +246,10 @@ setPaths(
   rasterPath = scratchDir
 )
 
-quickPlot::dev.useRSGD(FALSE)
-dev()
-clearPlot()
+quickPlot::dev.useRSGD(TRUE)
+#dev()
+#clearPlot()
+options(spades.moduleCodeChecks = FALSE)
 
 spadesCBMSim <- simInit(times = times,
                         params = parameters,

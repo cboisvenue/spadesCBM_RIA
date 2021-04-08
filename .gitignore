@@ -34,3 +34,7 @@ data/
 *.zip
 
 sampleVRI.csv
+
+*.png
+
+*.pdf

@@ -232,7 +232,7 @@ Init <- function(sim) {
   ## TODO: these aren't required
   omit <- which(objectNamesExpected %in% c("userDistFile", "userGcM3File"))
   available <- available[-omit]
-  browser()
+
   if (any(!available)) {
     stop(
       "The inputObjects for CBM_dataPrep are not all available:",
@@ -242,6 +242,8 @@ Init <- function(sim) {
       "?"
     )
   }
+
+  ### RIA 2020: we created a dt instead of a series of rasters in the .inputObjects.
 #
 #   age <- sim$ageRaster
 #   gcIndex <- sim$gcIndexRaster
@@ -251,20 +253,21 @@ Init <- function(sim) {
 
 
   ## Create the data table of all pixels and all values for the study area----------------
-  level2DT <- data.table(
-    spatial_unit_id = spuRaster[], ages = age[], pixelIndex = 1:ncell(age),
-    growth_curve_component_id = gcIndex[], growth_curve_id = gcIndex[],
-    ecozones = ecoRaster[]
-  )
+  # level2DT <- data.table(
+  #   spatial_unit_id = spuRaster[], ages = age[], pixelIndex = 1:ncell(age),
+  #   growth_curve_component_id = gcIndex[], growth_curve_id = gcIndex[],
+  #   ecozones = ecoRaster[]
+  # )
   # keep only the pixels that have all the information: the pixels that will be simulated
-  level2DT <- sim$allPixelsDT[!is.na(ages) & !is.na(growth_curve_id)]
-  spatialDT <- level2DT
+  spatialDT <- sim$allPixDT[!is.na(ages),]
+
+  #spatialDT <- level2DT
   ## END data.table of all pixels---------------------------------------------------------
 
 
   ## Create the pixel groups: groups of pixels with the same attributes ---------------
   spatialDT <- spatialDT[order(pixelIndex), ]
-  spatialDT$pixelGroup <- LandR::generatePixelGroups(spatialDT,
+  spatialDT$pixelGroup <- Cache(LandR::generatePixelGroups, spatialDT,
     maxPixelGroup = 0,
     columns = c("ages", "spatial_unit_id", "growth_curve_component_id", "ecozones")
   )
@@ -315,7 +318,11 @@ Init <- function(sim) {
   sim$delays <- rep.int(0, sim$nStands)
   sim$minRotations <- rep.int(10, sim$nStands)
   sim$maxRotations <- rep.int(30, sim$nStands)
-  retInt <- merge(sim$level3DT[, ], sim$cbmData@spinupParameters[, c(1, 2)], by = "spatial_unit_id", all.x = TRUE) %>% .[order(pixelGroup)]
+  setkey(sim$level3DT, spatial_unit_id)
+  spinupParameters <- as.data.table(sim$cbmData@spinupParameters[, c(1, 2)])
+  setkey(spinupParameters,spatial_unit_id)
+  retInt <- merge.data.table(sim$level3DT, spinupParameters,
+                  by = "spatial_unit_id", all.x = TRUE) %>% .[order(pixelGroup)]
   sim$returnIntervals <- retInt[, "return_interval"]
   sim$spatialUnits <- sim$level3DT[, spatial_unit_id]
   sim$ecozones <- sim$level3DT$ecozones
@@ -535,10 +542,6 @@ Init <- function(sim) {
 
   dt <- data.table(gcID = gcIDRaster[], age = ageRaster[])
 
-  # assertion -- if there are both NAs or both have data, then the colums with be the same, so sum is either 0 or 2
-  bb <- apply(dt, 1, function(x) sum(is.na(x)))
-  if (!all(names(table(bb)) %in% c("0", "2")))
-    stop("should be only 0 or 2s")
 
   #4. Make the ecozone Raster (ecoRaster)"http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip"
   ecozone <- Cache(prepInputsEcozones, url = "http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip",
@@ -546,9 +549,9 @@ Init <- function(sim) {
                    masterRaster = masterRaster)
 
   #5. Get just BC
-  provs <- getData("GADM", country = "CAN", level = 1)
+  #provs <- getData("GADM", country = "CAN", level = 1)
 
-  bc <- provs[provs$NAME_1 == "British Columbia",]
+  #bc <- provs[provs$NAME_1 == "British Columbia",]
 
   #6. mathc the SPU values to the ecozone values
 
@@ -557,18 +560,20 @@ Init <- function(sim) {
   rows <- match(ecozone[], cbmAdminThisSA$EcoBoundaryID)
   spatialUnitID <- cbmAdminThisSA[rows,"SpatialUnitID"]
 
-  dtRasters <- data.table(growth_curve_component_id = gcIDRaster[], ages = ageRaster[], ecozones = ecozone[], spatial_unit_id = spatialUnitID)
+  dtRasters <- as.data.table(cbind(growth_curve_component_id = gcIDRaster[], ages = ageRaster[], ecozones = ecozone[], spatialUnitID))
 
   # assertion -- if there are both NAs or both have data, then the colums with be the same, so sum is either 0 or 2
-  bbb <- apply(dtRasters, 1, function(x) sum(is.na(x)))
-  if (!all(names(table(bbb)) %in% c("0", "4")))
-    stop("should be only 0 or 4s")
+  if (isTRUE(P(sim)$doAssertions)) {
+    bbb <- apply(dtRasters, 1, function(x) sum(is.na(x)))
+    if (!all(names(table(bbb)) %in% c("0", "4")))
+      stop("should be only 0 or 4s")
+  }
 
   #7. Passed assertion? Make the rasters.
   sim$masterRaster <- masterRaster
 
-  sim$allPixDT <- data.table(cbind(dtRasters, pixelIndex = 1:ncell(gcIDRaster), growth_curve_id = gcIDRaster[]))
-
+  sim$allPixDT <- as.data.table(cbind(dtRasters, pixelIndex = 1:ncell(gcIDRaster), growth_curve_id = gcIDRaster[]))
+  setnames(sim$allPixDT,"SpatialUnitID", "spatial_unit_id")
 
   # 8. Disturbance rasters. The default example (SK) is a list of rasters, one for
   # # each year. But these can be provided by another family of modules in the
