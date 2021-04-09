@@ -35,8 +35,7 @@ cumPoolsCreate <- function(fullSpecies, gcMeta, userGcM3,
       # [1] "Disturbance"       "Growth1"           "DomTurnover"       "BioTurnover"
       # [5] "OvermatureDecline" "Growth2"           "DomDecay"          "SlowDecay"
       # [9] "SlowMixing"
-      id_ecozone <- paste0(id, "_", ecozone)
-      cumBiomList[[counter]] <- as.data.table(cbind(id, age, cumBiom, ecozone, id_ecozone))
+      cumBiomList[[counter]] <- as.data.table(cbind(id, age, cumBiom, ecozone, id_ecozone = meta$id_ecozone))
 
       # cumPools <- rbind(cumPools, cumBiom)
     }

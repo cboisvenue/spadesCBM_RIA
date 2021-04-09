@@ -401,7 +401,11 @@ Init <- function(sim) {
   #names(gcThisSim) <- c("growth_curve_component_id","e")
   setkey(gcThisSim, growth_curve_component_id)
   setkey(riaGcMeta, growth_curve_component_id) #changed from gcMeta to riaGcMeta
-  gcMeta <- merge(riaGcMeta, gcThisSim) #changed from gcMeta to riaGcMeta
+  gcMeta <- merge(riaGcMeta, gcThisSim) #changed from gcMeta to riaGcMeta # adds ecozone
+
+  curveID <- c("id_ecozone")
+
+  set(gcMeta, NULL, curveID, paste0(gcMeta$growth_curve_component_id, 999, gcMeta$ecozones))
 
   ### TODO CHECK - this in not tested
   if (!length(unique(unique(userGcM3$GrowthCurveComponentID)) ==
@@ -491,41 +495,44 @@ Init <- function(sim) {
                                     fol = 0,
                                     other = 0 )
 
-  fiveOf7cols <- fill0s[carbonVars, on = "id_ecozone"]
+  fiveOf7cols <- fill0s[carbonVars, on = curveID]
 
   otherVars <- cumPools[,.(id = unique(id), ecozone = unique(ecozone)), by = .(id_ecozone)]
-  add0s <- fiveOf7cols[otherVars, on = "id_ecozone"]
+  add0s <- fiveOf7cols[otherVars, on = curveID]
   cumPools[,numAge := NULL]
 
   cumPoolsRaw <- rbind(cumPools,add0s)
   set(cumPoolsRaw, NULL, "age", as.numeric(cumPoolsRaw$age))
   setorder(cumPoolsRaw, id_ecozone, age)
 
+  figPath <- file.path(modulePath(sim), currentModule(sim), "figures")
   # plotting and save the plots of the raw-translation in the sim$
-  sim$plotsRawCumulativeBiomass <- Cache(m3ToBiomIncOnlyPlots, inc = cumPoolsRaw, ncol = 5, nrow = 5)
+  sim$plotsRawCumulativeBiomass <- Cache(m3ToBiomPlots, inc = cumPoolsRaw,
+                                         path = figPath,
+                                         ncol = 5, nrow = 5)
 
   # Fixing of non-smooth curves
   cumPoolsClean <- Cache(cumPoolsSmooth, cumPoolsRaw)
 
   # a[, totMerch := totMerchNew]
-  figs <- Cache(m3ToBiomIncOnlyPlots, inc = cumPoolsClean,
+  figs <- Cache(m3ToBiomPlots, inc = cumPoolsClean,
+                path = figPath,
                 ncol = 5, nrow = 5, filenameBase = "cumPools_smoothed_postChapmanRichards")
 
   set(cumPoolsClean, NULL, colNames, NULL)
-  browser()
   colNamesNew <- grep(cbmAboveGroundPoolColNames, colnames(cumPoolsClean), value = TRUE)
-  setnames(cumPoolsClean, old = colNamesNew, new = cols)
+  setnames(cumPoolsClean, old = colNamesNew, new = colNames)
 
 
   # Calculating Increments
-
-  newCols <- c("lMerch", "lFol", "lOther")
-
-  lagPools <- cumPoolsRaw[, (newCols) := lapply(.SD, data.table::shift), .SDcols = cols, by = "id"]
-  lagPools[is.na(lagPools)] <- 0
   incCols <- c("incMerch", "incFol", "incOther")
-  incPools <- lagPools[, (incCols) := list(totMerch - lMerch, fol - lFol, other - lOther)][, .(id, age, incMerch, incFol, incOther)]
-  rawIncPlots <- m3ToBiomIncOnlyPlots(inc = incPools)
+  cumPoolsClean[, (incCols) := lapply(.SD, function(x) c(NA, diff(x))), .SDcols = colNames, by = curveID]
+  colsToUse33 <- c("age", curveID, incCols)
+  rawIncPlots <- Cache(m3ToBiomPlots, inc = cumPoolsClean[, ..colsToUse33],
+                       path = figPath,
+                       filenameBase = "Increments")
+
+
 
 
   # From: http://www.sthda.com/english/articles/32-r-graphics-essentials/126-combine-multiple-ggplots-in-one-graph/
@@ -548,7 +555,8 @@ Init <- function(sim) {
   # annotate_figure(rawPlots, #sim$plotsRawCumulativeBiomass,
   #                 top = text_grob("Cumulative merch fol other by gc id", face = "bold", size = 14)
   # )
-  message("User: please inspect the translation of your growth curves via sim$plotsRawCumulativeBiomass.")
+  message(crayon::red("User: please inspect figures of the raw and smoothed translation of your growth curves in: ",
+          figPath))
 
   # sim$gg
   # end plotting direct translations----------------------------------------
@@ -650,7 +658,7 @@ Init <- function(sim) {
   #   swmerch / 2, swfol / 2,
   #   swother / 2, hwmerch / 2, hwfol / 2, hwother / 2
   # )] %>% .[order(id, age), ]
-  # incPlots <- m3ToBiomIncOnlyPlots(inc = increments)
+  # incPlots <- m3ToBiomPlots(inc = increments)
   #
   # # From: http://www.sthda.com/english/articles/32-r-graphics-essentials/126-combine-multiple-ggplots-in-one-graph/
   # # do.call(ggarrange, rawPlots)
@@ -674,8 +682,6 @@ Init <- function(sim) {
   # message("User: please inspect the halved increments that are used in your simulation via sim$checkInc.")
 
   ## CHOICE 2.on increment curves ###################################################
-  browser()
-
   # setkey(cumPoolsRaw, id)
   # # half the increments are use at the begining of simulations and half later in
   # # the simulation. The order is:
@@ -690,7 +696,7 @@ Init <- function(sim) {
   # lagPools[is.na(lagPools)] <- 0
   # incCols <- c("incMerch", "incFol", "incOther")
   # incPools <- lagPools[, (incCols) := list(totMerch - lMerch, fol - lFol, other - lOther)][, .(id, age, incMerch, incFol, incOther)]
-  # rawIncPlots <- m3ToBiomIncOnlyPlots(inc = incPools)
+  # rawIncPlots <- m3ToBiomPlots(inc = incPools)
   # plotsRawInc <- do.call(
   #   ggarrange,
   #   append(
@@ -766,7 +772,7 @@ Init <- function(sim) {
   #
   # smoothIncPools <- as.data.table(cbind(incPools$id, sIncMerch, sIncFol[, 2], sIncOther[, 2]))
   # names(smoothIncPools) <- names(incPools)
-  # smoothIncPlots <- m3ToBiomIncOnlyPlots(inc = smoothIncPools )
+  # smoothIncPlots <- m3ToBiomPlots(inc = smoothIncPools )
   # # plot the smooth increments pools - any better?
   # plotsSmoothIncs <- do.call(
   #   ggarrange,
@@ -787,10 +793,13 @@ Init <- function(sim) {
   # )
 
 
-  sim$smoothIncPools <- smoothIncPools
-  sim$plotsSmoothIncs <- plotsSmoothIncs
+  # sim$smoothIncPools <- smoothIncPools
+  # sim$plotsSmoothIncs <- plotsSmoothIncs
 
-  forestType <- gcMeta[, .(id = growth_curve_component_id, forest_type_id)]
+  sim$cumPoolsClean <- cumPoolsClean # TODO: add to metadata
+
+  colsToUseForestType <- c("growth_curve_component_id", "forest_type_id", curveID)
+  forestType <- gcMeta[, .(forest_type_id, id_ecozone)]
   #       #FYI:
   #       # cbmTables$forest_type
   #       # id           name
@@ -798,12 +807,14 @@ Init <- function(sim) {
   #       # 2  2      Mixedwood
   #       # 3  3       Hardwood
   #       # 4  9 Not Applicable
-  setkey(forestType, id)
-  smoothIncPools <- merge(smoothIncPools, forestType, by = "id")
+
+  setkeyv(forestType, curveID)
+  cumPoolsClean <- merge(cumPoolsClean, forestType, by = curveID)
   swCols <- c("swmerch", "swfol", "swother")
   hwCols <- c("hwmerch", "hwfol", "hwother")
 
-  totalIncrementsSmooth <- smoothIncPools[forest_type_id == 1, (swCols) := list((incMerch), (incFol), (incOther))][forest_type_id == 3, (hwCols) := list((incMerch), (incFol), (incOther))]
+  totalIncrementsSmooth <- cumPoolsClean[forest_type_id == 1, (swCols) := list((incMerch), (incFol), (incOther))]
+  totalIncrementsSmooth <- totalIncrementsSmooth[forest_type_id == 3, (hwCols) := list((incMerch), (incFol), (incOther))]
   totalIncrementsSmooth[is.na(totalIncrementsSmooth)] <- 0
   outCols <- c("incMerch", "incFol", "incOther", "forest_type_id")
   incCols <- c(swCols, hwCols)
@@ -811,41 +822,26 @@ Init <- function(sim) {
   increments <- totalIncrementsSmooth[, (incCols) := list(
     swmerch / 2, swfol / 2,
     swother / 2, hwmerch / 2, hwfol / 2, hwother / 2
-  )] %>% .[order(id, age), ]
-  ########finish here ##################
+  )]
+  setorderv(increments, c(curveID, "age"))
+  ## TODO : clean-up this - have to remove the ecozone and id and make
+  ## everything numeric to be able to hash the matrix. This will create problems
+  ## when we relate the id to the id from vol curves since this id is a
+  ## combination of ecozone and id with no space (to be able to make it
+  ## numeric).
+  incColKeep <- c("id", "age", incCols)
+  set(increments, NULL, "id", as.numeric(increments$id_ecozone))
+  set(increments, NULL, setdiff(colnames(increments), incColKeep), NULL)
+  setcolorder(increments, incColKeep)
 
-  ## these are the fixes needed to make the smoothed increments curves usable
-  ## for simulation in the default example provided.
-  hardFixes <- readline(prompt = "Use the default example for this simulation? (y/N): ")
-  if (toupper(hardFixes) == "Y") {
-    ### Danger hard coded fixes to see if the age=0 issue ("stuck in spinup")
-    ### Using the smoothed increment
-    ## replace id 34 with 35, and 55 with 56.
-    increments[id == 34, 3:8] <- increments[id == 35, 3:8]
-    increments[id == 55, 3:8] <- increments[id == 56, 3:8]
+  # Assertions
+  if (isTRUE(P(sim)$doAssertions)) {
+    # All should have same min age
+    if (length(unique(increments[, min(age), by = "id"]$V1)) != 1)
+      stop("All ages should start at the same age for each curveID")
+    if (length(unique(increments[, max(age), by = "id"]$V1)) != 1)
+      stop("All ages should end at the same age for each curveID")
   }
-  incPlots <- m3ToBiomIncOnlyPlots(inc = increments)
-
-  # From: http://www.sthda.com/english/articles/32-r-graphics-essentials/126-combine-multiple-ggplots-in-one-graph/
-  # do.call(ggarrange, rawPlots)
-  sim$checkInc <- do.call(
-    ggarrange,
-    append(
-      incPlots,
-      list(
-        common.legend = TRUE,
-        legend = "right",
-        labels = names(rawPlots),
-        font.label = list(size = 10, color = "black", face = "bold"),
-        label.x = 0.5
-      )
-    )
-  )
-  # dev.new()
-  annotate_figure(sim$checkInc,
-    top = text_grob("Halved increments for simulations merch fol other by gc id", face = "bold", size = 14)
-  )
-
 
   sim$growth_increments <- as.matrix(increments)
   # END process growth curves -------------------------------------------------------------------------------

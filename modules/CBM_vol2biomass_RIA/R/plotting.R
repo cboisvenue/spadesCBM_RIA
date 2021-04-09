@@ -1,7 +1,8 @@
 #' Plot all columns that are not id_col
 #'
-m3ToBiomIncOnlyPlots <- function(inc=increments, id_col = "id_ecozone", nrow = 5, ncol = 5,
-                                 filenameBase = "rawCumBiomass_"){
+#' @importFrom reproducible checkPath
+m3ToBiomPlots <- function(inc=increments, id_col = "id_ecozone", nrow = 5, ncol = 5,
+                                 filenameBase = "rawCumBiomass_", path = "figures"){
   gInc <- copy(inc)
   colsOut <- c("id", "ecozone")
   gInc[ ,(colsOut) := list(NULL,NULL)]
@@ -21,10 +22,11 @@ m3ToBiomIncOnlyPlots <- function(inc=increments, id_col = "id_ecozone", nrow = 5
   #   -- not used -- so a bit wasteful
   numPages <- ceiling(length(idSim) / (nrow * ncol))
 
+  path <- checkPath(path, create = TRUE)
   for (i in seq(numPages)) {
     plotsByPage <- plots + facet_wrap_paginate(facets = id_col,
                                                page = i, nrow = nrow, ncol = ncol)
-    ggsave(paste0(filenameBase,i,".png"), plotsByPage)
+    ggsave(file.path(path, paste0(filenameBase,i,".png")), plotsByPage)
   }
   return(plots)
 }

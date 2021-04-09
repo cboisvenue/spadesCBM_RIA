@@ -250,7 +250,7 @@ quickPlot::dev.useRSGD(TRUE)
 #dev()
 #clearPlot()
 options(spades.moduleCodeChecks = FALSE,
-        reproducible.useMemoise = TRUE)
+        reproducible.useMemoise = FALSE)
 
 spadesCBMSim <- simInit(times = times,
                         params = parameters,
