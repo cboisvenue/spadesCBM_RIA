@@ -1,15 +1,17 @@
+#' Plot all columns that are not id_col
+#'
 m3ToBiomIncOnlyPlots <- function(inc=increments, id_col = "id_ecozone", nrow = 5, ncol = 5,
                                  filenameBase = "rawCumBiomass_"){
   gInc <- copy(inc)
-  colsOut <- c("age","id", "ecozone")
-  gInc[ ,(colsOut) := list(NULL,NULL,NULL)]
- # gInc[,c(id_col, "ageNumeric", "age")]
-  gc <- data.table::melt(gInc, id.vars = c(id_col, "ageNumeric"))
+  colsOut <- c("id", "ecozone")
+  gInc[ ,(colsOut) := list(NULL,NULL)]
+ # gInc[,c(id_col, "age", "age")]
+  gc <- data.table::melt(gInc, id.vars = c(id_col, "age"))
   set(gc, NULL, "valueNumeric", as.numeric(gc$value))
 
   idSim <- unique(gc[,..id_col])[[1]]
   plots <- gc %>% # [id_ecozone %in% idSim[1:20]] %>%
-    ggplot( aes(x=ageNumeric, y=valueNumeric, group=variable, color=variable)) +
+    ggplot( aes(x=age, y=valueNumeric, group=variable, color=variable)) +
     geom_line() +
     facet_wrap(facets = id_col) +
     labs(title= "Cumulative merch fol other by gc id") +

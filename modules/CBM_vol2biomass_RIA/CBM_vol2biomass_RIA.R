@@ -430,6 +430,10 @@ Init <- function(sim) {
 
   cumPools <- Cache(cumPoolsCreate, fullSpecies, gcMeta, userGcM3,
                              stable3, stable4, stable5, stable6, stable7, thisAdmin)
+
+  cbmAboveGroundPoolColNames <- "totMerch|fol|other"
+  colNames <- grep(cbmAboveGroundPoolColNames, colnames(cumPools), value = TRUE)
+
   # {
   #   # matching on species name
   #   speciesMeta <- gcMeta[species == fullSpecies[i], ]
@@ -494,169 +498,34 @@ Init <- function(sim) {
   cumPools[,numAge := NULL]
 
   cumPoolsRaw <- rbind(cumPools,add0s)
-  set(cumPoolsRaw, NULL, "ageNumeric", as.numeric(cumPoolsRaw$age))
-  setorder(cumPoolsRaw, id_ecozone, ageNumeric)
+  set(cumPoolsRaw, NULL, "age", as.numeric(cumPoolsRaw$age))
+  setorder(cumPoolsRaw, id_ecozone, age)
 
   # plotting and save the plots of the raw-translation in the sim$
   sim$plotsRawCumulativeBiomass <- Cache(m3ToBiomIncOnlyPlots, inc = cumPoolsRaw, ncol = 5, nrow = 5)
 
   # Fixing of non-smooth curves
-  a <- copy(cumPoolsRaw)
-  # a <- cumPoolsRaw[id_ecozone == "1603008_12"]
-  #a <- cumPoolsRaw[id_ecozone == "1601001_12"]
-  # a <- cumPoolsRaw[id_ecozone == "1601000_12"]
-  # a <- cumPoolsRaw[id_ecozone == "4103001_9"]
-  # a <- cumPoolsRaw[id_ecozone == "801005_12"]
-  browser()
-  colsToUse <- c("totMerch", "fol", "other")
-  a[, (colsToUse) := lapply(.SD, as.numeric), .SDcols = colsToUse]
-
-  plot.it <- FALSE
-  outInd <- character()
-  browser()
-  colsToUseNew <- paste0(colsToUse, "_New")
-  a[id_ecozone == "4101001_9", (colsToUseNew) := {
-    N <- .N
-    # Find blip, first minimum after that blip, and real maximum
-    # blipInd -- calculate 2nd derivative (using diff(diff())), pad with 2 zeros (b/c diff removes 1 value each time)
-    blipInd <- which.max(abs(c(0, 0, diff(diff(totMerch)))))
-    # firstMin is the lowest value to the right of blipInd -- if it is next index, fine, or if well right, also fine
-    firstMin <- which.min(totMerch[seq(blipInd+1, N - 40)]) + blipInd
-    # realMax is the first maximum after the first minimum after the blipInd
-    realMax <- which.max(totMerch[seq(firstMin+1, N)]) + firstMin
-    firstInflection <- tail(which(0.12 * totMerch[realMax] > totMerch), 1)
-
-    ## ORig
-    ind <- seq(N)
-    # wts <- ifelse( abs(ind - realMax) < 40 , 100, 4)
-    # not100s <- wts != 100
-    # wts[not100s] <- ifelse( abs(ind[not100s] - blipInd) < 30 , 1, 4)
-    # wts[totMerch < 10] <- 10
-    wts <- rep(1L, N)
-    wts[unique(pmin(N, realMax + -10:10))] <- 100
-    wts[ind > (realMax + 40) ] <- 0
-    # Chapman Richards
-    outInd <<- .BY
-    SD <- .SD
-    print(outInd)
-    SD <- copy(.SD)
-    # EGREGIOUS PROBLEMS HERE
-    SD[, override := .I > firstInflection & .I < firstMin]
-    SD[override == TRUE, (colsToUse) := NA]
-    SD[is.na(totMerch),
-       (colsToUse) := list(
-         approx(SD$ageNumeric, SD$totMerch, xout = SD$ageNumeric[is.na(SD$totMerch)])$y,
-         approx(SD$ageNumeric, SD$fol, xout = SD$ageNumeric[is.na(SD$fol)])$y,
-         approx(SD$ageNumeric, SD$other, xout = SD$ageNumeric[is.na(SD$other)])$y
-       )
-    ]
-    browser()
-    #browser(expr = .BY == "803006_12")
-    newVals <- lapply(colsToUse, function(c2u) {
-      Astart <- get(c2u)[realMax]
-      for(ii in 1:2000) {
-        nlsout <- try(nlrob(as.formula(paste(c2u, "~ A * (1 - exp(-k * ageNumeric))^p")),
-                            data = SD, #maxit = 200,
-                            weights = wts,
-                            # control = nls.control(maxiter = 150, tol = 1e-05, minFactor = 1e-8),
-                            start = list(A = Astart, k = runif(1, 0.0001, 0.1), p = runif(1, 1, 60)),
-                            trace = FALSE), silent = TRUE)
-        if (!is(nlsout, "try-error"))
-          break
-      }
-      fittedNew <- fitted(nlsout)
-      diffr <- c(diff(ifelse(get(c2u) > fittedNew, 1, -1)), 0)
-      lastCrossing <- tail(which(diffr != 0), 1)
-      newVals <- ifelse(ind >= lastCrossing, get(c2u), fittedNew)
-      newVals
-    })
-
-    newVals
-  }, by = "id_ecozone"]
+  cumPoolsClean <- Cache(cumPoolsSmooth, cumPoolsRaw)
 
   # a[, totMerch := totMerchNew]
-  Cache(m3ToBiomIncOnlyPlots, inc = a, ncol = 5, nrow = 5, filenameBase = "cumPools_smoothed_postChapmanRichards")
+  figs <- Cache(m3ToBiomIncOnlyPlots, inc = cumPoolsClean,
+                ncol = 5, nrow = 5, filenameBase = "cumPools_smoothed_postChapmanRichards")
 
-  # # Find blip, first minimum after that blip, and real maximum
-  # # blipInd -- calculate 2nd derivative (using diff(diff())), pad with 2 zeros (b/c diff removes 1 value each time)
-  # blipInd <- which.min(c(0, 0, diff(diff(a$totMerch))))
-  # # firstMin is the lowest value to the right of blipInd -- if it is next index, fine, or if well right, also fine
-  # firstMin <- which.min(a$totMerch[seq(blipInd+1, NROW(a))]) + blipInd
-  # # realMax is the first maximum after the first minimum after the blipInd
-  # realMax <- which.max(a$totMerch[seq(firstMin+1, NROW(a))]) + firstMin
-  #
-  # # put weights on the values that are within X of the realMax index
-  # a[, wts := ifelse( abs(.I - realMax) < 30 , 100, 1)]
-  # a[wts != 100, wts := ifelse( abs(.I - blipInd) < 30 , 0, 1)]
-  # a[totMerch < 4, wts := 10]
-  # # Chapman Richards
-  # nlsout <- nlrob(totMerch ~ A * (1 - exp(-k * ageNumeric))^p,
-  #                 data = a, #maxit = 200,
-  #                 weights = wts,
-  #                 # control = nls.control(maxiter = 150, tol = 1e-05, minFactor = 1e-8),
-  #                 start = list(A = a[realMax]$totMerch, k = 0.03, p = 4),
-  #                 trace = TRUE)
-  # a[ , fitted := fitted(nlsout)]
-  # a[, diffr := c(diff(ifelse(totMerch > fitted, 1, -1)), 0)]
-  # lastCrossing <- tail(which(a$diffr != 0), 1)
-  # a[, totMerchNew := ifelse(.I >= lastCrossing, totMerch, fitted)]
-  # a[is.na(fitted), totMerchNew := totMerch]
-  plot(a$totMerch, pch = 19, type = "l", col = "blue")
-  lines(a$fitted, col = "red")
-  lines(a$totMerchNew, col = "green")
+  set(cumPoolsClean, NULL, colNames, NULL)
+  browser()
+  colNamesNew <- grep(cbmAboveGroundPoolColNames, colnames(cumPoolsClean), value = TRUE)
+  setnames(cumPoolsClean, old = colNamesNew, new = cols)
 
 
+  # Calculating Increments
 
+  newCols <- c("lMerch", "lFol", "lOther")
 
-
-  a[totMerch, totMerch]
-
-  a[, totMerch := as.numeric(totMerch)]
-  a[totMerch > 0, firstDeriv := c(0, diff(totMerch))]
-  a[totMerch > 0, secondDeriv := c(0, diff(firstDeriv))]
-
-
-  a[, hasBlip := {
-    c(0, diff(totMerch)) < 0 & (.I < which.max(totMerch))
-    }]
-
-
-
-  a[, wtsTotMerch := ifelse(totMerch < 1, 100, 1)]
-  a[wtsTotMerch == 1, wtsTotMerch := ifelse(.I < which.max(totMerch), 5, 1)]
-  # wtsMerch <- c(
-  #   10, rep(5, (which(a$totMerch == max(a$totMerch))[1] - 1)),
-  #   rep(1, (length(a$age) - which(a$totMerch == max(a$totMerch))[1]))
-  # )
-  wtsIncrMerch <- c(
-    10, rep(5, (which(a$totMerch == max(a$totMerch))[1] - 1)),
-    rep(1, (length(a$age) - which(a$totMerch == max(a$totMerch))[1]))
-  )
-  k <- 5
-  a[, incrTotMerch := c(0, diff(a$totMerch))]
-  aa <- copy(a)
-  a <- aa[totMerch > 2]
-  bb <- 1:NROW(a)
-  gamMerch <- gam(
-    a$totMerch ~ s(a$ageNumeric, k = k),# by = bb),
-                  weight = a$wtsTotMerch,
-                  method = "REML")
-  # gamIncrMerch <- gam(a$incrTotMerch ~ s(a$ageNumeric, k = k),
-  #                 weight = wtsIncrMerch,
-  #                 method = "REML")
-  a[, gamTotMerch := fitted(gamMerch)]
-  a[, incrGamMerch := c(0, diff(gamTotMerch))]
-  # gamIncrMerch <- gam(a$incrTotMerch ~ s(a$ageNumeric, k = k),
-  #                     weight = wtsIncrMerch,
-  #                     method = "REML")
-  par(mfrow = c(1,2))
-  plot(a$age, a$totMerch, type = "l")
-  lines(a$age, fitted(gamMerch), col = "blue", type = "l")
-  plot(a$age, a$incrTotMerch, type = "l")
-  lines(a$age, fitted(gamIncrMerch), col = "blue", type = "l")
-  lines(a$age, a$incrGamMerch, col = "red", type = "l")
-
-
+  lagPools <- cumPoolsRaw[, (newCols) := lapply(.SD, data.table::shift), .SDcols = cols, by = "id"]
+  lagPools[is.na(lagPools)] <- 0
+  incCols <- c("incMerch", "incFol", "incOther")
+  incPools <- lagPools[, (incCols) := list(totMerch - lMerch, fol - lFol, other - lOther)][, .(id, age, incMerch, incFol, incOther)]
+  rawIncPlots <- m3ToBiomIncOnlyPlots(inc = incPools)
 
 
   # From: http://www.sthda.com/english/articles/32-r-graphics-essentials/126-combine-multiple-ggplots-in-one-graph/
@@ -807,115 +676,115 @@ Init <- function(sim) {
   ## CHOICE 2.on increment curves ###################################################
   browser()
 
-  setkey(cumPoolsRaw, id)
-  # half the increments are use at the begining of simulations and half later in
-  # the simulation. The order is:
-  # names(sim$allProcesses)
-  # [1] "Disturbance"       "Growth1"           "DomTurnover"
-  # [4] "BioTurnover"       "OvermatureDecline" "Growth2"
-  # [7] "DomDecay"          "SlowDecay"         "SlowMixing"
-  # here, calculating the increment, then dividing it in 2.
-  cols <- c("totMerch", "fol", "other")
-  newCols <- c("lMerch", "lFol", "lOther")
-  lagPools <- cumPoolsRaw[, (newCols) := lapply(.SD, data.table::shift), .SDcols = cols, by = "id"]
-  lagPools[is.na(lagPools)] <- 0
-  incCols <- c("incMerch", "incFol", "incOther")
-  incPools <- lagPools[, (incCols) := list(totMerch - lMerch, fol - lFol, other - lOther)][, .(id, age, incMerch, incFol, incOther)]
-  rawIncPlots <- m3ToBiomIncOnlyPlots(inc = incPools)
-  plotsRawInc <- do.call(
-    ggarrange,
-    append(
-      rawIncPlots,
-      list(
-        common.legend = TRUE,
-        legend = "right",
-        labels = names(rawIncPlots),
-        font.label = list(size = 10, color = "black", face = "bold"),
-        label.x = 0.5
-      )
-    )
-  )
-  # dev.new()
-  annotate_figure(plotsRawInc,
-                  top = text_grob("RawIncrements merch fol other by gc id", face = "bold", size = 14)
-  )
-  sim$plotsRawInc <- plotsRawInc
-  ## calculate the GAMs on increments
-  # created smooth cumulative curves using GAMs
-  sIncMerch <- NULL
-  sIncFol <- NULL
-  sIncOther <- NULL
-
-  ## TODO: module not loading the package mgcv even though it is in reqdPkgs
-  library(mgcv)
-
-
-  id <- unique(incPools$id)
-  for (val in id) {
-    # per column
-    # incMerch
-    oneSet <- incPools[id == val, ]
-    wts <- c(
-      100, rep(2, (which(oneSet$incMerch == max(oneSet$incMerch)) - 1)),
-      rep(1, (length(oneSet$age) - which(oneSet$incMerch == max(oneSet$incMerch))))
-    )
-    k <- 20
-    gamMerch <- gam(oneSet$incMerch ~ s(oneSet$age, k = k), weight = wts, method = "REML")
-    df1 <- as.data.frame(cbind(age = oneSet$age, incMerch = gamMerch$fitted.values))
-    # User: this would be a check of the estimates from Boudewyn with the fitted GAM values
-    # ggplot(oneSet, aes(age, incMerch)) + geom_point() +
-    #  geom_line(data=df1,aes(color="Fitted GAM cumulative incMerch"))
-    sIncMerch <- rbind(sIncMerch, df1)
-    # incFol
-    # oneSet <- cbind(cumPoolsRaw[id==id[i],.(age,incFol)])
-    wts <- c(
-      100, rep(2, (which(oneSet$incFol == max(oneSet$incFol)) - 1)),
-      rep(1, (length(oneSet$age) - which(oneSet$incFol == max(oneSet$incFol))))
-    )
-    k <- 20
-    gamMerch <- gam(oneSet$incFol ~ s(oneSet$age, k = k), weight = wts, method = "REML")
-    df2 <- as.data.frame(cbind(age = oneSet$age, incFol = gamMerch$fitted.values))
-    # User: this would be a check of the estimates from Boudewyn with the fitted GAM values
-    # ggplot(oneSet, aes(age, incFol)) + geom_point() +
-    #   geom_line(data=df2,aes(color="Fitted GAM cumulative incFol"))
-    sIncFol <- rbind(sIncFol, df2)
-    # other
-    # oneSet <- cbind(cumPoolsRaw[id==id[i],.(age,incOther)])
-    wts <- c(
-      100, rep(2, (which(oneSet$incOther == max(oneSet$incOther)) - 1)),
-      rep(1, (length(oneSet$age) - which(oneSet$incOther == max(oneSet$incOther))))
-    )
-    k <- 20
-    gamMerch <- gam(oneSet$incOther ~ s(oneSet$age, k = k), weight = wts, method = "REML")
-    df3 <- as.data.frame(cbind(age = oneSet$age, incOther = gamMerch$fitted.values))
-    # User: this would be a check of the estimates from Boudewyn with the fitted GAM values
-    # ggplot(oneSet, aes(age, incOther)) + geom_point() +
-    #   geom_line(data=df3,aes(color="Fitted GAM cumulative incOther"))
-    sIncOther <- rbind(sIncOther, df3)
-  }
-  # putting it all together
-
-  smoothIncPools <- as.data.table(cbind(incPools$id, sIncMerch, sIncFol[, 2], sIncOther[, 2]))
-  names(smoothIncPools) <- names(incPools)
-  smoothIncPlots <- m3ToBiomIncOnlyPlots(inc = smoothIncPools )
-  # plot the smooth increments pools - any better?
-  plotsSmoothIncs <- do.call(
-    ggarrange,
-    append(
-      smoothIncPlots,
-      list(
-        common.legend = TRUE,
-        legend = "right",
-        labels = names(smoothIncPlots),
-        font.label = list(size = 10, color = "black", face = "bold"),
-        label.x = 0.5
-      )
-    )
-  )
-  # dev.new()
-  annotate_figure(plotsSmoothIncs,
-                  top = text_grob("RawIncrements merch fol other by gc id", face = "bold", size = 14)
-  )
+  # setkey(cumPoolsRaw, id)
+  # # half the increments are use at the begining of simulations and half later in
+  # # the simulation. The order is:
+  # # names(sim$allProcesses)
+  # # [1] "Disturbance"       "Growth1"           "DomTurnover"
+  # # [4] "BioTurnover"       "OvermatureDecline" "Growth2"
+  # # [7] "DomDecay"          "SlowDecay"         "SlowMixing"
+  # # here, calculating the increment, then dividing it in 2.
+  # cols <- c("totMerch", "fol", "other")
+  # newCols <- c("lMerch", "lFol", "lOther")
+  # lagPools <- cumPoolsRaw[, (newCols) := lapply(.SD, data.table::shift), .SDcols = cols, by = "id"]
+  # lagPools[is.na(lagPools)] <- 0
+  # incCols <- c("incMerch", "incFol", "incOther")
+  # incPools <- lagPools[, (incCols) := list(totMerch - lMerch, fol - lFol, other - lOther)][, .(id, age, incMerch, incFol, incOther)]
+  # rawIncPlots <- m3ToBiomIncOnlyPlots(inc = incPools)
+  # plotsRawInc <- do.call(
+  #   ggarrange,
+  #   append(
+  #     rawIncPlots,
+  #     list(
+  #       common.legend = TRUE,
+  #       legend = "right",
+  #       labels = names(rawIncPlots),
+  #       font.label = list(size = 10, color = "black", face = "bold"),
+  #       label.x = 0.5
+  #     )
+  #   )
+  # )
+  # # dev.new()
+  # annotate_figure(plotsRawInc,
+  #                 top = text_grob("RawIncrements merch fol other by gc id", face = "bold", size = 14)
+  # )
+  # sim$plotsRawInc <- plotsRawInc
+  # ## calculate the GAMs on increments
+  # # created smooth cumulative curves using GAMs
+  # sIncMerch <- NULL
+  # sIncFol <- NULL
+  # sIncOther <- NULL
+  #
+  # ## TODO: module not loading the package mgcv even though it is in reqdPkgs
+  # library(mgcv)
+  #
+  #
+  # id <- unique(incPools$id)
+  # for (val in id) {
+  #   # per column
+  #   # incMerch
+  #   oneSet <- incPools[id == val, ]
+  #   wts <- c(
+  #     100, rep(2, (which(oneSet$incMerch == max(oneSet$incMerch)) - 1)),
+  #     rep(1, (length(oneSet$age) - which(oneSet$incMerch == max(oneSet$incMerch))))
+  #   )
+  #   k <- 20
+  #   gamMerch <- gam(oneSet$incMerch ~ s(oneSet$age, k = k), weight = wts, method = "REML")
+  #   df1 <- as.data.frame(cbind(age = oneSet$age, incMerch = gamMerch$fitted.values))
+  #   # User: this would be a check of the estimates from Boudewyn with the fitted GAM values
+  #   # ggplot(oneSet, aes(age, incMerch)) + geom_point() +
+  #   #  geom_line(data=df1,aes(color="Fitted GAM cumulative incMerch"))
+  #   sIncMerch <- rbind(sIncMerch, df1)
+  #   # incFol
+  #   # oneSet <- cbind(cumPoolsRaw[id==id[i],.(age,incFol)])
+  #   wts <- c(
+  #     100, rep(2, (which(oneSet$incFol == max(oneSet$incFol)) - 1)),
+  #     rep(1, (length(oneSet$age) - which(oneSet$incFol == max(oneSet$incFol))))
+  #   )
+  #   k <- 20
+  #   gamMerch <- gam(oneSet$incFol ~ s(oneSet$age, k = k), weight = wts, method = "REML")
+  #   df2 <- as.data.frame(cbind(age = oneSet$age, incFol = gamMerch$fitted.values))
+  #   # User: this would be a check of the estimates from Boudewyn with the fitted GAM values
+  #   # ggplot(oneSet, aes(age, incFol)) + geom_point() +
+  #   #   geom_line(data=df2,aes(color="Fitted GAM cumulative incFol"))
+  #   sIncFol <- rbind(sIncFol, df2)
+  #   # other
+  #   # oneSet <- cbind(cumPoolsRaw[id==id[i],.(age,incOther)])
+  #   wts <- c(
+  #     100, rep(2, (which(oneSet$incOther == max(oneSet$incOther)) - 1)),
+  #     rep(1, (length(oneSet$age) - which(oneSet$incOther == max(oneSet$incOther))))
+  #   )
+  #   k <- 20
+  #   gamMerch <- gam(oneSet$incOther ~ s(oneSet$age, k = k), weight = wts, method = "REML")
+  #   df3 <- as.data.frame(cbind(age = oneSet$age, incOther = gamMerch$fitted.values))
+  #   # User: this would be a check of the estimates from Boudewyn with the fitted GAM values
+  #   # ggplot(oneSet, aes(age, incOther)) + geom_point() +
+  #   #   geom_line(data=df3,aes(color="Fitted GAM cumulative incOther"))
+  #   sIncOther <- rbind(sIncOther, df3)
+  # }
+  # # putting it all together
+  #
+  # smoothIncPools <- as.data.table(cbind(incPools$id, sIncMerch, sIncFol[, 2], sIncOther[, 2]))
+  # names(smoothIncPools) <- names(incPools)
+  # smoothIncPlots <- m3ToBiomIncOnlyPlots(inc = smoothIncPools )
+  # # plot the smooth increments pools - any better?
+  # plotsSmoothIncs <- do.call(
+  #   ggarrange,
+  #   append(
+  #     smoothIncPlots,
+  #     list(
+  #       common.legend = TRUE,
+  #       legend = "right",
+  #       labels = names(smoothIncPlots),
+  #       font.label = list(size = 10, color = "black", face = "bold"),
+  #       label.x = 0.5
+  #     )
+  #   )
+  # )
+  # # dev.new()
+  # annotate_figure(plotsSmoothIncs,
+  #                 top = text_grob("RawIncrements merch fol other by gc id", face = "bold", size = 14)
+  # )
 
 
   sim$smoothIncPools <- smoothIncPools

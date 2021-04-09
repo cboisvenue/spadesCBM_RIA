@@ -249,7 +249,8 @@ setPaths(
 quickPlot::dev.useRSGD(TRUE)
 #dev()
 #clearPlot()
-options(spades.moduleCodeChecks = FALSE)
+options(spades.moduleCodeChecks = FALSE,
+        reproducible.useMemoise = TRUE)
 
 spadesCBMSim <- simInit(times = times,
                         params = parameters,
