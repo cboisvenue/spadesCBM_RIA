@@ -2,11 +2,13 @@
 #'
 #' @importFrom reproducible checkPath
 m3ToBiomPlots <- function(inc=increments, id_col = "id_ecozone", nrow = 5, ncol = 5,
-                                 filenameBase = "rawCumBiomass_", path = "figures"){
+                          filenameBase = "rawCumBiomass_", path = "figures",
+                          title = "Cumulative merch fol other by gc id",
+                          scales = "free_y"){
   gInc <- copy(inc)
   colsOut <- c("id", "ecozone")
   gInc[ ,(colsOut) := list(NULL,NULL)]
- # gInc[,c(id_col, "age", "age")]
+  # gInc[,c(id_col, "age", "age")]
   gc <- data.table::melt(gInc, id.vars = c(id_col, "age"))
   set(gc, NULL, "valueNumeric", as.numeric(gc$value))
 
@@ -15,7 +17,7 @@ m3ToBiomPlots <- function(inc=increments, id_col = "id_ecozone", nrow = 5, ncol 
     ggplot( aes(x=age, y=valueNumeric, group=variable, color=variable)) +
     geom_line() +
     facet_wrap(facets = id_col) +
-    labs(title= "Cumulative merch fol other by gc id") +
+    labs(title= title) +
     theme(plot.title = element_text(hjust = 0.5))
 
   # Do first page, so that n_pages can calculate how many pages there are
@@ -24,7 +26,7 @@ m3ToBiomPlots <- function(inc=increments, id_col = "id_ecozone", nrow = 5, ncol 
 
   path <- checkPath(path, create = TRUE)
   for (i in seq(numPages)) {
-    plotsByPage <- plots + facet_wrap_paginate(facets = id_col,
+    plotsByPage <- plots + facet_wrap_paginate(facets = id_col, scales = scales,
                                                page = i, nrow = nrow, ncol = ncol)
     ggsave(file.path(path, paste0(filenameBase,i,".png")), plotsByPage)
   }

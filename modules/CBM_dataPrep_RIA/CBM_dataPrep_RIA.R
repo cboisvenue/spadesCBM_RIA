@@ -117,6 +117,8 @@ defineModule(sim, list(
    ),
   outputObjects = bindrows(
     createsOutput(objectName = "pools", objectClass = "matrix", desc = NA),
+    createsOutput(objectName = "curveID", objectClass = "character",
+                  desc = "Vector of column names that together, uniquely define growth curve id"),
     createsOutput(
       objectName = "ages", objectClass = "numeric",
       desc = "Ages of the stands from the inventory in 1990"
@@ -285,6 +287,12 @@ Init <- function(sim) {
   # this table will be the pixel groups that are used in the spinup procedure in
   # the CBM_core spinup event
   level3DT <- unique(spatialDT[, -("pixelIndex")]) %>% .[order(pixelGroup), ]
+  setkeyv(level3DT, "pixelGroup")
+
+  sim$curveID <- c("growth_curve_component_id", "ecozones") # "id_ecozone" # TODO: add to metadata -- use in multiple modules
+  curveID <- sim$curveID
+  sim$gcids <- factor(gcidsCreate(level3DT[, ..curveID]))
+  set(level3DT, NULL, "gcids", sim$gcids)
   sim$level3DT <- level3DT
   ## End data.table for simulations-------------------------------------------
 
@@ -304,9 +312,9 @@ Init <- function(sim) {
   #sim$level3DT[ages==0 & growth_curve_component_id==52,ages:=3]
  ######################################
   ##################### temp fix should
-
-  sim$level3DT[ages <= 1, ages := 3]
-  sim$level3DT[order(pixelGroup), ]
+browser()
+  #sim$level3DT[ages <= 1, ages := 3]
+  setorderv(sim$level3DT, "pixelGroup")
 
   ## Creating all the vectors for the spinup --------------------------------
   sim$ages <- sim$level3DT[, ages]
@@ -314,15 +322,19 @@ Init <- function(sim) {
   sim$pools <- matrix(ncol = sim$PoolCount, nrow = sim$nStands, data = 0)
   colnames(sim$pools) <- sim$pooldef
   sim$pools[, "Input"] <- rep(1.0, nrow(sim$pools))
-  sim$gcids <- sim$level3DT[, growth_curve_component_id]
+  #curveID <- sim$curveID
+  #sim$gcids <- as.integer(sim$level3DT[, ..curveID][[sim$curveID]])
   sim$delays <- rep.int(0, sim$nStands)
   sim$minRotations <- rep.int(10, sim$nStands)
-  sim$maxRotations <- rep.int(30, sim$nStands)
-  setkey(sim$level3DT, spatial_unit_id)
+  sim$maxRotations <- rep.int(1000, sim$nStands)
+  setkeyv(sim$level3DT, "spatial_unit_id")
   spinupParameters <- as.data.table(sim$cbmData@spinupParameters[, c(1, 2)])
-  setkey(spinupParameters,spatial_unit_id)
+  setkeyv(spinupParameters,"spatial_unit_id")
   retInt <- merge.data.table(sim$level3DT, spinupParameters,
-                  by = "spatial_unit_id", all.x = TRUE) %>% .[order(pixelGroup)]
+                  by = "spatial_unit_id", all.x = TRUE)
+
+  setkeyv(retInt, "pixelGroup")
+  setkeyv(sim$level3DT, "pixelGroup")
   sim$returnIntervals <- retInt[, "return_interval"]
   sim$spatialUnits <- sim$level3DT[, spatial_unit_id]
   sim$ecozones <- sim$level3DT$ecozones
@@ -394,7 +406,7 @@ Init <- function(sim) {
                 # mySpuDmids <- data.table(mySpuDmids, dmid$disturbance_matrix_id)
                 # names(mySpuDmids) <- c("distName", "rasterId", "spatial_unit_id", "wholeStand", "disturbance_matrix_id")
                 # sim$mySpuDmids <- mySpuDmids
-  sim$mySpuDmids <- sim$userDist
+  # sim$mySpuDmids <- sim$userDist
 
   # need to match the historic and last past dist to the spatial unit
   # DECISION: both the last pass and the historic disturbance will be the same
@@ -405,7 +417,7 @@ Init <- function(sim) {
   ## saying these are the defaults.
 
 
-  mySpuFires <- sim$mySpuDmids[grep("wildfire", sim$mySpuDmids$distName, ignore.case = TRUE), ]
+  mySpuFires <- sim$userDist[grep("wildfire", sim$userDist$distName, ignore.case = TRUE), ]
 
   myFires <- mySpuFires[spatial_unit_id %in% unique(sim$level3DT$spatial_unit_id), ]
   setkey(myFires, spatial_unit_id)
@@ -501,9 +513,9 @@ Init <- function(sim) {
     sim$userDist <- prepInputs(url = sim$userDistFile,
                                  fun = "data.table::fread",
                                  destinationPath = dPath,
-                                 #purge = 7,
+                                 # purge = 7,
                                  filename2 = "mySpuDmids.csv")
-    }
+  }
 
   ## cbmAdmin needed to create spuRaster below (a bit convoluted ## TODO )
   if (!suppliedElsewhere("cbmAdmin", sim)) {

@@ -7,7 +7,7 @@ cumPoolsCreate <- function(fullSpecies, gcMeta, userGcM3,
     # matching on species name
     speciesMeta <- gcMeta[species == fullSpecies[i], ]
     # for each species name, process one gcID at a time
-    for (j in 1:NROW(unique(speciesMeta, on = c("growth_curve_component_id", "ecozones")))) {
+    for (j in 1:NROW(unique(speciesMeta, on = "gcids"))) {
       counter <- counter + 1L
 
       meta <- speciesMeta[j, ]
@@ -35,7 +35,7 @@ cumPoolsCreate <- function(fullSpecies, gcMeta, userGcM3,
       # [1] "Disturbance"       "Growth1"           "DomTurnover"       "BioTurnover"
       # [5] "OvermatureDecline" "Growth2"           "DomDecay"          "SlowDecay"
       # [9] "SlowMixing"
-      cumBiomList[[counter]] <- as.data.table(cbind(id, age, cumBiom, ecozone, id_ecozone = meta$id_ecozone))
+      cumBiomList[[counter]] <- data.table(id, age, cumBiom, ecozone, gcids = meta$gcids)
 
       # cumPools <- rbind(cumPools, cumBiom)
     }

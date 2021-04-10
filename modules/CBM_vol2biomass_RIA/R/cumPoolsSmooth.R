@@ -18,7 +18,7 @@ cumPoolsSmooth <- function(cumPoolsRaw, colsToUse = c("totMerch", "fol", "other"
   outInd <- character()
 
   outerInd <- 0
-  lenUniqueID_ecozone <- length(unique(cpr$id_ecozone))
+  lenUniqueID_ecozone <- length(unique(cpr[["gcids"]]))
 
   cpr[, (colsToUseNew) := {
     outerInd <<- outerInd + 1
@@ -71,5 +71,5 @@ cumPoolsSmooth <- function(cumPoolsRaw, colsToUse = c("totMerch", "fol", "other"
     })
 
     newVals
-  }, by = "id_ecozone"]
+  }, by = "gcids"]
 }

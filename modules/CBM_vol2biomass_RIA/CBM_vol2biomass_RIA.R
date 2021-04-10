@@ -49,6 +49,8 @@ defineModule(sim, list(
   inputObjects = bindrows(
     # expectsInput("objectName", "objectClass", "input object description", sourceURL, ...),
     # this are variables in inputed data.tables:SpatialUnitID, EcoBoundaryID, juris_id, ecozone, jur, eco, name, GrowthCurveComponentID, plotsRawCumulativeBiomass, checkInc
+    expectsInput(objectName = "curveID", objectClass = "character",
+                 desc = "Vector of column names that together, uniquely define growth curve id"),
     expectsInput(
       objectName = "table3",
       objectClass = "dataframe",
@@ -244,7 +246,7 @@ Init <- function(sim) {
   # if(!suppliedElsewhere("level3DT",sim)){
   #   userGcM3 <- sim$userGcM3
   # }else{
-  userGcM3 <- sim$userGcM3[GrowthCurveComponentID %in% unique(sim$gcids), ]
+  userGcM3 <- sim$userGcM3#[GrowthCurveComponentID %in% unique(sim$gcids), ]
   # }
   # START reducing Biomass model parameter tables -----------------------------------------------
   # reducing the parameter tables to the jurisdiction or ecozone we have in the study area
@@ -403,9 +405,18 @@ Init <- function(sim) {
   setkey(riaGcMeta, growth_curve_component_id) #changed from gcMeta to riaGcMeta
   gcMeta <- merge(riaGcMeta, gcThisSim) #changed from gcMeta to riaGcMeta # adds ecozone
 
-  curveID <- c("id_ecozone")
 
-  set(gcMeta, NULL, curveID, paste0(gcMeta$growth_curve_component_id, 999, gcMeta$ecozones))
+  browser()
+  curveID <- sim$curveID
+  if (!is.null(sim$level3DT)) {
+    gcidsLevels <- levels(sim$level3DT$gcids)
+    gcids <- factor(gcidsCreate(gcMeta[, ..curveID]), levels = gcidsLevels)
+  } else {
+    gcids <- factor(gcidsCreate(gcMeta[, ..curveID]))
+  }
+
+
+  set(gcMeta, NULL, "gcids", gcids)
 
   ### TODO CHECK - this in not tested
   if (!length(unique(unique(userGcM3$GrowthCurveComponentID)) ==
@@ -482,42 +493,45 @@ Init <- function(sim) {
   # plotting the curves of the direct translation ------------------------
   # adding the zeros back in
   # cumPools <- as.data.table(cumPools)
-  cumPools[, numAge := as.numeric(age)]
-  minAgeId <- cumPools[,.(minAge = max(0, min(numAge) - 1)), by = .(id_ecozone)]
+  # cumPools[, numAge := as.numeric(age)]
+  browser()
+  minAgeId <- cumPools[,.(minAge = max(0, min(age) - 1)), by = "gcids"]
 
-  fill0s <- minAgeId[,.(age = seq(from = 0, to = minAge, by = 1)), by = .(id_ecozone)]
+  fill0s <- minAgeId[,.(age = seq(from = 0, to = minAge, by = 1)), by = "gcids"]
   # might not need this
-  length0s <- fill0s[,.(toMinAge = length(age)), by = .(id_ecozone)]
+  length0s <- fill0s[,.(toMinAge = length(age)), by = "gcids"]
 
   # these are going to be 0s
-  carbonVars <- data.table(id_ecozone = unique(fill0s$id_ecozone),
+  carbonVars <- data.table(gcids = unique(fill0s$gcids),
                                     totMerch = 0,
                                     fol = 0,
                                     other = 0 )
 
-  fiveOf7cols <- fill0s[carbonVars, on = curveID]
+  fiveOf7cols <- fill0s[carbonVars, on = "gcids"]
 
-  otherVars <- cumPools[,.(id = unique(id), ecozone = unique(ecozone)), by = .(id_ecozone)]
-  add0s <- fiveOf7cols[otherVars, on = curveID]
-  cumPools[,numAge := NULL]
+  otherVars <- cumPools[,.(id = unique(id), ecozone = unique(ecozone)), by = "gcids"]
+  add0s <- fiveOf7cols[otherVars, on = "gcids"]
+  # cumPools[,numAge := NULL]
 
   cumPoolsRaw <- rbind(cumPools,add0s)
   set(cumPoolsRaw, NULL, "age", as.numeric(cumPoolsRaw$age))
-  setorder(cumPoolsRaw, id_ecozone, age)
+  setorderv(cumPoolsRaw, c("gcids", "age"))
 
   figPath <- file.path(modulePath(sim), currentModule(sim), "figures")
   # plotting and save the plots of the raw-translation in the sim$
+  if (!is.na(P(sim)$.plotInitialTime))
   sim$plotsRawCumulativeBiomass <- Cache(m3ToBiomPlots, inc = cumPoolsRaw,
                                          path = figPath,
-                                         ncol = 5, nrow = 5)
+                                         filenameBase = "rawCumBiomass_")
 
   # Fixing of non-smooth curves
   cumPoolsClean <- Cache(cumPoolsSmooth, cumPoolsRaw)
 
   # a[, totMerch := totMerchNew]
-  figs <- Cache(m3ToBiomPlots, inc = cumPoolsClean,
+  if (!is.na(P(sim)$.plotInitialTime))
+    figs <- Cache(m3ToBiomPlots, inc = cumPoolsClean,
                 path = figPath,
-                ncol = 5, nrow = 5, filenameBase = "cumPools_smoothed_postChapmanRichards")
+                filenameBase = "cumPools_smoothed_postChapmanRichards")
 
   set(cumPoolsClean, NULL, colNames, NULL)
   colNamesNew <- grep(cbmAboveGroundPoolColNames, colnames(cumPoolsClean), value = TRUE)
@@ -526,10 +540,13 @@ Init <- function(sim) {
 
   # Calculating Increments
   incCols <- c("incMerch", "incFol", "incOther")
-  cumPoolsClean[, (incCols) := lapply(.SD, function(x) c(NA, diff(x))), .SDcols = colNames, by = curveID]
-  colsToUse33 <- c("age", curveID, incCols)
-  rawIncPlots <- Cache(m3ToBiomPlots, inc = cumPoolsClean[, ..colsToUse33],
+  cumPoolsClean[, (incCols) := lapply(.SD, function(x) c(NA, diff(x))), .SDcols = colNames,
+                by = eval("gcids")]
+  colsToUse33 <- c("age", "gcids", incCols)
+  if (!is.na(P(sim)$.plotInitialTime))
+    rawIncPlots <- Cache(m3ToBiomPlots, inc = cumPoolsClean[, ..colsToUse33],
                        path = figPath,
+                       title = "Smoothed increments merch fol other by gc id",
                        filenameBase = "Increments")
 
 
@@ -798,8 +815,8 @@ Init <- function(sim) {
 
   sim$cumPoolsClean <- cumPoolsClean # TODO: add to metadata
 
-  colsToUseForestType <- c("growth_curve_component_id", "forest_type_id", curveID)
-  forestType <- gcMeta[, .(forest_type_id, id_ecozone)]
+  colsToUseForestType <- c("growth_curve_component_id", "forest_type_id", "gcids")
+  forestType <- gcMeta[, ..colsToUseForestType]
   #       #FYI:
   #       # cbmTables$forest_type
   #       # id           name
@@ -808,8 +825,8 @@ Init <- function(sim) {
   #       # 3  3       Hardwood
   #       # 4  9 Not Applicable
 
-  setkeyv(forestType, curveID)
-  cumPoolsClean <- merge(cumPoolsClean, forestType, by = curveID)
+  setkeyv(forestType, "gcids")
+  cumPoolsClean <- merge(cumPoolsClean, forestType, by = "gcids")
   swCols <- c("swmerch", "swfol", "swother")
   hwCols <- c("hwmerch", "hwfol", "hwother")
 
@@ -823,14 +840,14 @@ Init <- function(sim) {
     swmerch / 2, swfol / 2,
     swother / 2, hwmerch / 2, hwfol / 2, hwother / 2
   )]
-  setorderv(increments, c(curveID, "age"))
+  setorderv(increments, c("gcids", "age"))
   ## TODO : clean-up this - have to remove the ecozone and id and make
   ## everything numeric to be able to hash the matrix. This will create problems
   ## when we relate the id to the id from vol curves since this id is a
   ## combination of ecozone and id with no space (to be able to make it
   ## numeric).
   incColKeep <- c("id", "age", incCols)
-  set(increments, NULL, "id", as.numeric(increments$id_ecozone))
+  set(increments, NULL, "id", as.numeric(increments[["gcids"]]))
   set(increments, NULL, setdiff(colnames(increments), incColKeep), NULL)
   setcolorder(increments, incColKeep)
 
@@ -919,6 +936,10 @@ Event2 <- function(sim) {
   dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
   cacheTags <- c(currentModule(sim), "function:.inputObjects")
+
+  if (!suppliedElsewhere("curveID", sim)) {
+    sim$curveID <- c("growth_curve_component_id", "ecozones")
+  }
 
   # 1. tables from Boudewyn
   # these are all downloaded from the NFIS site. The NFIS however, changes the
