@@ -493,7 +493,6 @@ Init <- function(sim) {
   # adding the zeros back in
   # cumPools <- as.data.table(cumPools)
   # cumPools[, numAge := as.numeric(age)]
-  browser()
   minAgeId <- cumPools[,.(minAge = max(0, min(age) - 1)), by = "gcids"]
 
   fill0s <- minAgeId[,.(age = seq(from = 0, to = minAge, by = 1)), by = "gcids"]
