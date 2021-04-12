@@ -171,11 +171,11 @@ defineModule(sim, list(
     createsOutput(
       objectName = "spatialDT", objectClass = "data.table",
       desc = "the table containing one line per pixel"
-    ),
-    createsOutput(
-      objectName = "mySpuDmids", objectClass = "data.frame",
-      desc = "the table containing one line per pixel"
-    )
+    )#,
+    # createsOutput(
+    #   objectName = "mySpuDmids", objectClass = "data.frame",
+    #   desc = "the table containing one line per pixel"
+    # )
   )
 ))
 
@@ -312,7 +312,7 @@ Init <- function(sim) {
   #sim$level3DT[ages==0 & growth_curve_component_id==52,ages:=3]
  ######################################
   ##################### temp fix should
-browser()
+
   #sim$level3DT[ages <= 1, ages := 3]
   setorderv(sim$level3DT, "pixelGroup")
 
@@ -523,7 +523,7 @@ browser()
                                fun = "data.table::fread",
                                destinationPath = dPath,
                                #purge = 7,
-                               filename2 = "mySpuDmids.csv")
+                               filename2 = "cbmAdmin.csv")
     #fread(file.path(dPath, "cbmAdmin.csv")) ## TODO: use prepInputs with url
   }
 
