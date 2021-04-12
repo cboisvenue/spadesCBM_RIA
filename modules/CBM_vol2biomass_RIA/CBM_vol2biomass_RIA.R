@@ -406,7 +406,6 @@ Init <- function(sim) {
   gcMeta <- merge(riaGcMeta, gcThisSim) #changed from gcMeta to riaGcMeta # adds ecozone
 
 
-  browser()
   curveID <- sim$curveID
   if (!is.null(sim$level3DT)) {
     gcidsLevels <- levels(sim$level3DT$gcids)

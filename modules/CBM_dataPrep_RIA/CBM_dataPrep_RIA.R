@@ -268,17 +268,19 @@ Init <- function(sim) {
 
 
   ## Create the pixel groups: groups of pixels with the same attributes ---------------
-  spatialDT <- spatialDT[order(pixelIndex), ]
+  setkeyv(spatialDT, "pixelIndex")
   spatialDT$pixelGroup <- Cache(LandR::generatePixelGroups, spatialDT,
     maxPixelGroup = 0,
     columns = c("ages", "spatial_unit_id", "growth_curve_component_id", "ecozones")
   )
-  spatialDT <- spatialDT[order(pixelIndex), ]
+  setkeyv(spatialDT, "pixelIndex")
+
   spatialDT <- spatialDT[, .(
     ages, spatial_unit_id, pixelIndex,
     growth_curve_component_id, growth_curve_id, ecozones, pixelGroup
   )]
-  spatialDT <- spatialDT[order(pixelIndex), ]
+  setkeyv(spatialDT, "pixelIndex")
+  # spatialDT <- spatialDT[order(pixelIndex), ]
   sim$spatialDT <- spatialDT
   # end create pixel groups-------------
 
@@ -286,7 +288,8 @@ Init <- function(sim) {
   ## Data.table for simulations (one row per pixel group)---------------------
   # this table will be the pixel groups that are used in the spinup procedure in
   # the CBM_core spinup event
-  level3DT <- unique(spatialDT[, -("pixelIndex")]) %>% .[order(pixelGroup), ]
+
+  level3DT <- unique(spatialDT[, -("pixelIndex")])
   setkeyv(level3DT, "pixelGroup")
 
   sim$curveID <- c("growth_curve_component_id", "ecozones") # "id_ecozone" # TODO: add to metadata -- use in multiple modules
