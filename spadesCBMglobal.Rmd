@@ -249,14 +249,19 @@ setPaths(
 quickPlot::dev.useRSGD(FALSE)
 dev()
 clearPlot()
-options(spades.moduleCodeChecks = FALSE,
+options(spades.moduleCodeChecks = TRUE,
         reproducible.useMemoise = FALSE,
         spades.recoveryMode = FALSE)
+outputs <- data.frame(
+  objectName = "cbmPools",
+  saveTime = sort(c(times$start, times$start + 1:4 * 100, times$end - 2:0))
+)
 
 spadesCBMSim <- simInit(times = times,
                         params = parameters,
                         modules = modules, 
                         objects = objects, 
+                        outputs = outputs,
                         #paths = paths, ## not needed when using setPaths() above
                         loadOrder = unlist(modules))
 
