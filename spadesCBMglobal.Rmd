@@ -246,11 +246,12 @@ setPaths(
   rasterPath = scratchDir
 )
 
-quickPlot::dev.useRSGD(TRUE)
-#dev()
-#clearPlot()
+quickPlot::dev.useRSGD(FALSE)
+dev()
+clearPlot()
 options(spades.moduleCodeChecks = FALSE,
-        reproducible.useMemoise = FALSE)
+        reproducible.useMemoise = FALSE,
+        spades.recoveryMode = FALSE)
 
 spadesCBMSim <- simInit(times = times,
                         params = parameters,
