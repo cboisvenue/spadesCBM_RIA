@@ -212,7 +212,7 @@ inputDir <- reproducible::checkPath("inputs", create = TRUE)
 outputDir <- reproducible::checkPath("outputs", create = TRUE)
 scratchDir <- file.path(tempdir(), "scratch", "CBM") %>% reproducible::checkPath(create = TRUE)
 
-times <- list(start = 2020.00, end = 2025.00)
+times <- list(start = 2020.00, end = 2540.00)
 parameters <- list(
   CBM_defaults = list(
     .useCache = TRUE
@@ -225,8 +225,8 @@ parameters <- list(
   ),
   CBM_core = list(
     .useCache = "init", #c(".inputObjects", "init")
-    .plotInterval = 5,
-    .plotInitialTime = 2020,
+    # .plotInterval = 5,
+    .plotInitialTime = times$start,
     poolsToPlot = c("totalCarbon"),
     spinupDebug = FALSE ## TODO: temporary
   )
@@ -249,14 +249,12 @@ setPaths(
 quickPlot::dev.useRSGD(FALSE)
 dev()
 clearPlot()
-options(spades.moduleCodeChecks = TRUE,
+options(spades.moduleCodeChecks = FALSE,
         reproducible.useMemoise = FALSE,
         spades.recoveryMode = FALSE)
-outputs <- data.frame(
-  objectName = "cbmPools",
-  saveTime = sort(c(times$start, times$start + 1:4 * 100, times$end - 2:0))
-)
-
+whens <- sort(c(times$start, times$start + 1:4 * 100, times$end - 2:0))
+outputs <- as.data.frame(expand.grid(objectName = c("cbmPools", "NPP"), saveTime = whens))
+ 
 spadesCBMSim <- simInit(times = times,
                         params = parameters,
                         modules = modules, 

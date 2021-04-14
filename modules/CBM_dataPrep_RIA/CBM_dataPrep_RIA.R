@@ -226,7 +226,6 @@ Init <- function(sim) {
   ## These spatial units (or spu) and the ecozones link the CBM-CFS3 ecological
   ## parameters to the right location (example: decomposition rates).
   ##
-
   io <- inputObjects(sim, currentModule(sim))
   objectNamesExpected <- io$objectName
   available <- objectNamesExpected %in% ls(sim)
@@ -284,7 +283,6 @@ Init <- function(sim) {
   sim$spatialDT <- spatialDT
   # end create pixel groups-------------
 
-
   ## Data.table for simulations (one row per pixel group)---------------------
   # this table will be the pixel groups that are used in the spinup procedure in
   # the CBM_core spinup event
@@ -317,6 +315,7 @@ Init <- function(sim) {
   ##################### temp fix should
 
   #sim$level3DT[ages <= 1, ages := 3]
+
   setorderv(sim$level3DT, "pixelGroup")
 
   ## Creating all the vectors for the spinup --------------------------------
