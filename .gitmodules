@@ -4,6 +4,3 @@
 [submodule "modules/CBM_defaults"]
 	path = modules/CBM_defaults
 	url = https://github.com/PredictiveEcology/CBM_defaults
-[submodule "CBM_vol2biomass_RIA"]
-	path = CBM_vol2biomass_RIA
-	url = https://github.com/cboisvenue/CBM_vol2biomass_RIA.git
