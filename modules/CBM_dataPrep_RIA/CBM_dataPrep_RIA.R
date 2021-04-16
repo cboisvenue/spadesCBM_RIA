@@ -45,7 +45,6 @@ defineModule(sim, list(
     )
   ),
   inputObjects = bindrows(
-    # cbm defaults
     expectsInput(
       objectName = "cbmData", objectClass = "dataset",
       desc = "S4 object created from selective reading in of cbm_default.db in CBM_defaults module",
@@ -68,14 +67,13 @@ defineModule(sim, list(
       desc = "Provides equivalent between provincial boundaries, CBM-id for provincial boundaries and CBM-spatial unit ids",
       sourceURL = "https://drive.google.com/file/d/1xdQt9JB5KRIw72uaN5m3iOk8e34t9dyz"
     ),
-    # user provided tables
     expectsInput(
-      objectName = "userDistFile", objectClass = "character", ## TODO: should be a param
+      objectName = "userDistFile", objectClass = "character",
       desc = paste("User provided file name that identifies disturbances for simulation",
                    "(key words for searching CBM files, if not there the userDist will be created with defaults"),
       sourceURL = NA
     ),
-    expectsInput( ## URL RIA CORRECT CHECKED
+    expectsInput(
       objectName = "userDist", objectClass = "data.table",
       desc = "User provided file that identifies disturbances for simulation (distName),
       raster Id if applicable, and wholeStand toggle (1 = whole stand disturbance, 0 = partial disturbance),
@@ -83,17 +81,16 @@ defineModule(sim, list(
       sourceURL = "https://drive.google.com/file/d/1Gr_oIfxR11G1ahynZ5LhjVekOIr2uH8X"
     ),
         expectsInput(
-      objectName = "userGcM3File", objectClass = "character",## TODO: should be a param
+      objectName = "userGcM3File", objectClass = "character",
       desc = paste("User-provided pointer to the file containing: GrowthCurveComponentID,Age,MerchVolume.",
                    "Default name userGcM3"),
       sourceURL = NA
     ),
-    expectsInput(## URL RIA CORRECT CHECKED
+    expectsInput(
       objectName = "userGcM3", objectClass = "dataframe",
       desc = "User file containing: GrowthCurveComponentID,Age,MerchVolume. Default name userGcM3",
       sourceURL = "https://drive.google.com/file/d/1BYHhuuhSGIILV1gmoo9sNjAfMaxs7qAj"
     ),
-    # user provided rasters or raster related info
     expectsInput(
       objectName = "masterRaster", objectClass = "raster",
       desc = "Raster built in based on user provided info. Will be used as the raster to match for all operations"
@@ -103,7 +100,7 @@ defineModule(sim, list(
       desc = "Data table built for all pixels (incluing NAs) for the four essential raster-based information,
       growth curve location (gcID), ages, ecozones and spatial unit id (CBM-parameter link)"
     ),
-    expectsInput(## URL RIA CORRECT CHECKED
+    expectsInput(
       ## URL RIA FOR scfmFires rasters is this https://drive.google.com/file/d/1fJIPVMyDu66CopA-YP-xSdP2Zx1Ll_q8
       ## URL below is for the data table for the 526 years of scfm fire sims
       objectName = "disturbanceRasters", objectClass = "dataframe",
@@ -171,11 +168,7 @@ defineModule(sim, list(
     createsOutput(
       objectName = "spatialDT", objectClass = "data.table",
       desc = "the table containing one line per pixel"
-    )#,
-    # createsOutput(
-    #   objectName = "mySpuDmids", objectClass = "data.frame",
-    #   desc = "the table containing one line per pixel"
-    # )
+    )
   )
 ))
 
@@ -216,21 +209,11 @@ doEvent.CBM_dataPrep_RIA <- function(sim, eventTime, eventType, debug = FALSE) {
 
 
 Init <- function(sim) {
-  ## Rasters----------------------------------------------------------------------
-  ## user provides raster to match (masterRaster) which is a raster for the
-  ## study area, it will define the crs etc, for all other layers. The user also
-  ## provides age raster, and a raster linking each growth curve to pixels (gcIndex).
-  ## Using the masterRaster, the ecozone raster is made (Canadian ecozones) and the
-  ## spatial unit raster. The spatial units are a CBM-CFS3 specific location
-  ## that is the intersection of the ecozones and administrative boundaries.
-  ## These spatial units (or spu) and the ecozones link the CBM-CFS3 ecological
-  ## parameters to the right location (example: decomposition rates).
-  ##
+  ## making sure the CBM_defaults.R module was run
   io <- inputObjects(sim, currentModule(sim))
   objectNamesExpected <- io$objectName
   available <- objectNamesExpected %in% ls(sim)
 
-  ## TODO: these aren't required
   omit <- which(objectNamesExpected %in% c("userDistFile", "userGcM3File"))
   available <- available[-omit]
 
@@ -440,6 +423,7 @@ Init <- function(sim) {
   dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
+  # CBM defaults ----------------------------------------------------------
   # if we chose to not use the RSQLite library in this module, and extract
   # disturbance matrix id (dmid) from sim$cbmData@disturbanceMatrixAssociation,
   # then $sqlDir and $dbPath are not needed.
@@ -476,8 +460,9 @@ Init <- function(sim) {
     sim$pooldef <- CBMutils::.pooldef
     sim$PoolCount <- length(sim$pooldef)
   }
+  ## END CBM defaults-----------------------------------------------------
 
-  # user provided data tables------------------------------------------------------
+  # user provided data tables (3)------------------------------------------------------
 
   # 1. growth and yield information
   # userGcM3 and userGcM3File, these files are the m3/ha and age info by growth
@@ -519,18 +504,30 @@ Init <- function(sim) {
                                  filename2 = "mySpuDmids.csv")
   }
 
-  ## cbmAdmin needed to create spuRaster below (a bit convoluted ## TODO )
+  # 3. cbmAdmin needed to create spuRaster below (a bit convoluted ## TODO )
   if (!suppliedElsewhere("cbmAdmin", sim)) {
     sim$cbmAdmin <- prepInputs(url = extractURL("cbmAdmin"),
                                fun = "data.table::fread",
                                destinationPath = dPath,
                                #purge = 7,
                                filename2 = "cbmAdmin.csv")
-    #fread(file.path(dPath, "cbmAdmin.csv")) ## TODO: use prepInputs with url
   }
 
+  # END user provided data tables (3)------------------------------------------------------
 
-  # user provided rasters or spatial information------------------------
+  # user provided rasters or spatial information----------------------------------------
+
+  ## Rasters
+  ## user provides raster to match (masterRaster) which is a raster for the
+  ## study area, it will define the crs etc, for all other layers. The user also
+  ## provides age raster, and a raster linking each growth curve to pixels (gcIndex).
+  ## Using the masterRaster, the ecozone raster is made (Canadian ecozones) and the
+  ## spatial unit raster. The spatial units are a CBM-CFS3 specific location
+  ## that is the intersection of the ecozones and administrative boundaries.
+  ## These spatial units (or spu) and the ecozones link the CBM-CFS3 ecological
+  ## parameters to the right location (example: decomposition rates).
+  ##
+
   #1. VRI rasters gcID and age
   # study area raster
   RIArtm <- prepInputs(url = "https://drive.google.com/file/d/1h7gK44g64dwcoqhij24F2K54hs5e35Ci/view?usp=sharing",
@@ -553,8 +550,6 @@ Init <- function(sim) {
   gcIDWData <- !is.na(gcIDRaster[])
   masterRaster[ageWData] <- gcIDRaster[ageWData]
   gcIDRaster[!ageWData] <- NA
-
-  dt <- data.table(gcID = gcIDRaster[], age = ageRaster[])
 
 
   #4. Make the ecozone Raster (ecoRaster)"http://sis.agr.gc.ca/cansis/nsdb/ecostrat/zone/ecozone_shp.zip"
@@ -583,7 +578,7 @@ Init <- function(sim) {
       stop("should be only 0 or 4s")
   }
 
-  #7. Passed assertion? Make the rasters.
+  #7. Passed assertion? Save the masterRaster and data.table with all pixel indices.
   sim$masterRaster <- masterRaster
 
   sim$allPixDT <- as.data.table(cbind(dtRasters, pixelIndex = 1:ncell(gcIDRaster), growth_curve_id = gcIDRaster[]))
@@ -593,7 +588,7 @@ Init <- function(sim) {
   # # each year. But these can be provided by another family of modules in the
   # # annual event.
   ### TODO give options to the user to provide a raster a data table, a raster list or a raster stack
-  ## NOTES for RIA fire only runs: the
+
   if (!suppliedElsewhere("disturbanceRasters", sim)) {
     ## this case is reading in a sparseDT.
     # RTM that the datatable was created with
@@ -622,8 +617,8 @@ Init <- function(sim) {
     #the NAs in rtmIndex are pixels that are not in THLB (but inside the landscape) - we can remove them
     sim$disturbanceRasters <- scfmAnnualBurns
 
-    ## the function indexAnnualFire() will have to be used in the annual event
-    ## of the CBM_core module
+    ## a function indexAnnualFire() may be used in the annual event
+    ## of the CBM_core module to extract the year
 
 
 
