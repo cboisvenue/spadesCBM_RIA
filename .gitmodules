@@ -7,3 +7,6 @@
 [submodule "modules/CBM_vol2biomass_RIA"]
 	path = modules/CBM_vol2biomass_RIA
 	url = https://github.com/cboisvenue/CBM_vol2biomass_RIA.git
+[submodule "modules/CBM_dataPrep_RIA"]
+	path = modules/CBM_dataPrep_RIA
+	url = https://github.com/cboisvenue/CBM_dataPrep_RIA.git
