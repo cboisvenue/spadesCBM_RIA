@@ -7,3 +7,4 @@
 "RIA_THLB_rtm.tif" "839a93fe02e17912" "1671114" "xxhash64"
 "RIAlandscape.tif" "33606af051c7bbf9" "20972090" "xxhash64"
 "sampleVRI.csv" "ce70bb2047909774" "72889314" "xxhash64"
+"VEG_COMP_LYR_L1_POLY_2015.gdb.zip" "3d68130bb18e7205" "4712134887" "xxhash64"

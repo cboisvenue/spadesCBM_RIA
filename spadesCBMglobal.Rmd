@@ -252,10 +252,12 @@ clearPlot()
 options(spades.moduleCodeChecks = FALSE,
         reproducible.useMemoise = FALSE,
         spades.recoveryMode = FALSE)
+        #reproducible.useNewDigestAlgorithm = 2)
+
 whens <- sort(c(times$start, times$start + 1:4 * 100, times$end - 2:0))
 outputs <- as.data.frame(expand.grid(objectName = c("cbmPools", "NPP"), saveTime = whens))
  
-spadesCBMSim <- simInit(times = times,
+spadesCBMSim2 <- simInit(times = times,
                         params = parameters,
                         modules = modules, 
                         objects = objects, 
@@ -263,7 +265,7 @@ spadesCBMSim <- simInit(times = times,
                         #paths = paths, ## not needed when using setPaths() above
                         loadOrder = unlist(modules))
 
-spadesCBMout <- spades(spadesCBMSim, debug = TRUE)
+spadesCBMout2 <- spades(spadesCBMSim2, debug = TRUE)
 ```
 
 # Functions
