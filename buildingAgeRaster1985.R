@@ -119,5 +119,109 @@ a <- prepInputs(url =
                 studyArea = sa
                 #rasterTomatch = masterRaster
 )
+# starting from the read-in age raster in 2015 and keeping the same masterRaster
+# as the fireReturnInterval runs
+
+## NOTEs: there are 104427 pixels with NAs in 2015 and ages in 2020. 15018 of
+## those are disturbed during the 1985-2015 period in the Wulder and White data.
+## There are no pixels that have no ages in 2015 and have ages in 2020. Options:
+
+## figure out what ages the NAs have in 2020.
+## Note that some ages in the 2020 that have no ages in the 2015 raster AND that
+## are disturbed (so in the sim$disturbanceRasters data table) are old...older
+## then the age from the dist...but most are below 50.
+
+ageDTboth <- data.table(ageDT2015, ageDT2020)
+ageNoMathc <- ageDTboth[is.na(ageDT2015) & !is.na(ageDT2020),]
+library(ggplot2)
+distPixWageIn2020 <- qplot(ageNoMathc[pixelIndex %in% allDist$pixelID]$ageDT2020, geom="histogram")
+
+## check the age distribution of the ageNoMathc for the remaining 89409 pixels
+## (8046.81 ha over 280118.2)
+
+noAge2015 <- ageNoMathc[!(pixelIndex %in% allDist$pixelID)]
+noAge2015hist <- qplot(noAge2015$ageDT2020, geom="histogram")
+
+## have to bring those to 1985...how many are over 35 (2020-1985)?
+noAge2015[ageDT2020>=35,]
+#81250. These I can do -5.
+# look at the others? Can I buffer around them??
+probPix <- noAge2015[ageDT2020<35,]
+# double checking if any of these are in the disturbed pixels
+probPix[pixelIndex %in% allDist$pixelID,]
+# none
+# trying to see if I can find pixels around those pixels that are disturbed.
+# need to create a raster of these pixels and give them a value
+probPixRaster <- raster::raster(masterRaster)
+probPixRaster[] <- NA
+probPixRaster[probPix$pixelIndex] <- 1
+
+## trying to find the closest pixel with a disturbance in the 1985-2015
+## disturbance data.table.
+# are there pixels that are disturbed twice in this data?
+countDist <- allDist[, .N, by = pixelID]
+# yes
+# are those in the proPix?
+probPix[pixelIndex %in% countDist[N>1,]$pixelID,]
+# no
+# create a raster with all the disturbances
+allDistRaster <- raster::raster(masterRaster)
+allDistRaster[] <- NA
+allDistRaster[countDist$pixelID] <- 1
+# trying focal. This takes a raster and gives me back a raster
+f3 <- function(x){
+  theNAs <- is.na(x)
+  if (all(theNAs))
+    NA
+  else
+    x[sample(which(!theNAs),1)]
+}
+f1 <- focal(allDistRaster,
+            w=matrix(1,nrow=5,ncol=5),
+            fun = f3)
+
+set(ageDTboth, NULL, "f25", f1[])
+checkF25 <- ageDTboth[pixelIndex %in% probPix$pixelIndex,]
+checkF25[!is.na(f25),]
+#ageDT2015 pixelIndex ageDT2020 pixelIndex f25
+# 1:        NA    1073507        15          1   1
+# 2:        NA    1078649        15          1   1
+# 3:        NA    1081227        15          1   1
+# 4:        NA    1083788        15          2   1
+# 5:        NA    1083795        15          1   1
+# ---
+#   6159:        NA    8453863        31          1   1
+# 6160:        NA    8456433        31          1   1
+# 6161:        NA    8456435        31          1   1
+# 6162:        NA    8466726        33          2   1
+# 6163:        NA    8469298        33          2   1
+
+## trying a little bigger
+f49 <- focal(allDistRaster,
+             w=matrix(1,nrow=7,ncol=7),
+             fun = f3)
+
+set(ageDTboth, NULL, "f49", f49[])
+
+checkf49 <- ageDTboth[pixelIndex %in% probPix$pixelIndex,]
+checkf49[!is.na(f49),]
+checkf49[is.na(f49),]
+
+## next to do repeat this but with one disturbance at a time since I have to
+## know which disturbance to attribute (1 =fire and 2 = harvest)
+
+## what is up with these last pixels??
+lastPix <- checkf49[is.na(f49),]$pixelIndex
+
+sim$allPixDT[pixelIndex %in% lastPix,]
+range(sim$allPixDT[pixelIndex %in% lastPix,]$pixelIndex)
+lastBad <- NA
+allPix <- data.table(sim$allPixDT,lastBad)
+allPix$lastBad[which(allPix$pixelIndex %in% lastPix)] <- 1
+# Now what? take the values of the ones in the row close by??
+
+
+
+
 
 
