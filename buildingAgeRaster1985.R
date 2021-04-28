@@ -1,142 +1,198 @@
 
 
 # old rasters from Greg 2015 I think.
-rastersOLD <- prepInputs(
-  url = "https://drive.google.com/file/d/1DN31xcXh97u6v8NaVcy0O3vzKpLpld69/view?usp=sharing",
-  fun = "raster::stack",
-  #rasterToMatch = masterRaster, useGDAL = FALSE) # this was Eliot's
-  destinationPath = 'inputs')
-
-stackIan <- prepInputs(url = "https://drive.google.com/file/d/1keh-3KIvgy8G5nBBxolH_LsoC53w3qqN/view?usp=sharing",
-                       fun = "raster::stack",
-                       destinationPath = 'inputs')
-# current masterRaster
-fireRetMasterRaster <- spadesCBMout$masterRaster
-
-# trying things
-rastersOLDt1 <- prepInputs(
-  url = "https://drive.google.com/file/d/1DN31xcXh97u6v8NaVcy0O3vzKpLpld69/view?usp=sharing",
-  fun = "raster::stack",
-  rasterToMatch = spadesCBMout$masterRaster,
-  useGDAL = FALSE,
-  destinationPath = 'inputs')
-
-age <- postProcess(x = stackIan$RIAlandscape.5,
-                   rasterToMatch = spadesCBMout$masterRaster,
-                   filename2 = "inputs/pixelAges.tif")
-
-aValues <- age[]
-table(aValues, useNA = 'ifany')
-mValues <- spadesCBMout$masterRaster[]
-table(mValues)
-# there are this many more NAs in the age raster provided by Ian
-# 5435395 - 5605119
-# [1] -169724
+# rastersOLD <- prepInputs(
+#   url = "https://drive.google.com/file/d/1DN31xcXh97u6v8NaVcy0O3vzKpLpld69/view?usp=sharing",
+#   fun = "raster::stack",
+#   #rasterToMatch = masterRaster, useGDAL = FALSE) # this was Eliot's
+#   destinationPath = 'inputs')
+#
+# stackIan <- prepInputs(url = "https://drive.google.com/file/d/1keh-3KIvgy8G5nBBxolH_LsoC53w3qqN/view?usp=sharing",
+#                        fun = "raster::stack",
+#                        destinationPath = 'inputs')
+# # current masterRaster
+# fireRetMasterRaster <- spadesCBMout$masterRaster
+#
+# # trying things
+# rastersOLDt1 <- prepInputs(
+#   url = "https://drive.google.com/file/d/1DN31xcXh97u6v8NaVcy0O3vzKpLpld69/view?usp=sharing",
+#   fun = "raster::stack",
+#   rasterToMatch = spadesCBMout$masterRaster,
+#   useGDAL = FALSE,
+#   destinationPath = 'inputs')
+#
+# age <- postProcess(x = stackIan$RIAlandscape.5,
+#                    rasterToMatch = spadesCBMout$masterRaster,
+#                    filename2 = "inputs/pixelAges.tif")
+#
+# aValues <- age[]
+# table(aValues, useNA = 'ifany')
+# mValues <- spadesCBMout$masterRaster[]
+# table(mValues)
+# # there are this many more NAs in the age raster provided by Ian
+# # 5435395 - 5605119
+# # [1] -169724
 
 # and here they are
-agesDT <- data.table(spadesCBMout$allPixDT[,.(ages, pixelIndex)],aValues)
-setnames(agesDT,c("ages","aValues"), c("ages2020", "ages2015"))
-agesNA <- agesDT[is.na(ages2015) & !is.na(ages2020),]
-
-# need to check if these pixels are disturbed
-# are they burned?
-presentDayBurns <- prepInputs(url = 'https://drive.google.com/file/d/1MjQ5y9Txr1ezv0BatG4b_6FpM6wti1b5/view?usp=sharing',
-                              destinationPath = 'inputs',
-                              overwrite = TRUE,
-                              fun = 'readRDS')
-# there are 3426/169724 that get burned between 1985-2015
-agesNA[pixelIndex %in% presentDayBurns$pixelID,]
-
-# are they harvested?
-presentDayHarvest <- prepInputs(url = 'https://drive.google.com/file/d/1Ca-kPun7_VF2xV8s40IJ9hri3Ok-6qx5/view?usp=sharing',
-                              destinationPath = 'inputs',
-                              overwrite = TRUE,
-                              fun = 'readRDS')
-# there are 14969/169724 that get burned between 1985-2015
-agesNA[pixelIndex %in% presentDayHarvest$pixelID,]
-
-(14969 + 3426)/169724
-#only 11%
+# agesDT <- data.table(spadesCBMout$allPixDT[,.(ages, pixelIndex)],aValues)
+# setnames(agesDT,c("ages","aValues"), c("ages2020", "ages2015"))
+# agesNA <- agesDT[is.na(ages2015) & !is.na(ages2020),]
+#
+# # need to check if these pixels are disturbed
+# # are they burned?
+# presentDayBurns <- prepInputs(url = 'https://drive.google.com/file/d/1MjQ5y9Txr1ezv0BatG4b_6FpM6wti1b5/view?usp=sharing',
+#                               destinationPath = 'inputs',
+#                               overwrite = TRUE,
+#                               fun = 'readRDS')
+# # there are 3426/169724 that get burned between 1985-2015
+# agesNA[pixelIndex %in% presentDayBurns$pixelID,]
+#
+# # are they harvested?
+# presentDayHarvest <- prepInputs(url = 'https://drive.google.com/file/d/1Ca-kPun7_VF2xV8s40IJ9hri3Ok-6qx5/view?usp=sharing',
+#                               destinationPath = 'inputs',
+#                               overwrite = TRUE,
+#                               fun = 'readRDS')
+# # there are 14969/169724 that get burned between 1985-2015
+# agesNA[pixelIndex %in% presentDayHarvest$pixelID,]
+#
+# (14969 + 3426)/169724
+# #only 11%
 
 
 #read-in the VRI2015
 # this is an ESRI file
 #https://pub.data.gov.bc.ca/datasets/02dba161-fdb7-48ae-a4bb-bd6ef017c36d/2015/VEG_COMP_LYR_L1_POLY_2015.gdb.zip
 
-# back-tracking VRI2015 age raster to 1985 based on the disturbance info
-presentDayBurns[, events := 1L]
-presentDayHarvest[, events := 2L]
-allDist <- rbind(presentDayBurns, presentDayHarvest)
+# # back-tracking VRI2015 age raster to 1985 based on the disturbance info
+# presentDayBurns[, events := 1L]
+# presentDayHarvest[, events := 2L]
+# allDist <- rbind(presentDayBurns, presentDayHarvest)
+#
+# # there needs to be a part here to make the right age raster
+# RIArtm <- prepInputs(url = "https://drive.google.com/file/d/1h7gK44g64dwcoqhij24F2K54hs5e35Ci/view?usp=sharing",
+#                      destinationPath = 'inputs')
+# VRI2015ageRaster <- Cache(prepInputsVRIage, VRIurl = "https://drive.google.com/file/d/1spcJq_4r4TRA2jfjclQcwBcIfnbniEXZ",
+#                             dPath = "C:/Celine/github/spadesCBM_RIA/modules/CBM_dataPrep_RIA/data",
+#                             rasterToMatch = RIArtm,
+#                             cacheRepo = cacheDir)
+# # make a data table from the raster
+#
+#
+# # this is the wrong raster but waiting for the VRI2015
+# ages2015dt <- agesDT[,.(pixelIndex, ages2015)]
+#
+#
+#
+#
+# prepInputsVRIage <- function(VRIurl, dPath, rasterToMatch, field = "PROJ_AGE_1"){
+#   VRIin <- prepInputs(url = VRIurl,
+#                       fun = "sf::st_read",
+#                       destinationPath = dPath)
+#   RIA_VRI <- st_transform(VRIin, crs = st_crs(rasterToMatch))
+#   #gcIDRaster <- fasterize::fasterize(RIA_VRI, rasterToMatch, field = "curve2")
+#   ageRaster <- fasterize::fasterize(RIA_VRI, rasterToMatch, field = "PROJ_AGE_1")
+#   #gcIDRaster[] <- as.integer(gcIDRaster[])
+#   ageRaster[] <- as.integer(ageRaster[])
+#   VRIageRaster <- raster::raster(ageRaster)
+#   return(VRIageRaster)
+# }
+#
+# # Eliot modified reproducible so prepInputs can deal with .gbd files
+# remotes::install_github("PredictiveEcology/reproducible@gdb_archiveNA")
+# # I am using "dummy" masterRaster --> use your real one
+# masterRaster <- raster(extent(-1963750, -1321250, 7407500, 8239000),
+#                        crs = "+proj=lcc +lat_0=0 +lon_0=-95 +lat_1=49 +lat_2=77 +x_0=0 +y_0=0 +ellps=GRS80 +units=m", res = 250)
+# # Make a studyArea --> use your real one
+# sa <- as(extent(masterRaster), "SpatialPolygons")
+# crs(sa) <- crs(masterRaster)
+# loadAge <- function(x, field = "PROJ_AGE_1") {
+#   # a <- Cache(sf::st_read, x) # I used Cache during my development because this takes 37 minutes to run -- I was sick of running it again and again
+#   a <- sf::st_read(x)
+#   a1 <- a[, field]
+#   return(a1)
+# }
+# a <- prepInputs(url =
+#                   "https://pub.data.gov.bc.ca/datasets/02dba161-fdb7-48ae-a4bb-bd6ef017c36d/2015/VEG_COMP_LYR_L1_POLY_2015.gdb.zip",
+#                 fun = quote(loadAge(x = targetFilePath,
+#                                     field = "PROJ_AGE_1")),
+#                 targetFile = "VEG_COMP_LYR_L1_POLY_2015.gdb.zip", archive = NA,
+#                 studyArea = sa
+#                 #rasterTomatch = masterRaster
+# )
 
-# there needs to be a part here to make the right age raster
-RIArtm <- prepInputs(url = "https://drive.google.com/file/d/1h7gK44g64dwcoqhij24F2K54hs5e35Ci/view?usp=sharing",
-                     destinationPath = 'inputs')
-VRI2015ageRaster <- Cache(prepInputsVRIage, VRIurl = "https://drive.google.com/file/d/1spcJq_4r4TRA2jfjclQcwBcIfnbniEXZ",
-                            dPath = "C:/Celine/github/spadesCBM_RIA/modules/CBM_dataPrep_RIA/data",
-                            rasterToMatch = RIArtm,
-                            cacheRepo = cacheDir)
-# make a data table from the raster
 
+############ From the browser post VRI2015 reading-in###########################
 
-# this is the wrong raster but waiting for the VRI2015
-ages2015dt <- agesDT[,.(pixelIndex, ages2015)]
-
-
-
-
-prepInputsVRIage <- function(VRIurl, dPath, rasterToMatch, field = "PROJ_AGE_1"){
-  VRIin <- prepInputs(url = VRIurl,
-                      fun = "sf::st_read",
-                      destinationPath = dPath)
-  RIA_VRI <- st_transform(VRIin, crs = st_crs(rasterToMatch))
-  #gcIDRaster <- fasterize::fasterize(RIA_VRI, rasterToMatch, field = "curve2")
-  ageRaster <- fasterize::fasterize(RIA_VRI, rasterToMatch, field = "PROJ_AGE_1")
-  #gcIDRaster[] <- as.integer(gcIDRaster[])
-  ageRaster[] <- as.integer(ageRaster[])
-  VRIageRaster <- raster::raster(ageRaster)
-  return(VRIageRaster)
-}
-
-# Eliot modified reproducible so prepInputs can deal with .gbd files
-remotes::install_github("PredictiveEcology/reproducible@gdb_archiveNA")
-# I am using "dummy" masterRaster --> use your real one
-masterRaster <- raster(extent(-1963750, -1321250, 7407500, 8239000),
-                       crs = "+proj=lcc +lat_0=0 +lon_0=-95 +lat_1=49 +lat_2=77 +x_0=0 +y_0=0 +ellps=GRS80 +units=m", res = 250)
-# Make a studyArea --> use your real one
-sa <- as(extent(masterRaster), "SpatialPolygons")
-crs(sa) <- crs(masterRaster)
-loadAge <- function(x, field = "PROJ_AGE_1") {
-  # a <- Cache(sf::st_read, x) # I used Cache during my development because this takes 37 minutes to run -- I was sick of running it again and again
-  a <- sf::st_read(x)
-  a1 <- a[, field]
-  return(a1)
-}
-a <- prepInputs(url =
-                  "https://pub.data.gov.bc.ca/datasets/02dba161-fdb7-48ae-a4bb-bd6ef017c36d/2015/VEG_COMP_LYR_L1_POLY_2015.gdb.zip",
-                fun = quote(loadAge(x = targetFilePath,
-                                    field = "PROJ_AGE_1")),
-                targetFile = "VEG_COMP_LYR_L1_POLY_2015.gdb.zip", archive = NA,
-                studyArea = sa
-                #rasterTomatch = masterRaster
-)
 # starting from the read-in age raster in 2015 and keeping the same masterRaster
-# as the fireReturnInterval runs
+# as the fireReturnInterval runs.
 
-## NOTEs: there are 104427 pixels with NAs in 2015 and ages in 2020. 15018 of
-## those are disturbed during the 1985-2015 period in the Wulder and White data.
-## There are no pixels that have no ages in 2015 and have ages in 2020. Options:
+age2015 <- ageRaster2015[]
+age2020 <- ageRaster[]
+# NAs 2015 5539822
+# NAs 2020 5435395
+
 
 ## figure out what ages the NAs have in 2020.
 ## Note that some ages in the 2020 that have no ages in the 2015 raster AND that
 ## are disturbed (so in the sim$disturbanceRasters data table) are old...older
 ## then the age from the dist...but most are below 50.
 
-ageDTboth <- data.table(ageDT2015, ageDT2020)
-ageNoMathc <- ageDTboth[is.na(ageDT2015) & !is.na(ageDT2020),]
-library(ggplot2)
-distPixWageIn2020 <- qplot(ageNoMathc[pixelIndex %in% allDist$pixelID]$ageDT2020, geom="histogram")
 
-## check the age distribution of the ageNoMathc for the remaining 89409 pixels
+ageDT <- data.table(pixelIndex = sim$allPixDT$pixelIndex, age2015, age2020)
+ageNoMatch <- ageDT[is.na(age2015) & !is.na(age2020),]
+## NOTEs: there are 104427 more pixels with NAs in age2015 than in age2020.
+ageDT[!is.na(age2015) & is.na(age2020),]
+## There are no pixels that have ages in 2015 and are NAs-age in 2020.
+
+# ageNA1985, what is their year of disturbance?
+
+setkeyv(ageNoMatch, "pixelIndex")
+setkeyv(allDist,"pixelID")
+
+# do any pixels burn twice?
+length(unique(presentDayBurns$pixelID)) == dim(presentDayBurns)[1]
+#TRUE
+# harvested twice?
+length(unique(presentDayHarvest$pixelID)) == dim(presentDayHarvest)[1]
+#TRUE
+
+# get only the burnt/harvested pixels in the noMatch
+ageNAburns <- presentDayBurns[pixelID %in% ageNoMatch$pixelIndex, ]
+setnames(ageNAburns,"pixelID", "pixelIndex")
+ageNAharvest <- presentDayHarvest[pixelID %in% ageNoMatch$pixelIndex, ]
+setnames(ageNAharvest,"pixelID", "pixelIndex")
+# Merge them with ageNoMatch
+#dt_a[dt_b, on = .(b = y)]
+ageNA1985 <- merge.data.table(ageNoMatch, ageNAburns, by = "pixelIndex", all.x = TRUE)
+setnames(ageNA1985,"year", "burnYear")
+ageNA1985[, events := NULL]
+ageNA1985 <- merge.data.table(ageNA1985, ageNAharvest, by = "pixelIndex", all.x = TRUE)
+setnames(ageNA1985,"year", "harvestYear")
+ageNA1985[, events := NULL]
+ageNA1985$noDist <- 0
+ageNA1985[which(is.na(burnYear) & is.na(harvestYear)),]$noDist <- 1
+
+# make a column of "straight substraction"
+ageNA1985[, substract := (age2020 - 35)]
+
+
+# 85185
+
+
+# of the negative one in substract, how many are disturbed?
+ageNoMatch[substract >= 0,]
+ageNoMatch[pixelIndex %in% allDist$pixelID,]
+ageNoMatch[!(pixelIndex %in% allDist$pixelID),]
+## 15018 of those are disturbed during the 1985-2015 period in the Wulder and
+## White data.
+
+
+library(ggplot2)
+distPixWageIn2020 <- qplot(ageNoMatch[pixelIndex %in% allDist$pixelID,]$age2020, geom="histogram")
+## most of these are under 50 years old, but not all...
+ageNoMatch[(pixelIndex %in% allDist$pixelID) & age2020 <35,]
+
+## check the age distribution of the ageNoMatch for the remaining 89409 pixels
 ## (8046.81 ha over 280118.2)
 
 noAge2015 <- ageNoMathc[!(pixelIndex %in% allDist$pixelID)]
