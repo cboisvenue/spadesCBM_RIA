@@ -120,6 +120,40 @@
 #                 #rasterTomatch = masterRaster
 # )
 
+# extra tries that failed
+# asked for help but got "do it another way" answer
+
+# pickAges <- function(gcID, pickN, allPixDT){
+#                       ageDist <- allPixDT[growth_curve_id == as.numeric(gcID) & ages >80,]$ages
+#                       return(ageDist[round(runif(
+#                         n = as.numeric(pickN),
+#                         min = 1,
+#                         max = length(ageDist)),digits = 0)])
+# }
+#
+# newVector <- inDT[, lapply(.SD, FUN = pickAges(gcID = growth_curve_id,
+#                                                             pickN = N,
+#                                                             allPixDT = egPixDT)),
+#                                by = 'growth_curve_id']
+#
+#
+# newAgesDistPix <- rndNumBygcID[, lapply(.SD, FUN = pickAges(gcID = growth_curve_id,
+#                                                             pickN = N,
+#                                                             allPixDT = sim$allPixDT)),
+#                                by = 'growth_curve_id']
+
+#newPixDT <- egPixDT[inDT, on = "growth_curve_id", nomatch = 0] # join the 2 objects on "growth_curve_id"
+# ageList <- as.list(vector(mode = "list", length = nrow(rndNumBygcID)))
+# for(i in 1:length(rndNumBygcID$growth_curve_id)){
+#   ageDist <- matchPixDT[growth_curve_id == as.numeric(rndNumBygcID[i,1]),]
+#   ageList[[i]] <- sample(ageDist$ages, size = as.numeric(rndNumBygcID[i,2]))
+# }
+#
+# ageNew <- rbindlist(ageList)
+#
+## another try
+
+
 
 ############ From the browser post VRI2015 reading-in###########################
 
@@ -175,22 +209,172 @@ ageNA1985[which(is.na(burnYear) & is.na(harvestYear)),]$noDist <- 1
 # make a column of "straight substraction"
 ageNA1985[, substract := (age2020 - 35)]
 
+## pixels that have no disturbance and are >0 in 1985 get this age ##################
+ageNA1985$PixSubtract1985 <- 999
+ageNA1985[noDist == 1 & substract >= 0,]$PixSubtract1985 <- ageNA1985[noDist == 1 & substract >= 0,]$substract
+ageNA1985[PixSubtract1985 == 999,]
+# still 23177 that are not dealt with.
 
-# 85185
+## the ones that have a non-negative age at the time of disturbance will get the
+## age in the year prior to disturbance
+ageNA1985[, PixFireYrAge := age2020 - (2020-burnYear)]
+ageNA1985[, PixCutYrAge := age2020 - (2020-harvestYear)]
+## this gives the ages of the burnt pixels in 1985 (values>0)
+ageNA1985[, firePix1985age := PixFireYrAge - (burnYear - 1985)]
+ageNA1985[, cutPix1985age := PixCutYrAge - (harvestYear - 1985)]
+
+## how many left?
+ageNA1 <- ageNA1985[PixSubtract1985 != 999] #81250
+ageNA2 <- ageNA1985[ PixSubtract1985 == 999 & (firePix1985age > 0 | cutPix1985age > 0),] #3835
+
+#104427-85085
+ageNA1985[pixelIndex %in% ageNA1$pixelIndex | pixelIndex %in% ageNA2$pixelIndex] #85085
+probPix <- ageNA1985[!(pixelIndex %in% ageNA1$pixelIndex | pixelIndex %in% ageNA2$pixelIndex)] #19342
+# remove these
+#colsRemove <- c("substract", "PixSubtract1985", "PixFireYrAge")
+#probPix[, c("substract", "PixSubtract1985", "PixFireYrAge") := list(NULL, NULL, NULL)]
+
+# how many of those are disturbed?
+table(probPix$noDist)
+# 0     1
+# 11183  8159
+
+# look at disturbed pixels ages in 1985
+probCuts1985 <- qplot(probPix[noDist == 0,]$cutPix1985age, geom = "histogram")
+probBurns1985 <- qplot(probPix[noDist == 0,]$firePix1985age, geom = "histogram")
+
+## decision: all the disturbed pixels (noDist == 0) that were cut or burnt will
+## have mature ages at the year of disturbance. Those will be selected from the
+## age distribution of pixels with the same gcID with ages >80 in age2020.
+
+distPixToMatch <- probPix[noDist == 0,]
+length(unique(distPixToMatch$pixelIndex)) # no duplicats
+# figure out the gcID for each pixelIndex
+# get all the ages>80 at ages2020 in each gcID
+# randomly select one for each pixelIndex
+
+#gcIDdistPixNoMatch <- unique(sim$allPixDT[pixelIndex %in% distPixToMatch$pixelIndex,]$growth_curve_id)
+#84
+rndNumBygcID <- sim$allPixDT[pixelIndex %in% distPixToMatch$pixelIndex, .(pixelIndex, growth_curve_id)][,.N, by = "growth_curve_id"]
+
+matchPixDT <- sim$allPixDT[growth_curve_id %in% rndNumBygcID$growth_curve_id & ages>80,.(growth_curve_id, ages)]
+
+newAgedistPix1 <- matchPixDT[rndNumBygcID, on = "growth_curve_id", nomatch = 0]
+
+#newPixDT <- newPixDT[, .SD[sample(.N, N)], by = "growth_curve_id"] # take a sample of each growth_curve_id, length N
+#newAgedistPix <- newAgedistPix1[, lapply(.SD, sample(ages, size = N[1])), by = growth_curve_id]
+
+newAgedistPix <- newAgedistPix1[, .SD[sample(ages,size = N[1])], by = "growth_curve_id"]
+
+# This is just a test -- does each growth curve id have the same # rows as N says
+newAgedistPix[, .N == N[1],by = "growth_curve_id"]
+
+# re-attach a pixelIndex
+pixIndDistPixToMatch <- sim$allPixDT[pixelIndex %in% distPixToMatch$pixelIndex, .(pixelIndex, growth_curve_id)]
+setorder(pixIndDistPixToMatch, growth_curve_id)
+setorder(newAgedistPix, growth_curve_id)
+set(pixIndDistPixToMatch, NULL, "distPixNegAge1985", newAgedistPix$ages)
+pixIndDistPixToMatch[, growth_curve_id := NULL]
+ageNA1985 <- merge.data.table(ageNA1985, pixIndDistPixToMatch, on = "pixelIndex", all.x = TRUE)
+
+##
+noDistPixToMatch <- probPix[noDist == 1,]
+
+negAgeHist <- hist(noDistPixToMatch$substract, plot = FALSE)
+Plot(negAgeHist)
+
+## trying to find the closest pixel with a disturbance in the 1985-2015
+## disturbance data.table.
+# are there pixels that are disturbed twice in this data?
+countDist <- allDist[, .N, by = pixelID]
+# yes
+# are those in the proPix?
+probPix[pixelIndex %in% countDist[N>1,]$pixelID,] #no
+
+# create a raster with all the disturbances
+allDistRaster <- raster::raster(masterRaster)
+allDistRaster[] <- NA
+allDistRaster[countDist$pixelID] <- 1
+
+# trying focal. This takes a raster and gives me back a raster
+f3 <- function(x){
+  theNAs <- is.na(x)
+  if (all(theNAs))
+    NA
+  else
+    x[sample(which(!theNAs),1)]
+}
+# maybe too small?
+f9 <- focal(allDistRaster,
+            w=matrix(1,nrow=3,ncol=3),
+            fun = f3)
+
+# agg that column to the all pixels DT
+set(ageDT, NULL, "f9", f9[])
+# do any of the 3X3 windows cover the last 8159 pixels?
+checkF9 <- ageDT[pixelIndex %in% noDistPixToMatch$pixelIndex,]
+table(checkF9$f9, useNA = "ifany")
+# 1  NaN
+# 4410 3749
+# figure out what year and what disturbances
+# some pixels are disturbed twice but they are not in my probPix
+#
+# make a raster with the dist year
+yrDistRaster <- raster::raster(masterRaster)
+setnames(countDist, "pixelID", "pixelIndex")
+setnames(allDist, "pixelID", "pixelIndex")
+yrDist <- unique(countDist[allDist, on = "pixelIndex", nomatch = 0][,.(pixelIndex, year)])
+yrDistRaster[] <- NA
+yrDistRaster[yrDist$pixelIndex] <- yrDist$year
+yrf9 <- focal(yrDistRaster,
+              w=matrix(1,nrow=3,ncol=3),
+              fun = f3)
+set(ageDT, NULL, "yrf9", yrf9[])
+
+# create a new "distPixels" DT adding the dist to the f9==1
+f9pix <- ageDT[f9==1]
+f9dist <- merge.data.table(allDist, f9pix, all = TRUE)
+# add the growth_curve_id to help the match??
+f9dist <- f9dist[sim$allPixDT, on = 'pixelIndex', nomatch = 0][,.(pixelIndex, year, events, age2015, age2020, f9, yrf9, growth_curve_id)]
+f9dist[, targetPix := 0L]
+f9dist[pixelIndex %in% noDistPixToMatch$pixelIndex]$targetPix <- 1
+
+# are there any pixels with targetPix == 1 and yrf9 !is.na()?
+f9dist[targetPix >0 &!is.na(yrf9)]#4217
+
+## NEXT: need to assign the dist years to those pixels and an age at time of dist (as above)
+## NEXT 2: try again with a bigger window
+
+## now check if the lag1 adds years to the
+# lagNames <- c("yearLag", "eventLag", "growth_curve_idLag")
+# f9dist[,.(lagNames) := list(shift(year,1,type="lag"), shift(events,1,type="lag"),shift(year,1,growth_curve_id="lag"))]
+f9dist[, yearLag := shift(year,1,type="lag")]
+f9dist[!is.na(yearLag) & targetPix>0]
+#1886
+# would I get more with a "lead"
+f9dist[, yearLead := shift(year,1,type="lead")]
+f9dist[!is.na(yearLead) & targetPix>0] #1897
+# 2lag?
+f9dist[, yearLag := shift(year,1,type="lag")]
+f9dist[!is.na(yearLag) & targetPix>0]
 
 
-# of the negative one in substract, how many are disturbed?
-ageNoMatch[substract >= 0,]
-ageNoMatch[pixelIndex %in% allDist$pixelID,]
-ageNoMatch[!(pixelIndex %in% allDist$pixelID),]
-## 15018 of those are disturbed during the 1985-2015 period in the Wulder and
-## White data.
+
+ageAllDist <- merge.data.table(ageDT, allDist, by = "pixelIndex", all.x = TRUE)
+# add a column to indicate the pixels I am looking to fill ages
+ageAllDist[, targetPix := 0L]
+ageAllDist[pixelIndex %in% noDistPixToMatch$pixelIndex]$targetPix <- 1
+
+f9Pix <- ageAllDist[!is.na(f9)]
+thesePix4 <- checkF9[!is.na(f9)]
+
+### HERE
+
+qplot(sim$allPixDT[growth_curve_id == rndNumBygcID[1,1] & ages >80,]$ages, geom = "histogram")
 
 
 library(ggplot2)
 distPixWageIn2020 <- qplot(ageNoMatch[pixelIndex %in% allDist$pixelID,]$age2020, geom="histogram")
-## most of these are under 50 years old, but not all...
-ageNoMatch[(pixelIndex %in% allDist$pixelID) & age2020 <35,]
 
 ## check the age distribution of the ageNoMatch for the remaining 89409 pixels
 ## (8046.81 ha over 280118.2)
