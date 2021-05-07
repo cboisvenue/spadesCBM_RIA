@@ -9,6 +9,8 @@ carbonOutPlot(
   masterRaster = spadesCBMout$masterRaster
 )
 
+### fire runs results and fiddling ############################################
+
 #Outputs for Sam
 # getting the individual matrices used in the c-transactions in the sims
 fireSimTransferMatrices <- lapply(opMatrices, unique)
@@ -40,3 +42,22 @@ which(gcidsLevels == "4001001_4")
 pg1gc <- as.data.table(fireReturnSims$growth_increments[
   fireReturnSims$growth_increments[,1] == which(gcidsLevels == "4001001_4"),])
 pg1gc[age == max(age),]
+### fire runs results and fiddling END ############################################
+
+
+### presentDay runs checking
+
+## using some CBMutils plotting functions
+# plot 1985 cbmPools
+
+CBMutils::plotCarbonRasters(
+  pixelkeep = spadesCBMout2$pixelKeep,
+  cbmPools = spadesCBMout2$cbmPools,
+  poolsToPlot = "totalCarbon",
+  years = c(1985, 2015),
+  masterRaster = spadesCBMout2$masterRaster
+)
+ageDist2015hist <- qplot(spadesCBMout2$spatialDT$ages, geom = "histogram")
+ageDist1985hist <- qplot(spadesCBMout2$allPixDT[!is.na(ages),]$ages, geom = "histogram")
+Plot(ageDist1985hist)
+Plot(ageDist2015hist, addTo = TRUE)

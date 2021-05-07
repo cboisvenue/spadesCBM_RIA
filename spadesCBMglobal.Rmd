@@ -224,7 +224,7 @@ parameters <- list(
     .useCache = TRUE
   ),
   CBM_core = list(
-    .useCache = "init", #c(".inputObjects", "init")
+    #.useCache = TRUE, #"init", #c(".inputObjects", "init")
     # .plotInterval = 5,
     .plotInitialTime = times$start,
     poolsToPlot = c("totalCarbon"),
@@ -253,8 +253,10 @@ options(spades.moduleCodeChecks = FALSE,
         reproducible.useMemoise = FALSE,
         spades.recoveryMode = FALSE)
         #reproducible.useNewDigestAlgorithm = 2)
-
-whens <- sort(c(times$start, times$start + 1:4 * 100, times$end - 2:0))
+# this is the whens for the 540 years of fire runs
+#whens <- sort(c(times$start, times$start + 1:4 * 100, times$end - 2:0))
+# this is for the presentDay runs
+whens <- sort(c(times$start, times$start + c(5, 10, 15, 20, 25), times$end - 2:0))
 outputs <- as.data.frame(expand.grid(objectName = c("cbmPools", "NPP"), saveTime = whens))
  
 spadesCBMSim2 <- simInit(times = times,
