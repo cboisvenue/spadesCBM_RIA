@@ -10,3 +10,6 @@
 [submodule "modules/CBM_dataPrep_RIApresentDay"]
 	path = modules/CBM_dataPrep_RIApresentDay
 	url = https://github.com/cboisvenue/CBM_dataPrep_RIApresentDay.git
+[submodule "modules/CBM_dataPrep_RIAfri"]
+	path = modules/CBM_dataPrep_RIAfri
+	url = https://github.com/cboisvenue/CBM_dataPrep_RIAfri.git
