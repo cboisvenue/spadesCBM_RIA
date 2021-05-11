@@ -300,8 +300,6 @@ RIAfriRuns <- simInitAndSpades(times = timesFRI,
                                loadOrder = unlist(modulesFRI),
                                debug = TRUE)
 
-)
-
 RIApresentDayRuns <- simInitAndSpades(times = timesPresentDay,
                                params = parametersPresentDay,
                                modules = modulesPresentDay,
@@ -310,6 +308,7 @@ RIApresentDayRuns <- simInitAndSpades(times = timesPresentDay,
                                outputs = outputsPresentDay,
                                loadOrder = unlist(modulesPresentDay),
                                debug = TRUE)
+
 # RIAfriSim <- simInit(times = timesFRI,
 #                         params = parameters,
 #                         modules = modulesFRI, 
