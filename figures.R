@@ -50,7 +50,7 @@ pg1gc[age == max(age),]
 ## using some CBMutils plotting functions
 # plot 1985 cbmPools
 
-CBMutils::plotCarbonRasters(
+presentDayTotCrasters <- CBMutils::plotCarbonRasters(
   pixelkeep = spadesCBMout2$pixelKeep,
   cbmPools = spadesCBMout2$cbmPools,
   poolsToPlot = "totalCarbon",

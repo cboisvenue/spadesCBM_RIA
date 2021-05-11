@@ -207,12 +207,15 @@ Require("PredictiveEcology/CBMutils (>= 0.0.6)")
 options("reproducible.useRequire" = TRUE)
 
 cacheDir <- reproducible::checkPath("cache", create = TRUE)
-moduleDir <- "modules"
+moduleDir <- reproducible::checkPath("modules")
 inputDir <- reproducible::checkPath("inputs", create = TRUE)
 outputDir <- reproducible::checkPath("outputs", create = TRUE)
 scratchDir <- file.path(tempdir(), "scratch", "CBM") %>% reproducible::checkPath(create = TRUE)
 
-times <- list(start = 1985.00, end = 2015.00)
+## TODO fix this so we ca run all the times with the appropriate sims below
+timesFRI <- list(start = 2020.00, end = 2540.00)
+timesPresentDay <- list(start = 1985.00, end = 2015.00)
+
 parameters <- list(
   CBM_defaults = list(
     .useCache = TRUE
@@ -222,29 +225,54 @@ parameters <- list(
   ),
   CBM_vol2biomass_RIA = list(
     .useCache = TRUE
-  ),
-  CBM_core = list(
-    #.useCache = TRUE, #"init", #c(".inputObjects", "init")
-    # .plotInterval = 5,
-    .plotInitialTime = times$start,
-    poolsToPlot = c("totalCarbon"),
-    spinupDebug = FALSE ## TODO: temporary
   )
 )
+parametersFRI <- parameters
+parametersFRI$CBM_core <- list(
+                    #.useCache = TRUE, #"init", #c(".inputObjects", "init")
+                    # .plotInterval = 5,
+                    .plotInitialTime = timesFRI$start,
+                    poolsToPlot = c("totalCarbon"),
+                    spinupDebug = FALSE ## TODO: temporary
+                  )
+parametersPresentDay <- parameters
+parametersPresentDay$CBM_core <- list(
+                    #.useCache = TRUE, #"init", #c(".inputObjects", "init")
+                    # .plotInterval = 5,
+                    .plotInitialTime = timesPresentDay$start,
+                    poolsToPlot = c("totalCarbon"),
+                    spinupDebug = FALSE ## TODO: temporary
+                  )
 
-modules <- list("CBM_defaults", "CBM_dataPrep_RIA", "CBM_vol2biomass_RIA", "CBM_core")
+modulesFRI <- list("CBM_defaults", "CBM_dataPrep_RIAfri", "CBM_vol2biomass_RIA", "CBM_core")
+modulesPresentDay <- list("CBM_defaults", "CBM_dataPrep_RIApresentDay", "CBM_vol2biomass_RIA", "CBM_core")
+
 objects <- list(
   dbPath = file.path(inputDir, "cbm_defaults", "cbm_defaults.db"),
   sqlDir = file.path(inputDir, "cbm_defaults")
 )
 
-setPaths(
+paths <- list(
   cachePath = cacheDir,
   modulePath = moduleDir,
   inputPath = inputDir,
-  outputPath = outputDir,
   rasterPath = scratchDir
 )
+
+pathsFRI <- paths
+pathsFRI$outputPath <- file.path(outputDir,"FRI")
+
+pathsPresentDay<- paths
+pathsPresentDay$outputPath <- file.path(outputDir,"presentDay")
+
+# this sets options globally
+# setPaths(
+#   cachePath = cacheDir,
+#   modulePath = moduleDir,
+#   inputPath = inputDir,
+#   outputPath = outputDir,
+#   rasterPath = scratchDir
+# )
 
 quickPlot::dev.useRSGD(FALSE)
 dev()
@@ -253,21 +281,44 @@ options(spades.moduleCodeChecks = FALSE,
         reproducible.useMemoise = FALSE,
         spades.recoveryMode = FALSE)
         #reproducible.useNewDigestAlgorithm = 2)
-# this is the whens for the 540 years of fire runs
-#whens <- sort(c(times$start, times$start + 1:4 * 100, times$end - 2:0))
-# this is for the presentDay runs
-whens <- sort(c(times$start, times$start + c(5, 10, 15, 20, 25), times$end - 2:0))
-outputs <- as.data.frame(expand.grid(objectName = c("cbmPools", "NPP"), saveTime = whens))
- 
-spadesCBMSim2 <- simInit(times = times,
-                        params = parameters,
-                        modules = modules, 
-                        objects = objects, 
-                        outputs = outputs,
-                        #paths = paths, ## not needed when using setPaths() above
-                        loadOrder = unlist(modules))
 
-spadesCBMout2 <- spades(spadesCBMSim2, debug = TRUE)
+# this is the whens for the 540 years of fire runs
+whensFRI <- sort(c(timesFRI$start, timesFRI$start + 1:4 * 100, timesFRI$end - 2:0))
+# this is for the presentDay runs
+whensPresentDay <- sort(c(timesPresentDay$start, timesPresentDay$start + c(5, 10, 15, 20, 25), 
+                          timesPresentDay$end - 2:0))
+
+outputsFRI <- as.data.frame(expand.grid(objectName = c("cbmPools", "NPP"), saveTime = whensFRI))
+outputsPresentDay <- as.data.frame(expand.grid(objectName = c("cbmPools", "NPP"), saveTime = whensPresentDay))
+
+RIAfriRuns <- simInitAndSpades(times = timesFRI,
+                               params = parametersFRI,
+                               modules = modulesFRI,
+                               objects = objects,
+                               paths = pathsFRI,
+                               outputs = outputsFRI,
+                               loadOrder = unlist(modulesFRI),
+                               debug = TRUE)
+
+)
+
+RIApresentDayRuns <- simInitAndSpades(times = timesPresentDay,
+                               params = parametersPresentDay,
+                               modules = modulesPresentDay,
+                               objects = objects,
+                               paths = pathsPresentDay,
+                               outputs = outputsPresentDay,
+                               loadOrder = unlist(modulesPresentDay),
+                               debug = TRUE)
+# RIAfriSim <- simInit(times = timesFRI,
+#                         params = parameters,
+#                         modules = modulesFRI, 
+#                         objects = objects, 
+#                         outputs = outputsFRI,
+#                         paths = pathsFRI, ## not needed when using setPaths() above
+#                         loadOrder = unlist(modulesFRI))
+# 
+# RIAfriCBMout <- spades(RIAfriSim, debug = TRUE)
 ```
 
 # Functions
