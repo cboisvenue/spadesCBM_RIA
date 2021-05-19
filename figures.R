@@ -121,6 +121,21 @@ clearPlot()
 Plot(FRIageDist2540hist)
 Plot(FRIageDist2020hist, addTo = TRUE)
 
+# ploting the spinup resutls
+friSpinup <- data.table(RIAfriRuns$spinupResult)
+friSpinup[, simYear := 0]
+friSpinup[, ages := RIAfriRuns$level3DT$ages]
+friSpinup[, pixelGroup := RIAfriRuns$level3DT$pixelGroup]
+friSpinup
+neworder <- c(27, 1, 29, 28, 2:26)
+setcolorder(friSpinup, neworder)
+
+FRIspinupRaster <- spatialRaster(
+  pixelkeep = RIAfriRuns$pixelKeep,
+  cbmPools = friSpinup,
+  poolsToPlot = "totalCarbon",
+  years = 0,
+  masterRaster = RIAfriRuns$masterRaster)
 
 ### fire runs results and fiddling ############################################
 
@@ -158,7 +173,7 @@ pg1gc[age == max(age),]
 ### fire runs results and fiddling END ############################################
 
 
-### presentDay runs checking
+### presentDay runs checking ######################################################################
 
 presentDayResultRasters <- spatialRaster(
   pixelkeep = RIApresentDayRuns$pixelKeep,
@@ -196,3 +211,40 @@ presentDayRunsAgeDist2015hist <- qplot(RIApresentDayRuns$spatialDT$ages, geom = 
 presentDayRunsAgeDist1985hist <- qplot(RIApresentDayRuns$allPixDT[!is.na(ages),]$ages, geom = "histogram")
 Plot(ageDist1985hist)
 Plot(ageDist2015hist, addTo = TRUE)
+### end presentDay runs checking ######################################################################
+
+### harvest1 runs checking ######################################################################
+harv1resultRasters <- spatialRaster(
+  pixelkeep = RIAharvest1Runs$pixelKeep,
+  cbmPools = RIAharvest1Runs$cbmPools,
+  poolsToPlot = "totalCarbon",
+  years = c(2020, 2099),
+  masterRaster = RIAharvest1Runs$masterRaster)
+
+Plot(harv1resultRasters$totalCarbon[[1]], title = "Total Carbon (t/ha) in 2020")
+Plot(harv1resultRasters$totalCarbon[[2]], title = "Total Carbon (t/ha) in 2099")
+
+writeRaster(harv1resultRasters$totalCarbon[[1]], filename = file.path(outputDir,"harvest1","TotalCarbon2020.tif"))
+writeRaster(harv1resultRasters$totalCarbon[[2]], filename = file.path(outputDir,"harvest1","TotalCarbon2099.tif"))
+
+harv1ageDist2099hist <- qplot(RIAharvest1Runs$spatialDT$ages, geom = "histogram")
+harv1ageDist2020hist <- qplot(RIAharvest1Runs$allPixDT[!is.na(ages),]$ages, geom = "histogram")
+clearPlot()
+Plot(harv1ageDist2099hist, title = "Age class Distribution 2099")
+Plot(harv1ageDist2020hist, title = "Age class Distribution 2020", addTo = TRUE)
+
+# ploting the spinup resutls
+harv1Spinup <- data.table(RIAharvest1Runs$spinupResult)
+harv1Spinup[, simYear := 0]
+harv1Spinup[, ages := RIAharvest1Runss$level3DT$ages]
+harv1Spinup[, pixelGroup := RIAharvest1Runs$level3DT$pixelGroup]
+harv1Spinup
+neworder <- c(27, 1, 29, 28, 2:26)
+setcolorder(harv1Spinup, neworder)
+
+harv1spinupRaster <- spatialRaster(
+  pixelkeep = RIAharvest1Runs$pixelKeep,
+  cbmPools = harv1Spinup,
+  poolsToPlot = "totalCarbon",
+  years = 0,
+  masterRaster = RIAharvest1Runs$masterRaster)

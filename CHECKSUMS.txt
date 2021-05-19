@@ -1,5 +1,6 @@
 "file" "checksum" "filesize" "algorithm"
 "ria_vri-final_shp.zip" "c38f35c4f1117cef" "2668638588" "xxhash64"
+"tif_scenario-carbon-base_20210422.tar.gz" "cab3e4733aca6e79" "212296350" "xxhash64"
 "annualFires525yrs.tif" "5cf6c7476d8c4b60" "14344987" "xxhash64"
 "historicalFire_1985-2015.tif" "917afcdd39a8d3f4" "7925895" "xxhash64"
 "pixelAge2015.tif" "3f61c6442a15976e" "3703487" "xxhash64"

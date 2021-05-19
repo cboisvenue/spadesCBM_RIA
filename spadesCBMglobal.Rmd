@@ -215,6 +215,7 @@ scratchDir <- file.path(tempdir(), "scratch", "CBM") %>% reproducible::checkPath
 ## TODO fix this so we ca run all the times with the appropriate sims below
 timesFRI <- list(start = 2020.00, end = 2540.00)
 timesPresentDay <- list(start = 1985.00, end = 2015.00)
+timesHarvest1 <- list(start = 2020.00, end = 2099.00)
 
 parameters <- list(
   CBM_defaults = list(
@@ -227,6 +228,7 @@ parameters <- list(
     .useCache = TRUE
   )
 )
+
 parametersFRI <- parameters
 parametersFRI$CBM_core <- list(
                     #.useCache = TRUE, #"init", #c(".inputObjects", "init")
@@ -243,9 +245,17 @@ parametersPresentDay$CBM_core <- list(
                     poolsToPlot = c("totalCarbon"),
                     spinupDebug = FALSE ## TODO: temporary
                   )
+parametersHarvest1 <- parameters
+parametersHarvest1$CBM_core <- list(
+                    #.useCache = TRUE, #"init", #c(".inputObjects", "init")
+                    # .plotInterval = 5,
+                    .plotInitialTime = timesHarvest1$start,
+                    poolsToPlot = c("totalCarbon"),
+                    spinupDebug = FALSE) ## TODO: temporary
 
 modulesFRI <- list("CBM_defaults", "CBM_dataPrep_RIAfri", "CBM_vol2biomass_RIA", "CBM_core")
 modulesPresentDay <- list("CBM_defaults", "CBM_dataPrep_RIApresentDay", "CBM_vol2biomass_RIA", "CBM_core")
+modulesHarvest1 <- list("CBM_defaults", "CBM_dataPrep_RIAharvest1", "CBM_vol2biomass_RIA", "CBM_core")
 
 objects <- list(
   dbPath = file.path(inputDir, "cbm_defaults", "cbm_defaults.db"),
@@ -262,8 +272,12 @@ paths <- list(
 pathsFRI <- paths
 pathsFRI$outputPath <- file.path(outputDir,"FRI")
 
-pathsPresentDay<- paths
+pathsPresentDay <- paths
 pathsPresentDay$outputPath <- file.path(outputDir,"presentDay")
+
+pathsHarvest1 <- paths
+pathsHarvest1$outputPath <- file.path(outputDir,"harvest1")
+
 
 # this sets options globally
 # setPaths(
@@ -287,9 +301,22 @@ whensFRI <- sort(c(timesFRI$start, timesFRI$start + 1:4 * 100, timesFRI$end - 2:
 # this is for the presentDay runs
 whensPresentDay <- sort(c(timesPresentDay$start, timesPresentDay$start + c(5, 10, 15, 20, 25), 
                           timesPresentDay$end - 2:0))
+whensHarvest1 <- sort(c(timesHarvest1$start, timesHarvest1$start + c(10, 30, 50, 60), 
+                          timesHarvest1$end - 1:0))
+
 
 outputsFRI <- as.data.frame(expand.grid(objectName = c("cbmPools", "NPP"), saveTime = whensFRI))
 outputsPresentDay <- as.data.frame(expand.grid(objectName = c("cbmPools", "NPP"), saveTime = whensPresentDay))
+outputsHarvest1 <- as.data.frame(expand.grid(objectName = c("cbmPools", "NPP"), saveTime = whensHarvest1))
+
+RIApresentDayRuns <- simInitAndSpades(times = timesPresentDay,
+                               params = parametersPresentDay,
+                               modules = modulesPresentDay,
+                               objects = objects,
+                               paths = pathsPresentDay,
+                               outputs = outputsPresentDay,
+                               loadOrder = unlist(modulesPresentDay),
+                               debug = TRUE)
 
 RIAfriRuns <- simInitAndSpades(times = timesFRI,
                                params = parametersFRI,
@@ -300,13 +327,13 @@ RIAfriRuns <- simInitAndSpades(times = timesFRI,
                                loadOrder = unlist(modulesFRI),
                                debug = TRUE)
 
-RIApresentDayRuns <- simInitAndSpades(times = timesPresentDay,
-                               params = parametersPresentDay,
-                               modules = modulesPresentDay,
+RIAharvest1Runs <- simInitAndSpades(times = timesHarvest1,
+                               params = parametersHarvest1,
+                               modules = modulesHarvest1,
                                objects = objects,
-                               paths = pathsPresentDay,
-                               outputs = outputsPresentDay,
-                               loadOrder = unlist(modulesPresentDay),
+                               paths = pathsHarvest1,
+                               outputs = outputsHarvest1,
+                               loadOrder = unlist(modulesHarvest1),
                                debug = TRUE)
 
 # RIAfriSim <- simInit(times = timesFRI,
