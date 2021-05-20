@@ -217,6 +217,7 @@ timesFRI <- list(start = 2020.00, end = 2540.00)
 timesPresentDay <- list(start = 1985.00, end = 2015.00)
 timesHarvest1 <- list(start = 2020.00, end = 2099.00)
 
+
 parameters <- list(
   CBM_defaults = list(
     .useCache = TRUE
@@ -256,6 +257,7 @@ parametersHarvest1$CBM_core <- list(
 modulesFRI <- list("CBM_defaults", "CBM_dataPrep_RIAfri", "CBM_vol2biomass_RIA", "CBM_core")
 modulesPresentDay <- list("CBM_defaults", "CBM_dataPrep_RIApresentDay", "CBM_vol2biomass_RIA", "CBM_core")
 modulesHarvest1 <- list("CBM_defaults", "CBM_dataPrep_RIAharvest1", "CBM_vol2biomass_RIA", "CBM_core")
+modulesHarvest2 <- list("CBM_defaults", "CBM_dataPrep_RIAharvest2", "CBM_vol2biomass_RIA", "CBM_core")
 
 objects <- list(
   dbPath = file.path(inputDir, "cbm_defaults", "cbm_defaults.db"),
@@ -277,6 +279,9 @@ pathsPresentDay$outputPath <- file.path(outputDir,"presentDay")
 
 pathsHarvest1 <- paths
 pathsHarvest1$outputPath <- file.path(outputDir,"harvest1")
+
+pathsHarvest2 <- paths
+pathsHarvest2$outputPath <- file.path(outputDir,"harvest2")
 
 
 # this sets options globally
@@ -334,6 +339,15 @@ RIAharvest1Runs <- simInitAndSpades(times = timesHarvest1,
                                paths = pathsHarvest1,
                                outputs = outputsHarvest1,
                                loadOrder = unlist(modulesHarvest1),
+                               debug = TRUE)
+
+RIAharvest2Runs <- simInitAndSpades(times = timesHarvest1,
+                               params = parametersHarvest1,
+                               modules = modulesHarvest2,
+                               objects = objects,
+                               paths = pathsHarvest2,
+                               outputs = outputsHarvest1,
+                               loadOrder = unlist(modulesHarvest2),
                                debug = TRUE)
 
 # RIAfriSim <- simInit(times = timesFRI,

@@ -16,3 +16,9 @@
 [submodule "modules/CBM_dataPrep_RIAharvest1"]
 	path = modules/CBM_dataPrep_RIAharvest1
 	url = https://github.com/cboisvenue/CBM_dataPrep_RIAharvest1.git
+[submodule "modules//CBM_dataPrep_RIAharvest2"]
+	path = modules//CBM_dataPrep_RIAharvest2
+	url = https://github.com/cboisvenue/CBM_dataPrep_RIAharvest2.git
+[submodule "modules/CBM_dataPrep_RIAharvest2"]
+	path = modules/CBM_dataPrep_RIAharvest2
+	url = https://github.com/cboisvenue/CBM_dataPrep_RIAharvest2.git
