@@ -66,8 +66,132 @@ FRIresultRasters <- spatialRaster(
   years = c(2020, 2540),
   masterRaster = RIAfriRuns$masterRaster)
 
-writeRaster(FRIresultRasters$totalCarbon[[1]], filename = file.path(outputDir,"FRI","TotalCarbon2020.tif"))
-writeRaster(FRIresultRasters$totalCarbon[[2]], filename = file.path(outputDir,"FRI","TotalCarbon2540.tif"))
+# writeRaster(FRIresultRasters$totalCarbon[[1]], filename = file.path(outputDir,"FRI","TotalCarbon2020.tif"))
+# writeRaster(FRIresultRasters$totalCarbon[[2]], filename = file.path(outputDir,"FRI","TotalCarbon2540.tif"))
+
+presentDayResultRasters <- spatialRaster(
+  pixelkeep = RIApresentDayRuns$pixelKeep,
+  cbmPools = RIApresentDayRuns$cbmPools,
+  poolsToPlot = "totalCarbon",
+  years = c(1985, 2015),
+  masterRaster = RIApresentDayRuns$masterRaster)
+
+harv1baseResultRasters <- spatialRaster(
+  pixelkeep = RIAharvest1Runs$pixelKeep,
+  cbmPools = RIAharvest1Runs$cbmPools,
+  poolsToPlot = "totalCarbon",
+  years = c(2020, 2099),
+  masterRaster = RIAharvest1Runs$masterRaster)
+
+harv2baseResultRasters <- spatialRaster(
+  pixelkeep = RIAharvest2Runs$pixelKeep,
+  cbmPools = RIAharvest2Runs$cbmPools,
+  poolsToPlot = "totalCarbon",
+  years = c(2020, 2099),
+  masterRaster = RIAharvest2Runs$masterRaster)
+
+#totalCbeginningAllsims.pdf
+Plot(presentDayResultRasters$totalCarbon[[2]], title = "Present 2015 t/ha C")
+Plot(FRIresultRasters$totalCarbon[[1]], title = "FRI 2020 t/ha C")
+Plot(harv1baseResultRasters$totalCarbon[[1]], title = "Base harvest 2020 t/ha C")
+Plot(harv2baseResultRasters$totalCarbon[[1]], title = "Less harvest 2020 t/ha C")
+
+# Total C end all sims
+#totalCendAllsims.pdf
+clearPlot()
+Plot(presentDayResultRasters$totalCarbon[[2]], title = "Present 2015 t/ha C")
+Plot(FRIresultRasters$totalCarbon[[2]], title = "FRI 2540 t/ha C")
+Plot(harv1baseResultRasters$totalCarbon[[2]], title = "Base harvest 2099 t/ha C")
+Plot(harv2baseResultRasters$totalCarbon[[2]], title = "Less harvest 2099 t/ha C")
+
+### Age class distribution
+FRIageDist2540hist <- qplot(RIAfriRuns$spatialDT$ages, geom = "histogram")
+FRIageDist2020hist <- qplot(RIAfriRuns$allPixDT[!is.na(ages),]$ages, geom = "histogram")
+presentDayAgeDist2015hist <- qplot(RIApresentDayRuns$spatialDT$ages, geom = "histogram")
+presentDayAgeDist1985hist <- qplot(RIApresentDayRuns$allPixDT[!is.na(ages),]$ages, geom = "histogram")
+harv1ageDist2099hist <- qplot(RIAharvest1Runs$spatialDT$ages, geom = "histogram")
+harv1ageDist2020hist <- qplot(RIAharvest1Runs$allPixDT[!is.na(ages),]$ages, geom = "histogram")
+harv2ageDist2099hist <- qplot(RIAharvest2Runs$spatialDT$ages, geom = "histogram")
+harv2ageDist2020hist <- qplot(RIAharvest2Runs$allPixDT[!is.na(ages),]$ages, geom = "histogram")
+
+
+clearPlot()
+# all same age class dist?
+# beginningAgeDistCheck.pdf
+Plot(presentDayAgeDist2015hist,FRIageDist2020hist,harv1ageDist2020hist)
+Plot(harv2ageDist2020hist, addTo = TRUE)
+
+
+clearPlot()
+Plot(presentDayAgeDist2015hist)
+Plot(FRIageDist2540hist)
+Plot(harv1ageDist2099hist, addTo = TRUE)
+Plot(harv2ageDist2099hist, addTo = TRUE)
+## Note that the harv1 and harv2 are bi-modal
+
+
+## Calculate total carbon
+calcTotalC <- function(cbmPools, year, masterRaster){
+  # year <- time(RIApresentDayRuns)
+  # cbmPools <- RIApresentDayRuns$cbmPools
+  # masterRaster <- RIApresentDayRuns$masterRaster
+  # calculate total carbon by pixelGroup
+  totalCarbon <- apply(cbmPools[, SoftwoodMerch:HardwoodBranchSnag], 1, "sum")
+  cbmPools <- cbind(cbmPools, totalCarbon)
+  totColsOnly <- cbmPools[,.(simYear,pixelCount, pixelGroup, totalCarbon)]
+  ## check that all is good
+  totColsOnly[,sum(pixelCount), by=simYear]
+  # simYear      V1
+  # 1:    1985 3112425
+  # 2:    1990 3112425
+  # 3:    1995 3112425
+  # 4:    2000 3112425
+  # 5:    2005 3112425
+  # 6:    2010 3112425
+  # 7:    2013 3112425
+  # 8:    2014 3112425
+  # 9:    2015 3112425
+  resInHa <- res(masterRaster)[1]*res(masterRaster)[2]/10000
+  totColsOnly[, absCarbon := (pixelCount*resInHa*totalCarbon)]
+  landscapeCarbon <- totColsOnly[,sum(absCarbon)/1000000, by = simYear]
+  return(landscapeCarbon)
+
+}
+
+presentDayTotalC <- calcTotalC(cbmPools = RIApresentDayRuns$cbmPools,
+                               year = time(RIApresentDayRuns),
+                               masterRaster = RIApresentDayRuns$masterRaster)
+FRITotalC <- calcTotalC(cbmPools = RIAfriRuns$cbmPools,
+                               year = time(RIAfriRuns),
+                               masterRaster = RIAfriRuns$masterRaster)
+harv1TotalC <- calcTotalC(cbmPools = RIAharvest1Runs$cbmPools,
+                               year = time(RIAharvest1Runs),
+                               masterRaster = RIAharvest1Runs$masterRaster)
+harv2TotalC <- calcTotalC(cbmPools = RIAharvest2Runs$cbmPools,
+                          year = time(RIAharvest2Runs),
+                          masterRaster = RIAharvest2Runs$masterRaster)
+
+
+avgYrlyNPP <- function(NPPDT, cbmPools, masterRaster){
+  NPPDT <- RIApresentDayRuns$NPP
+  # adding the pixelCount for each pixelGroup for each year
+  cbmPools <- RIApresentDayRuns$cbmPools
+  masterRaster <- RIApresentDayRuns$masterRaster
+  cbmPools <- cbmPools[,.(simYear, pixelCount, pixelGroup)]
+
+  }
+
+
+
+
+
+
+
+
+
+
+
+### Fiddling below
 
 # ## modified NPP
 # NPPplot <- function(spatialDT, NPP, masterRaster) {
@@ -101,7 +225,6 @@ writeRaster(FRIresultRasters$totalCarbon[[2]], filename = file.path(outputDir,"F
 #                 title = paste0("Pixel-level average NPP MgC/ha/yr.",
 #                                "\n Landscape average: ", round(overallAvgNpp,3), "  MgC/ha/yr."))
 
-
 NPPplot(
   spatialDT = RIAfriRuns$spatialDT,
   NPP = RIAfriRuns$NPP,
@@ -115,11 +238,6 @@ carbonOutPlot(
   masterRaster = RIAfriRuns$masterRaster
 )
 
-FRIageDist2540hist <- qplot(RIAfriRuns$spatialDT$ages, geom = "histogram")
-FRIageDist2020hist <- qplot(RIAfriRuns$allPixDT[!is.na(ages),]$ages, geom = "histogram")
-clearPlot()
-Plot(FRIageDist2540hist)
-Plot(FRIageDist2020hist, addTo = TRUE)
 
 # ploting the spinup resutls
 friSpinup <- data.table(RIAfriRuns$spinupResult)
