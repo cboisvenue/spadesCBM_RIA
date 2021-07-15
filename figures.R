@@ -1,5 +1,23 @@
 ## Figure for RIA runs
 
+library(Require)
+Require("magrittr") # this is needed to use "%>%" below
+Require("SpaDES.core")
+
+#install_github("PredictiveEcology/CBMutils@development")
+#load_all("~/GitHub/PredictiveEcology/CBMutils")
+Require("PredictiveEcology/CBMutils (>= 0.0.6)")
+
+options("reproducible.useRequire" = TRUE)
+library(data.table)
+library(raster)
+
+# read-in all the results from the paper simulations
+RIAfriRuns <- readRDS("C:/Celine/github/spadesCBM_RIA/outputs/FRI/RIAfriRuns.rds")
+RIApresentDayRuns <- readRDS("C:/Celine/github/spadesCBM_RIA/outputs/presentDay/RIApresentDayRuns.rds")
+RIAharvest1Runs <- readRDS("C:/Celine/github/spadesCBM_RIA/outputs/harvest1/RIAharvest1Runs.rds")
+RIAharvest2Runs <- readRDS("C:/Celine/github/spadesCBM_RIA/outputs/harvest2/RIAharvest2Runs.rds")
+
 # the CBMutils::spatialPlot function plot rasters directly, but does not return
 # rasters. Here I modify it to return rasters for more flexibility in presenting
 # results
@@ -157,7 +175,7 @@ calcTotalC <- function(cbmPools, year, masterRaster){
   return(landscapeCarbon)
 
 }
-
+# these are in Megatonnes of C
 presentDayTotalC <- calcTotalC(cbmPools = RIApresentDayRuns$cbmPools,
                                year = time(RIApresentDayRuns),
                                masterRaster = RIApresentDayRuns$masterRaster)
@@ -172,16 +190,44 @@ harv2TotalC <- calcTotalC(cbmPools = RIAharvest2Runs$cbmPools,
                           masterRaster = RIAharvest2Runs$masterRaster)
 
 
-avgYrlyNPP <- function(NPPDT, cbmPools, masterRaster){
-  NPPDT <- RIApresentDayRuns$NPP
+analyseNPP <- function(NPPDT, cbmPools, masterRaster){
+  #NPPDT <- RIApresentDayRuns$NPP
   # adding the pixelCount for each pixelGroup for each year
-  cbmPools <- RIApresentDayRuns$cbmPools
-  masterRaster <- RIApresentDayRuns$masterRaster
+  #cbmPools <- RIApresentDayRuns$cbmPools
+  #masterRaster <- RIApresentDayRuns$masterRaster
+
   cbmPools <- cbmPools[,.(simYear, pixelCount, pixelGroup)]
 
-  }
+  dt1 <- merge.data.table(NPPDT, cbmPools,
+                             by = c("pixelGroup", "simYear"), all.x = TRUE)
 
+  avgNPPbyHabyYr <- dt1[, .(avgNPPha = mean(NPP)), by = simYear]
 
+  # calculate the absolute carbon update of the landscape for each year
+  resInHa <- res(masterRaster)[1]*res(masterRaster)[2]/10000
+
+  dt1[, absNPP := (pixelCount*resInHa*NPP), by = simYear]
+  # this is in Mega tonnes of carbon
+  absNPPbyYr <- dt1[, .(absNPP = sum(absNPP)/1000000), by = simYear]
+
+  NPPtable <- as.data.table(cbind(avgNPPbyHabyYr,absNPP=absNPPbyYr$absNPP))
+
+  return(NPPtable)
+
+}
+
+FRINPP <- analyseNPP(RIAfriRuns$NPP, RIAfriRuns$cbmPools, RIAfriRuns$masterRaster)
+presentDayNPP <- analyseNPP(RIApresentDayRuns$NPP, RIApresentDayRuns$cbmPools, RIApresentDayRuns$masterRaster)
+harv1NPP <- analyseNPP(RIAharvest1Runs$NPP, RIAharvest1Runs$cbmPools, RIAharvest1Runs$masterRaster)
+harv2NPP <- analyseNPP(RIAharvest2Runs$NPP, RIAharvest2Runs$cbmPools, RIAharvest2Runs$masterRaster)
+
+  avgNPPabs <- mean(absNPPbyYr$absNPP)
+  maxNPPbyYr <- max(absNPPbyYr$absNPP)
+  minNPPbyYr <- min(absNPPbyYr$absNPP)
+
+  avgNPPha <- mean(avgNPPbyHabyYr$avgNPPha)
+  maxNPPha <- max(avgNPPbyHabyYr$avgNPPha)
+  minNPPha <- min(avgNPPbyHabyYr$avgNPPha)
 
 
 
