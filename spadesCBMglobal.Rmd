@@ -314,6 +314,14 @@ outputsFRI <- as.data.frame(expand.grid(objectName = c("cbmPools", "NPP"), saveT
 outputsPresentDay <- as.data.frame(expand.grid(objectName = c("cbmPools", "NPP"), saveTime = whensPresentDay))
 outputsHarvest1 <- as.data.frame(expand.grid(objectName = c("cbmPools", "NPP"), saveTime = whensHarvest1))
 
+presemtDaySimList <- simInit(times = timesPresentDay,
+                               params = parametersPresentDay,
+                               modules = modulesPresentDay,
+                               objects = objects,
+                               paths = pathsPresentDay,
+                               outputs = outputsPresentDay,
+                               loadOrder = unlist(modulesPresentDay))
+
 RIApresentDayRuns <- simInitAndSpades(times = timesPresentDay,
                                params = parametersPresentDay,
                                modules = modulesPresentDay,
