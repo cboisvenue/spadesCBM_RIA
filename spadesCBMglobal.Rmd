@@ -16,9 +16,12 @@ editor_options:
 
 # Overview
 
-This SpaDES deck (four SpaDES modules) presents a transparent and spatially explicit implementation of the logic, pools structure, equations, and default assumptions of the Carbon Budget Model of the Canadian Forest Sector (CBM-CFS3) [@Kurz:2009a].
-In contrast to the Generic Carbon Budget Model (GCBM) [@Smyth:2020], the entire landscape in the provided study area is simulated on a yearly basis.
-This permits links to other models that modify the landscape (fire, insects, harvest), and permits contagion processes to be simulated.
+This SpaDES deck (four SpaDES modules) presents a transparent and spatially explicit implementation of the logic, pools structure, equations, and default assumptions of the Carbon Budget Model of the Canadian Forest Sector (CBM-CFS3) [@Kurz:2009a]. 
+This was developed as a R&D for improving CBM and carbon modelling in the CFS.
+In this implementation of CBM, the entire landscape in the provided study area is simulated on a yearly basis The Generic Carbon Budget Model (GCBM) [@Smyth:2020] simulates each pixel through the time horizon independently. 
+The yearly processing of the entire landscape permits the link to/use of other SpaDES simulation modules that affect that landscape.
+Other models that modify the landscape (fire, insects, harvest) that simulate the whole landscape at each timestep can be used to modify the landscape and assess the carbon implication of these modification.
+Contagion processes (examples: fire, seed dispersal, insect propagation) can therefore be simulated.
 Further, all scripts are R-based, providing a parameter and data handling platform, and a clear understanding of the model structure and parameters to any R-proficient scientist.
 Results will eventually be linked to an R-shiny-based interface to present results more easily to non-R proficient users.
 
@@ -31,11 +34,10 @@ It is an R-package that functions as a scheduler through space and time.
 Being an R-based platform, is makes modelling transparent and accessible to a large community of researchers across disciplines.
 More information on `SpaDES` and other openly available `SpaDES` modules can be found here <http://spades.predictiveecology.org/>.
 
-`spadesCBM` modifies the carbon pools via matrix multiplications instead of simple multiplication used in CBM-CFS3.
-These multiplications happen via a C++ script originally created by Scott Morken and since modified by this team to correct errors.
+`spadesCBM` modifies the carbon pools via matrix multiplications (multiplication is used in CBM-CFS3).
+These multiplications happen via a C++ script originally created by Scott Morken and since modified by this team to correct errors or clarify the scripts.
 Being in the `SpaDES` environment, it is meant to be run spatially explicitly which assumes that the required inputs are spatially explicit.
 Knowledge of the `SpaDES` structure would help an R-knowledgeable user to manipulate simulations but is not necessary to run the current example simulations.
-The code-chunk in this document will run by default, simulations for $333 450 ha$ location in the managed forests of Saskatchewan, Canada.
 Prior knowledge of CBM-CFS3 would also help users understand the structure of these modules, the default parameters used, but is not necessary to run simulations.
 All modules being written in R and the publicly available description of the `SpaDES` R-package imply that any R-user can learn how to run these modules and simulate carbon on a landscape.
 In this document, we describe all four modules necessary for simulations using `spadesCBM` in the traditional way, which is with growth curves as the main change-agent ($m^3/ha$ for the study area).
@@ -43,7 +45,7 @@ In this document, we describe all four modules necessary for simulations using `
 # Four-module family
 
 The four modules SpaDES-deck is called from a global script (see also below).
-Four modules are run: `spadesCBMdefaults`, `spadesCBMinputs`, `spadesCBMm3ToBiomass`, and `spadesCBMcore`.
+Four modules are run: `spadesCBMdefaults`, `spadesCBM_dataPrep_studyArea_scenario`, `spadesCBMm3ToBiomass`, and `spadesCBMcore`.
 The code environment is on a public repository here: <https://github.com/cboisvenue/spadesCBM>.
 You need permission and a GitHub account to access this and for now, **please don't distribute this code.**
 
@@ -76,6 +78,8 @@ In the SpaDES environment, this module has one event (`init`) and does not sched
 It requires the `dbPath` and `sqlDir` to run.
 
 ## CBM_dataPrep_SK
+
+The code-chunk in this document will run by default, simulations for $333 450 ha$ location in the managed forests of Saskatchewan, Canada.
 
 This module reads in information that is expected to be provided by the user similarly to CBM-CFS3. 
 User provided/expected input include: 
@@ -212,7 +216,7 @@ inputDir <- reproducible::checkPath("inputs", create = TRUE)
 outputDir <- reproducible::checkPath("outputs", create = TRUE)
 scratchDir <- file.path(tempdir(), "scratch", "CBM") %>% reproducible::checkPath(create = TRUE)
 
-## TODO fix this so we ca run all the times with the appropriate sims below
+## TODO fix this so we can run all the times with the appropriate sims below
 timesFRI <- list(start = 2020.00, end = 2540.00)
 timesPresentDay <- list(start = 1985.00, end = 2015.00)
 timesHarvest1 <- list(start = 2020.00, end = 2099.00)
@@ -222,15 +226,15 @@ parameters <- list(
   CBM_defaults = list(
     .useCache = TRUE
   ),
-  CBM_dataPrep_RIA = list(
-    .useCache = TRUE
-  ),
   CBM_vol2biomass_RIA = list(
     .useCache = TRUE
   )
 )
-
+#Fire Return Interval
 parametersFRI <- parameters
+parametersFRI$CBM_dataPrep_RIAfri <- list(
+                     .useCache = TRUE
+                     )
 parametersFRI$CBM_core <- list(
                     #.useCache = TRUE, #"init", #c(".inputObjects", "init")
                     # .plotInterval = 5,
@@ -238,7 +242,11 @@ parametersFRI$CBM_core <- list(
                     poolsToPlot = c("totalCarbon"),
                     spinupDebug = FALSE ## TODO: temporary
                   )
+#Present Day 1985-2015
 parametersPresentDay <- parameters
+parametersPresentDay$CBM_dataPrep_RIApresentDay <- list(
+                    .useCache = TRUE
+                    )
 parametersPresentDay$CBM_core <- list(
                     #.useCache = TRUE, #"init", #c(".inputObjects", "init")
                     # .plotInterval = 5,
@@ -246,7 +254,12 @@ parametersPresentDay$CBM_core <- list(
                     poolsToPlot = c("totalCarbon"),
                     spinupDebug = FALSE ## TODO: temporary
                   )
+# harvest1 is the base case
 parametersHarvest1 <- parameters
+parametersPresentDay$CBM_dataPrep_RIAharvest1 <- list(
+                    .useCache = TRUE
+                    )
+
 parametersHarvest1$CBM_core <- list(
                     #.useCache = TRUE, #"init", #c(".inputObjects", "init")
                     # .plotInterval = 5,
@@ -257,6 +270,7 @@ parametersHarvest1$CBM_core <- list(
 modulesFRI <- list("CBM_defaults", "CBM_dataPrep_RIAfri", "CBM_vol2biomass_RIA", "CBM_core")
 modulesPresentDay <- list("CBM_defaults", "CBM_dataPrep_RIApresentDay", "CBM_vol2biomass_RIA", "CBM_core")
 modulesHarvest1 <- list("CBM_defaults", "CBM_dataPrep_RIAharvest1", "CBM_vol2biomass_RIA", "CBM_core")
+#harvest2 is the less-than-base case
 modulesHarvest2 <- list("CBM_defaults", "CBM_dataPrep_RIAharvest2", "CBM_vol2biomass_RIA", "CBM_core")
 
 objects <- list(
@@ -313,14 +327,14 @@ whensHarvest1 <- sort(c(timesHarvest1$start, timesHarvest1$start + c(10, 30, 50,
 outputsFRI <- as.data.frame(expand.grid(objectName = c("cbmPools", "NPP"), saveTime = whensFRI))
 outputsPresentDay <- as.data.frame(expand.grid(objectName = c("cbmPools", "NPP"), saveTime = whensPresentDay))
 outputsHarvest1 <- as.data.frame(expand.grid(objectName = c("cbmPools", "NPP"), saveTime = whensHarvest1))
-
-presemtDaySimList <- simInit(times = timesPresentDay,
-                               params = parametersPresentDay,
-                               modules = modulesPresentDay,
-                               objects = objects,
-                               paths = pathsPresentDay,
-                               outputs = outputsPresentDay,
-                               loadOrder = unlist(modulesPresentDay))
+# tool for debugging, this runs only the simInit fnct, running the .inputObjects for each module.
+# presemtDaySimList <- simInit(times = timesPresentDay,
+#                                params = parametersPresentDay,
+#                                modules = modulesPresentDay,
+#                                objects = objects,
+#                                paths = pathsPresentDay,
+#                                outputs = outputsPresentDay,
+#                                loadOrder = unlist(modulesPresentDay))
 
 RIApresentDayRuns <- simInitAndSpades(times = timesPresentDay,
                                params = parametersPresentDay,
