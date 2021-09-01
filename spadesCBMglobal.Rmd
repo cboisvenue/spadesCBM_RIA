@@ -28,11 +28,15 @@ Results will eventually be linked to an R-shiny-based interface to present resul
 ## Background
 
 This SpaDES-deck was developed on the `SpaDES` platform (a package in R; <https://cran.r-project.org/package=SpaDES>) to make it transparent, spatial explicit, and able to link to other modules/models in `SpaDES.`
-The SpaDES-deck enables the inclusion of CFS-type carbon modelling in cumulative effects evaluation, and provides an environment in which science improvements can be explored and tested.
-`SpaDES` is a Spatial Discrete Event Simulator.
+This SpaDES-deck enables the inclusion of CFS-type carbon modelling in cumulative effects evaluation, and provides an environment in which science improvements can be explored and tested.
+`SpaDES` is a Spatial Discrete Event Simulation.
 It is an R-package that functions as a scheduler through space and time.
 Being an R-based platform, is makes modelling transparent and accessible to a large community of researchers across disciplines.
+Note that modules or models do not have to be writting in R, but callable from R.
 More information on `SpaDES` and other openly available `SpaDES` modules can be found here <http://spades.predictiveecology.org/>.
+
+
+# Four-module family CBM
 
 `spadesCBM` modifies the carbon pools via matrix multiplications (multiplication is used in CBM-CFS3).
 These multiplications happen via a C++ script originally created by Scott Morken and since modified by this team to correct errors or clarify the scripts.
@@ -40,11 +44,9 @@ Being in the `SpaDES` environment, it is meant to be run spatially explicitly wh
 Knowledge of the `SpaDES` structure would help an R-knowledgeable user to manipulate simulations but is not necessary to run the current example simulations.
 Prior knowledge of CBM-CFS3 would also help users understand the structure of these modules, the default parameters used, but is not necessary to run simulations.
 All modules being written in R and the publicly available description of the `SpaDES` R-package imply that any R-user can learn how to run these modules and simulate carbon on a landscape.
-In this document, we describe all four modules necessary for simulations using `spadesCBM` in the traditional way, which is with growth curves as the main change-agent ($m^3/ha$ for the study area).
+In this document, we describe all four modules necessary for simulations using `spadesCBM` in the traditional way as described in [@Kurz:2009a] with simular parameters as described in [@Stinson:2011], which is with growth curves as the main change-agent ($m^3/ha$) for the study area.
 
-# Four-module family
-
-The four modules SpaDES-deck is called from a global script (see also below).
+The four modules SpaDES-deck is called from a global script (below).
 Four modules are run: `spadesCBMdefaults`, `spadesCBM_dataPrep_studyArea_scenario`, `spadesCBMm3ToBiomass`, and `spadesCBMcore`.
 The code environment is on a public repository here: <https://github.com/cboisvenue/spadesCBM>.
 You need permission and a GitHub account to access this and for now, **please don't distribute this code.**
@@ -72,14 +74,12 @@ This object has the following slot names:
 - "overmatureDeclineParameters" (48by4 full);
 - "disturbanceMatrix" (426X3 - character matrix with word descriptions of disturbances ["id" "name" "description"]).
 
-The whole sqlite db that contains the defaults is stored in this RStudio project (`spadesCBM.Rproj`) in the data folder `spadesCBM/data/cbm_defaults`.
-*All parameters used in these simulations are the general Canadian defaults, and are searchable with common R functionality*.
+The whole sqlite db that contains the defaults is stored in this RStudio project associated with the current simulations (`spadesCBM_RIA.Rproj`) in the data folder `spadesCBM_RIA/data/modules/CBM_defaults/data/cbm_defaults`.
+*All parameters used in these simulations are the general Canadian defaults, and are searchable/changeable with common R functionality*.
 In the SpaDES environment, this module has one event (`init`) and does not schedule anything else.
-It requires the `dbPath` and `sqlDir` to run.
+It requires the `dbPath` and `sqlDir` to run (specified in the global script below).
 
-## CBM_dataPrep_SK
-
-The code-chunk in this document will run by default, simulations for $333 450 ha$ location in the managed forests of Saskatchewan, Canada.
+## CBM_dataPrep_studyArea_specifyScenario
 
 This module reads in information that is expected to be provided by the user similarly to CBM-CFS3. 
 User provided/expected input include: 
@@ -91,79 +91,72 @@ User provided/expected input include:
     + growth_curve_id - the identification to the spatial application of this growth curve,
     + growth_curve_component_id (same value as above),
     + species - the common name for the leading species,
-    + canfi_species - a numeric code used to identify species for correct Boudewyn et al. parameter match,
-    + genus - a four-leter codeidentifying the genus of the species, again, for correct Boudewyn et al parameter matching.
-    + forest_type_id - a numeric code used in CBM-CFS3 to identify is the forest is a conifer forest (1), a mixed forest (2) or a hardwood forest (3).
+    + canfi_species - a numeric code used to identify species for correct Boudewyn _et al._ [-@Boudewyn:2007] parameter match,
+    + genus - a four-leter codeidentifying the genus of the species, again, for correct Boudewyn _et al._ [-@Boudewyn:2007] parameter matching.
+    + forest_type_id - a numeric code used in CBM-CFS3 to identify if the forest is a conifer forest (1), a mixed forest (2) or a hardwood forest (3).
 Note that the list of canfi_species and genus are provided in the default example and stored in the cloud-based folder to assist with links between species names, canfi_species, and genus, or create them.
 
-The user-provided study area is used to make a a `sim$masterRaster` on which all maps and other calculations are based.
+The user-provided study area is used to make a `sim$masterRaster` on which all maps and other calculations are based.
 The spatial unit raster as well as an ecozone raster are created using the `sim$masterRaster`.
 Spatial units (SPUs) are an overlay of administrative boundaries (provinces and territories) and ecozones.
 SPUs are the link back to the default ecological parameters assembled for CBM-CFS3 simulations in Canada.
 These parameters are necessary to be able to perform a simulation, you either use the defaults or have to provide alternative values for all the parameters.
-These information are used to narrow the parameter options from CBM_default to the ones that are specific to this study area.
-The CBM_default modules needs to have been run before CBM_dataPrep.
-User should take the example module (`CBM_dataPrep_SK`) as a base and adapt it to their specific study area (example: `CBM_dataPrep_myStudyArea`).
+The location information provided by SPU is used to narrow the parameter options from CBM_default to the ones that are specific to this study area.
+The CBM_default modules needs to have been run before CBM_dataPrep_studyAre_scenario.
+User can take the module provided here as a base and adapt it to their specific study area (example: `CBM_dataPrep_myStudyArea`).
 Information and data provided are also used to create a table of similar pixels to increase processing speeds (pixelGroup).
-The data.table produced for initial representation of the land base is saved in the simList as `sim$level3DT` . 
+The `data.table` produced for initial representation of the land base is saved in the simList as `sim$level3DT` . 
 All necessary vectors for annual processes (simulations) are created in this module.
 These vectors need to be in a specific format for the C++ functions processing.
 A table stored in the simList (`sim$mySpuDmid`) links the user-provided disturbance information to the disturbance matrix identification numbers in CBM_defaults.
-The `.inputObjects` function at this end of this module provides automatic read-in of all the necessary rasters and tables for an example land base in SK.
-All default-SK example inputs are stored on a cloud-drive and can be access as example inputs.
+The `.inputObjects` function at this end of this module provides automatic read-in of all the necessary rasters and tables for current study area.
 
-## spadesCBMm3ToBiomass
+This module is the most specific to a study area.
+Users should expect this module to contain all idiosyncratic data manipulations specific to the study area and to each simulated scenario.
+
+## spadesCBMm3ToBiomass_studyArea
 
 This module is a translation module from the user-provided growth curves (cumulative $m^3/ha$) into the biomass increments that drive simulations in CBM. 
 It is an implementation of the stand-level biomass conversion parameters published in Boudewyn _et al._ [-@Boudewyn:2007].
 
 Following the CBM-CFS3 approach, the user provides growth curves of cumulative $m^3/ha$.
-Each curves needs to have an identification number permitting the linking to its spatial application (user-provide in `CBM_dataPrep`); it needs the range of ages from 0 to the oldest ages represented on the landscape; and it needs the volume associated with that age vector.
-The user also provides meta data for each curve (again in `CBM_dataPrep`).
+Each curves needs to have an identification number permitting the linking to its spatial application (user-provide in `CBM_dataPrep_studyArea_specifyScenario`); it needs the range of ages from 0 to the oldest ages represented on the landscape; and it needs the volume associated with that age vector.
+The user also provides meta data for each curve (again in `CBM_dataPrep_studyArea_specifyScenario`).
 All $m^3/ha$ curves provided are plotted for visual inspection in a simList object named `sim$volCurves`.
-The unaltered translation of the curves into three above ground carbon pools, directly out of the application of the Boudewyn et al parameters and caps, are saved as plots in the simList object `sim$$plotsRawCumulativeBiomass`.
-These translations sometimes result in non-smooth curves, or curves with odd shapes.
+The unaltered translation of the curves into three above ground carbon pools, directly out of the application of the Boudewyn _et al._ [-@Boudewyn:2007] parameters and caps, are saved as plots in the simList object `sim$plotsRawCumulativeBiomass`.
+These translations most likely will result in non-smooth curves, or curves with odd shapes.
 Resulting curves also mostly do not go through a 0 intercept. 
-For this reason, the user is obliged to adjust the curves. 
+For this reason, the user is obliged to smooth the curves. 
 This seems to be done internally in CBM-CFS3. 
-We proposed using GAMs (Generalized Additive Models) to smooth the curves and force the 0 intercept.
-We provide an example using the default SK example where GAMs are applied to the cumulative curves of carbon for the three above ground carbon pools resulting from each $m^3/ha$ curve translated. 
-This later example is currently commented out.
-Another example where the GAMS were applied to the increments calculated from the difference between two cumulative, consecutive years in the cumulative carbon curves is applied in the SK default example.
+We proposed a smoothing proceedure that uses a Chapman-Richards function to correct for non-plausible shapes and wiggles in the curves resulting from the translation process.
 Note that the purpose of the present SpaDES-deck is to emulate the CBM-CFS3 approach. 
 Modification to this approach will be ongoing via advancements and improvements enabled by the transparency this SpaDES-deck provides.
-Examples of this are the use of biomass increments from other sources than translations of cumulative growth curves using the Boudewyn et al approach (example from LandR-biomass, a `SpaDES` module of the vegetation dynamics model LANDIS-II, or from provincially provided biomass or carbon increments).
-In order, here are the plots produced in the SK example: 
-- `sim$volCurves` showing the user-provided curves 
-- `sim$plotsRawCumulativeBiomass` translation into cumulative biomass (1 m3/ha curve = 3 cumulative biomass curves, one for merchantable wood biomass, one for foliage and one for other (branches + bark))
-- `sim$plotsRawInc` simulations require biomass increments. These show the increments calculated from the previous cumulative biomass curves.
-- `sim$plotsSmoothIncs` these are an example of smoothing methods using GAMs for the `sim$plotsRawInc`
-- `sim$checkInc` show the increments that will be used in the simulations, for the SK example, there were some hard-coded fixed applied.
+Examples of this are the use of biomass increments from other sources than translations of cumulative growth curves using the Boudewyn _et al._ [-@Boudewyn:2007] algorithms.
+This module saves figures for users to evaluate in `spadesCBM_RIA/data/modules/CBM_vol2biomass_RIA/figures`.
 
 
-For simulations emulating CBM-CFS3, the `CBM_default`, `CBM_dataPrep_yourStudyArea`, need to be run prior to running this module. 
+For simulations emulating CBM-CFS3, the `CBM_default`, `CBM_dataPrep_yourStudyArea_specifyScenario`, need to be run prior to running this module. 
 This module, however, can be run independently for translation of $m^3/ha$ stand-level, single-species translation into carbon per ha values.
-Important: it is the user's responsability to ensure that the increments driving the simulation produced by this current module (`CBM_vol2Biomass`) are as realistic as possible. 
+Important: it is the user's responsability to ensure that the increments driving the simulation produced by this current module (`CBM_vol2Biomass_studyArea`) are as realistic as possible. 
 These curves are the engine of CBM-CFS3 simulation and of the spadesCBM simulations that emulate them.
 
-Lorem ipsum ... <!-- TODO: update this -->
 
 ## spadesCBMcore
 
 This module completes the simulations of the `spadesCBM.`
-The `CBM_default`, and `CBM_dataPrep_yourStudyAre` or `CBM_datPrep_SK` need to be run prior to this module.
-The `CBM_vol2biomass` either needs to be run or the used must provide annual increments, halved, for the three above ground pools (merch, foliage, other) by forest type (hardwood and softwood) for simulations to be possible.
+The `CBM_default`, and `CBM_dataPrep_studyArea_specifyScenario` or `CBM_datPrep_studyArea` need to be run prior to this module.
+The `CBM_vol2biomass_studyArea` either needs to be run or the user must provide annual increments, halved, for the three above ground pools (merch, foliage, other) by forest type (hardwood and softwood), harshed in the same format as produced by this module for simulations to be possible.
 The module has six SpaDES-events: `spinup`, `postSpinup`, `saveSpinup`, `annual`, `plot`, and `savePools`, with `saveSpinup` and `plot` being optional.
 The spinup event is the `init` event run by default in SpaDES modules.
-The event `spinup` runs the traditional spinup of CBM-CFS3: where each stand (pixel or pixel group in out case) is disturbed using the disturbance specified in `sim$historicDMIDs` (usually wildfire for the ecozone) and re-grown using the provided above ground biomass pools, repeatedly, until the dead organic matter (DOM) pools values stabilize or the maximum number of iteration is reached (`sim$maxRotations`).
+The event `spinup` runs the traditional spinup of CBM-CFS3: where each stand (pixel or pixel group in our case) is disturbed using the disturbance specified in `sim$historicDMIDs` (usually wildfire for the ecozone) and re-grown using the provided above ground biomass pools, repeatedly, until the dead organic matter (DOM) pools values stabilize or the maximum number of iteration is reached (`sim$maxRotations`).
 A user can set a minimum and a maximum number of rotations, and the disturbance return interval (`sim$minRotations`, `sim$maxRotations`, `sim$returnIntervals`) for the spinup.
 In the `spinup` event, carbon increment estimates from the biomass estimate of Boudewyn _et al._ [-@Boudewyn:2007]'s translation of the $m^3/ha$ curves are used for each of four pools: stem wood, bark, branches and foliage.
-As per CBM-CFS3, bark and branches are grouped under "other".
-Biomass in coarse and fine roots are estimated using the above ground estimates from the increments and default parameters, one set for softwood and one set for hardwood (see root_parameter table in teh SQLite default database). 
-To estimate carbon is all other pools, the burn-grow cycle is repeated as described above.
+As bark, branches,  biomass nonmerch (equation 2 in Boudewyn), and biomass sap (equation 3 in Boudewyn) are grouped under "other".
+Biomass in coarse and fine roots are estimated using the above ground estimates from the increments and default parameters, one set for softwood and one set for hardwood (see root_parameter table in the SQLite default database). 
+To estimate carbon in all other pools, the burn-grow cycle is repeated as described above.
 In all spatial units in Canada, the historical disturbance is set to fire.
-Defaults are provided in the SK default example, and CBM_default modules has fire return intervals for each ecozone in Canada that can be match with the ecozone of the study area via the ecozone raster, which is either provided by the user, or create in the `CBM_dataPrep_yourStudyArea` module.
-Once the DOM pools have stabilized, the spinup event grows the stand (still using the same growth curve) to the user-provided age of that stand/pixel ("ages" defined by the age raster the user provided in `CBM_dataPrep_yourStudyArea`).
+The `CBM_default` module has fire return intervals for each ecozone in Canada that can be match with the ecozone of the study area via the ecozone raster, which is either provided by the user, or create in the `CBM_dataPrep_yourStudyArea_specifyScenario` module.
+Once the DOM pools have stabilized, the spinup event grows the stand (still using the same growth curve) to the user-provided age of that stand/pixel ("ages" defined by the age raster the user provided in `CBM_dataPrep_yourStudyArea_specifyScenario`).
 
 In the `postSpinup` event, matrices are set up for the processes that will happen in the annual event.
 In order the processes are:
@@ -178,8 +171,11 @@ In order the processes are:
 9. slow mixing of dead pools' carbon(`sim$allProcesses$SlowMixing`).
 
 The annual event is where all the processes are applied.
+Most carbon transactions are done via c++ functions compiled via Rcpp in this module.
+
 The 'plot' event uses three parameters: the initial plot time (`.plotInitialTime`), the interval to plot (`.plotInterval`), and the carbon pools to plot (`poolsToPlot`).
 The parameter `poolsToPlot` accepts a character vector consisting of any individual pools in `cbmPools` as well as `totalCarbon` for the sum of below ground and above ground carbon.
+
 The event `savePools` is scheduled last.
 It currently creates a `.csv` file (`cPoolsPixelYear.csv`) that contains the carbon pool values for each unique stand/pixel type (pixelGroup) at the end of each simulation year, for all simulation years.
 
@@ -187,7 +183,7 @@ If `spinupDebug` is set to `FALSE`, the spinup event provides a line for each st
 The event `spinupDebug` was put in place to explore the results of the spinup and if TRUE, it saves **ALL** the disturbed-grow cycles.
 
 Note: there is a special simList parameter called `P(sim)$spinupDebug`.
-This parameter is a logical parameter defined in the metadata of the `spadesCBMcore.R` module.
+This parameter is a logical parameter defined in the metadata of the `CBM_core.R` module.
 This parameter is by default set to `FAlSE`.
 If this parameter is set to `TRUE`, annual simulations will not happen. 
 This parameter modifies the output of the C++ function called Spinup() to output all the spinup runs performed to get to the maximum rotations or the stabilizing of the DOM pools.
@@ -195,9 +191,26 @@ It determines if the results from the spinup will be saved as an external file.
 If this is set to `TRUE`, only  `saveSpinup` event is schedule, not the `postSpinup` which starts the process of the annual simulation by scheduling the `annual` event.
 This parameter is solely for exploring the spinup procedure used in CBM.
 
-# Simulations
+# Current Simulations
 
-Running the following script, with all the defaults (answer "Y" to running the default SK example), will perform simulations from 1990 to 1993 for a forest management unit covering $333 450 ha$ in Saskatchewan Canada, applying the disturbances from the White and Wulder disturbance product used in the Boisvenue _et al._ 2016b publication. The user can modify this inputs to run spadesCBM simulation for their study area.
+
+The global script in this document will run by default, simulations for $53.4Mha$ of managed forests in the northeastern corner of the province of British Colombia, Canada.
+
+Running the following script, with all the defaults parameters, for four sceanrios. 
+These scenarios were developed for a publication [@Boisvenue:in prep] where the carbon carrying capacity of the study area (`FRI` for Fire Return Interval) is compared to the current carbon on the landscape (`presentDay`), and to two levels of timber removal (`harvest1` and `harvest2`).
+The `presentDay` runs the disturbances from 1985-2015 as presented in Hermosilla _et al._ [-@Hermosilla:2016].
+The `FRI` scenario runs on the same landscape, 500 years of spatially explicit fire disturbance on the respective fire return interval as represented by the fire model described Armstrong & Cumming [@Armstrong:2003].
+This scenario represent the carbon carrying capacity of the landscape [@Liang:2017].
+The final two scenarios (`harvest1` and `harvest2`) are a spatial representation of harvest and fires at contrasting levels of harvesting represented by the Ws3 model [@Paradis:2018].
+
+Note that all scenarios use the same `CBM_vol2biomass_RIA` module, and that both the `CBM_default` and `CBM_core` modules are non-changing between any study area or scenario. Each scenario requires its own `dataPrep` modules.
+These are names as follows:
+- `CBM_dataPrep_RIAfri`
+- `CBM_dataPrep_RIApresentDay`
+- `CBM_dataPrep_RIAharvest1`
+- `CBM_dataPrep_RIAharvest2`
+
+Meta data for each scenario are created in the script below and this script runs four seperate simulations.
 
 ```{r, module_usage, eval=FALSE, echo=TRUE}
 library(Require)
@@ -206,7 +219,7 @@ Require("SpaDES.core")
 
 #install_github("PredictiveEcology/CBMutils@development")
 #load_all("~/GitHub/PredictiveEcology/CBMutils")
-Require("PredictiveEcology/CBMutils (>= 0.0.6)")
+#Require("PredictiveEcology/CBMutils (>= 0.0.6)")
 
 options("reproducible.useRequire" = TRUE)
 
@@ -236,7 +249,7 @@ parametersFRI$CBM_dataPrep_RIAfri <- list(
                      .useCache = TRUE
                      )
 parametersFRI$CBM_core <- list(
-                    #.useCache = TRUE, #"init", #c(".inputObjects", "init")
+                    .useCache = FALSE, #"init", #c(".inputObjects", "init")
                     # .plotInterval = 5,
                     .plotInitialTime = timesFRI$start,
                     poolsToPlot = c("totalCarbon"),
@@ -248,7 +261,7 @@ parametersPresentDay$CBM_dataPrep_RIApresentDay <- list(
                     .useCache = TRUE
                     )
 parametersPresentDay$CBM_core <- list(
-                    #.useCache = TRUE, #"init", #c(".inputObjects", "init")
+                    .useCache = FALSE, #"init", #c(".inputObjects", "init")
                     # .plotInterval = 5,
                     .plotInitialTime = timesPresentDay$start,
                     poolsToPlot = c("totalCarbon"),
@@ -410,54 +423,35 @@ It returns a list of `data.frame`s, one `data.frame` per disturbance matrix id, 
 
 # Other important information
 
-The `sim$masterRaster` in the default example for SK, is a raster of leasing species `ldSpsRaster` for each pixel in the default simulations. 
-It has 0 for no-species pixels (not simulated), and 1 to 7 for other species.
-The species code table:
-
-`species_code`:
-
-| **`rasterValue`** | **`species_code`** |
-|-------------------|--------------------|
-|0                  | No_Spp             |
-|1                  | Abie_Bal           |
-|2                  | Popu_Bal           |
-|3                  | Pice_Mar           |
-|4                  | Pinu_Ban           |
-|5                  | Popu_Tre           |
-|6                  | Betu_Pap           |
-|7                  | Pice_Gla           |
-
-`standIndex`: this comes out of the C++ functions.
+The `standIndex` comes out of the C++ functions.
+This is the same as the `pixelGroup` in the R scripts.
 It is always on the right-hand side of the of assignments in the R scripts.
-Presently, to make sure that `standIndex` matches `pixelGroup`, rows are ordered by `pixelGroup` before going into C++ functions.
-
+To make sure that `standIndex` matches `pixelGroup`, rows are ordered by `pixelGroup` before going into C++ functions.
 `sim$pixelGroupC`: this is the `data.table` that gets updated every year and from which the `sim$pixelGroupForAnnual` is created.
 `sim$pixelGroupForAnnual` is fed into the `Rcpp` functions (matrix operations of annual processes and disturbances).
 Each line represents a `pixelGroup`, _i.e._, a group of unique pixels.
 It has unique combinations of `ages`, `spatial_unit_id`, `growth_curve_component_id`, `growth_curve_id`, `ecozones`,  and `events` (which represent disturbances).
 `pixelGroup` the unique identifier for the each group.
-Each group is recalculated every simulation year.
+`pixelGroup` are recalculated every simulation year and therefore each simulation year assigns pixels to `pixelGroup` and these do not necessarily match between years, only non-disturbed pixels maintain their  `pixelGroup` number from one simulation year to the next.
 `pixelGroupC` and `pixelGroupForAnnual` populates the vectors needed for the C++ functions (`ages`, `gcids`, `spatialUnits`, etc.).
-This `data.table` is remade annually because annual disturbances reset the age and modify the amount of carbon in each pool.
+The `data.table` `pixelGroupForAnnual` is remade annually because annual disturbances reset the age and modify the amount of carbon in each pool.
 The `sim$spatialDT` is the long form of the `pixelGroup` table where each pixel individually is listed.
-For the SK example, there are 1347529 pixels simulated out of 3705000 in the `sim$masterRaster`.
+`sim$spatialDT` lists all the simulated pixels in the `sim$masterRaster`.
+Not all pixels in the `sim$masterRaster` are usually simulated.
 The `sim$pixelKeep` is a `data.table` that has tracks what `pixelGroup` each pixel is in at each simulation year.
 The `sim$pixelKeep` gets build 1 column at a time for each year of the simulation.
 `sim$spatialDT` is rebuilt every year because disturbances change ages, one of the unique identifiers.
-`sim$spatialDT` is used to add a column called events that is extractor each year from the disturbance raster stack (`sim$disturbanceRasters`).
+`sim$spatialDT` is used to add a column called events that identify which pixels get disturbed each year from the disturbance raster information (`sim$disturbanceRasters`).
 
-In the case of the SK example, `sim$disturbanceRasters` is a raster stack from White and Wulder, are use for disturbances in these simulations as per the [@Boisvenue:2016] publication.
-The disturbance raster names are read in the `CBM_dataPrep_SK` module as a list.
-In the annual event of the `CBM_core`, the raster for that year is loaded, and an events column is added to the `sim$spatialDT` using just the simulated pixels, which in this case are the pixel with inventory information.
-The `pixelGroup` is then calculated using unique combinations of `spatial_unit_id`, `growth_curve_component_id`, `ages`, and `events` in the `spatialDT` and a function from the `LandR` package (`LandR::generatePixelGroups()`)
+
 *NOTE* the first `sim$spatialDT`, used in `CBM_core` `spinup` event does not have an `events` column, as fire is applied on a reoccurring schedule.
 
 # Units
 
 The user provides growth curves in $m^3/ha$ of cumulative $m^3/ha$ over time.
 Those curves are fed into the Boudewyn algorithms (`CBM_vol2biomass` module) with its results multiplied by 0.5 to give carbon.
-That gives us the `cumBiom` that is the cumulative biomass for the three above-ground live pools in tonnes of carbon/ha.
-The `sim$growth_increments` are the final increments driving simulation which are hashed to speed up the processing time.
+That gives us the `cumPools` that is the cumulative biomass for the three above-ground live pools in tonnes of carbon/ha.
+The `sim$growth_increments` are the final increments (diffirences between the years) driving simulation which are hashed to speed up the processing time.
 These are in metric tonnes of carbon per ha.
 All other pools and fluxes are also in metric tonnes of carbon per ha. 
 
