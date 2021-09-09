@@ -269,7 +269,7 @@ parametersPresentDay$CBM_core <- list(
                   )
 # harvest1 is the base case
 parametersHarvest1 <- parameters
-parametersPresentDay$CBM_dataPrep_RIAharvest1 <- list(
+parametersHarvest1$CBM_dataPrep_RIAharvest1 <- list(
                     .useCache = TRUE
                     )
 
@@ -384,7 +384,7 @@ RIAharvest2Runs <- simInitAndSpades(times = timesHarvest1,
                                outputs = outputsHarvest1,
                                loadOrder = unlist(modulesHarvest2),
                                debug = TRUE)
-
+## Tools for debuging FRI runs, running the .inputObjects of all modules
 # RIAfriSim <- simInit(times = timesFRI,
 #                         params = parameters,
 #                         modules = modulesFRI, 
