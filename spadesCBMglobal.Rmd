@@ -1,14 +1,15 @@
 ---
 title: "spadesCBM"
 author:
-  - Celine Boisvenue
-  - Ian Eddy
-  - Alex Chubaty
+- Celine Boisvenue
+- Ian Eddy
+- Alex Chubaty
 date: "September 2020"
 output:
   html_document:
     df_print: paged
   pdf_document: default
+  word_document: default
 bibliography: references.bib
 editor_options:
   chunk_output_type: console
@@ -221,7 +222,7 @@ Require("SpaDES.core")
 
 #install_github("PredictiveEcology/CBMutils@development")
 #load_all("~/GitHub/PredictiveEcology/CBMutils")
-#Require("PredictiveEcology/CBMutils (>= 0.0.6)")
+Require("PredictiveEcology/CBMutils (>= 0.0.6)")
 
 options("reproducible.useRequire" = TRUE)
 
@@ -335,6 +336,7 @@ whensFRI <- sort(c(timesFRI$start, timesFRI$start + 1:4 * 100, timesFRI$end - 2:
 # this is for the presentDay runs
 whensPresentDay <- sort(c(timesPresentDay$start, timesPresentDay$start + c(5, 10, 15, 20, 25), 
                           timesPresentDay$end - 2:0))
+# this is for the harvest runs
 whensHarvest1 <- sort(c(timesHarvest1$start, timesHarvest1$start + c(10, 30, 50, 60), 
                           timesHarvest1$end - 1:0))
 
@@ -452,8 +454,8 @@ The `sim$pixelKeep` gets build 1 column at a time for each year of the simulatio
 
 The user provides growth curves in $m^3/ha$ of cumulative $m^3/ha$ over time.
 Those curves are fed into the Boudewyn algorithms (`CBM_vol2biomass` module) with its results multiplied by 0.5 to give carbon.
-That gives us the `cumPools` that is the cumulative biomass for the three above-ground live pools in tonnes of carbon/ha.
-The `sim$growth_increments` are the final increments (diffirences between the years) driving simulation which are hashed to speed up the processing time.
+That gives us the `cumPools` object that is the cumulative biomass for the three above-ground live pools in tonnes of carbon/ha.
+The `sim$growth_increments` are the final increments (differences between the years) driving simulation which are hashed to speed up the processing time.
 These are in metric tonnes of carbon per ha.
 All other pools and fluxes are also in metric tonnes of carbon per ha. 
 

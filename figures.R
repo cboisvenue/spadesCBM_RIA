@@ -239,14 +239,15 @@ FRIageDist2540hist <- qplot(RIAfriRuns$spatialDT$ages, geom = "histogram",
                             main = "a) Carrying capacity scenario year 2540",
                             xlab = "Ages")
 FRIageDist2020hist <- qplot(RIAfriRuns$allPixDT[!is.na(ages),]$ages, geom = "histogram",
-                            main = "a) Carrying capacity scenario year 2020",
+                            main = "c) Initialized landscape year 2020",
                             xlab = "Ages")
 clearPlot()
-Plot(FRIageDist2020hist, FRIageDist2540hist)
+Plot(FRIageDist2540hist, presentDayAgeDist1985hist)
+, FRIageDist2020hist)
 savePlot(filename = "C:/Celine/github/spadesCBM_RIA/results/ageClassDists/AgeClassDistsFRI", type = "png")
 
 presentDayAgeDist2015hist <- qplot(RIApresentDayRuns$spatialDT$ages, geom = "histogram",
-                                   main = "b) Present scenario year 2015",
+                                   main = "b) Initialized landscape year 2015",
                                    xlab = "Ages")
 presentDayAgeDist1985hist <- qplot(RIApresentDayRuns$allPixDT[!is.na(ages),]$ages,
                                    geom = "histogram",
@@ -288,6 +289,23 @@ Plot(presentDayAgeDist2015hist)
 Plot(harv1ageDist2099hist, addTo = TRUE)
 Plot(harv2ageDist2099hist, addTo = TRUE)
 savePlot(filename = "C:/Celine/github/spadesCBM_RIA/results/ageClassDists/AgeClassDistsEndAll", type = "png")
+
+# for discussion Figure 3
+FRIageDist2540hist <- qplot(RIAfriRuns$spatialDT$ages, geom = "histogram",
+                            xlab = "Ages")
+FRIageDist2020hist <- qplot(RIAfriRuns$allPixDT[!is.na(ages),]$ages, geom = "histogram",
+                            xlab = "Ages")
+presentDayAgeDist1985hist <- qplot(RIApresentDayRuns$allPixDT[!is.na(ages),]$ages,
+                                   geom = "histogram",
+                                   xlab = "Ages")
+clearPlot()
+Plot(FRIageDist2540hist, title = "a) Carrying capacity scenario year 2540")
+Plot(presentDayAgeDist1985hist, addTo = TRUE, title = "b) Initialized landscape year 2015")
+Plot(FRIageDist2020hist, addTo = TRUE, title = "c) Initialized landscape year 2020")
+savePlot(filename = "C:/Celine/github/spadesCBM_RIA/results/ageClassDists/figure3", type = "png")
+
+
+
 ## Note that the harv1 and harv2 are bi-modal
 ## END plot age class distributions and save plots ----------------------
 
@@ -383,7 +401,8 @@ presentDayAboveGroundC <- calcC(cbmPools = RIApresentDayRuns$cbmPools,
 presentDayCresults <- as.data.table(cbind(presentDayTotalC, presentDayAboveGroundC$V1))
 setnames(presentDayCresults, names(presentDayCresults),
          c("simYear", "TotalC", "AGC"))
-write.csv(presentDayCresults, file = "C:/Celine/github/spadesCBM_RIA/results/presentDayAbsC.csv")
+presentDayCresults[, scenario := "presentDay"]
+#write.csv(presentDayCresults, file = "C:/Celine/github/spadesCBM_RIA/results/presentDayAbsC.csv")
 
 
 FRITotalC <- calcTotalC(cbmPools = RIAfriRuns$cbmPools,
@@ -394,7 +413,8 @@ FRIAGC <- calcC(cbmPools = RIAfriRuns$cbmPools,
 FRICresults <- as.data.table(cbind(FRITotalC,FRIAGC$V1))
 setnames(FRICresults, names(FRICresults),
          c("simYear", "TotalC", "AGC"))
-write.csv(FRICresults, file = "C:/Celine/github/spadesCBM_RIA/results/FRIabsC.csv")
+FRICresults[, scenario := "FRI"]
+#write.csv(FRICresults, file = "C:/Celine/github/spadesCBM_RIA/results/FRIabsC.csv")
 
 
 harv1TotalC <- calcTotalC(cbmPools = RIAharvest1Runs$cbmPools,
@@ -405,7 +425,8 @@ harv1AGC <- calcC(cbmPools = RIAharvest1Runs$cbmPools,
 harv1Cresults <- as.data.table(cbind(harv1TotalC,harv1AGC$V1))
 setnames(harv1Cresults, names(harv1Cresults),
          c("simYear", "TotalC", "AGC"))
-write.csv(harv1Cresults, file = "C:/Celine/github/spadesCBM_RIA/results/harv1absC.csv")
+harv1Cresults[, scenario := "harvBase"]
+#write.csv(harv1Cresults, file = "C:/Celine/github/spadesCBM_RIA/results/harv1absC.csv")
 
 harv2TotalC <- calcTotalC(cbmPools = RIAharvest2Runs$cbmPools,
                           masterRaster = RIAharvest2Runs$masterRaster)
@@ -415,14 +436,50 @@ harv2AGC <- calcC(cbmPools = RIAharvest2Runs$cbmPools,
 harv2Cresults <- as.data.table(cbind(harv2TotalC,harv2AGC$V1))
 setnames(harv2Cresults, names(harv2Cresults),
          c("simYear", "TotalC", "AGC"))
-write.csv(harv2Cresults, file = "C:/Celine/github/spadesCBM_RIA/results/harv2absC.csv")
+harv2Cresults[, scenario := "harvLess"]
+#write.csv(harv2Cresults, file = "C:/Celine/github/spadesCBM_RIA/results/harv2absC.csv")
+
+allSimsC <- as.data.table(rbind(FRICresults, presentDayCresults, harv1Cresults, harv2Cresults))
+write.csv(allSimsC, file = "C:/Celine/github/spadesCBM_RIA/results/allSimsC.csv")
 
 
 
+#spinupSims
+calcSpinupC <- function(spinup, level3DT, pixelKeep, masterRaster){
+  # calculate total C
+  spinup <- as.data.table(cbind(level3DT$pixelGroup, spinup))
+  setnames(spinup,"V1", "pixelGroup")
+  totalCarbon <- apply(spinup[, SoftwoodMerch:HardwoodBranchSnag], 1, "sum")
+  spinUp <- cbind(spinup, totalCarbon)
+  # get the number of pixels per pixelGoup
+  pixelCount <- pixelKeep[, .N, by = pixelGroup0]
+  setnames(pixelCount, "pixelGroup0", "pixelGroup")
+  allspinup <- spinUp[pixelCount, on = "pixelGroup"]
+  totColsOnly <- allspinup[,.(pixelGroup, totalCarbon, N)]
+  # get the resolution in ha of each pixel
+  resInHa <- res(masterRaster)[1]*res(masterRaster)[2]/10000
+  totColsOnly[, absCarbon := (N*resInHa*totalCarbon)]
+  # this is in Mega tonnes of carbon
+  landscapeCarbon <- totColsOnly[,sum(absCarbon)/1000000]
+  return(landscapeCarbon)
+}
 
-
-
-
+presentDaySpinupC <- calcSpinupC(spinup = RIApresentDayRuns$spinupResult,
+                                 level3DT = RIApresentDayRuns$level3DT,
+                                 pixelKeep = RIApresentDayRuns$pixelKeep,
+                                 masterRaster = RIApresentDayRuns$masterRaster)
+FRISpinupC <- calcSpinupC(spinup = RIAfriRuns$spinupResult,
+                                 level3DT = RIAfriRuns$level3DT,
+                                 pixelKeep = RIAfriRuns$pixelKeep,
+                                 masterRaster = RIAfriRuns$masterRaster)
+harv1SpinupC <- calcSpinupC(spinup = RIAharvest1Runs$spinupResult,
+                                 level3DT = RIAharvest1Runs$level3DT,
+                                 pixelKeep = RIAharvest1Runs$pixelKeep,
+                                 masterRaster = RIAharvest1Runs$masterRaster)
+harv2SpinupC <- calcSpinupC(spinup = RIAharvest2Runs$spinupResult,
+                                 level3DT = RIAharvest2Runs$level3DT,
+                                 pixelKeep = RIAharvest2Runs$pixelKeep,
+                                 masterRaster = RIAharvest2Runs$masterRaster)
 
 
 
@@ -474,185 +531,29 @@ write.csv(simsNPP, file = "C:/Celine/github/spadesCBM_RIA/results/simsNPP.csv")
   minNPPha <- min(avgNPPbyHabyYr$avgNPPha)
 
 
+## products-------------------------------------------------------------
+  # Units: products and emissions are in tonnes (absolute tonnes, not per ha)
 
+presentDayProducts <- as.data.table(RIApresentDayRuns$emissionsProducts)
+presentDayProducts <- presentDayProdcuts[,.(simYear, Products)]
+presentDayProducts[, scenario := "presentDay"]
+harv1Products <- as.data.table(RIAharvest1Runs$emissionsProducts)
+harv1Products <- harv1Products[,.(simYear,Products)]
+harv1Products[, scenario := "base"]
+harv2Products <- as.data.table(RIAharvest2Runs$emissionsProducts)
+harv2Products <- harv2Products[,.(simYear,Products)]
+harv2Products[, scenario := "less"]
 
+RIAproducts <- as.data.table(rbind(presentDayProducts, harv1Products, harv2Products))
 
+# No need for this, it is already in tonnes (not per ha not per pixels)
+# totNoPixels <- 3112425
+# resInHa <- res(RIAharvest1Runs$masterRaster)[1]*res(RIAharvest1Runs$masterRaster)[2]/10000
+# totalAreaHa <- totNoPixels*resInHa
+# RIAproducts[, abs := (Products*totalAreaHa)]
 
-
-
-
-### Fiddling below
-
-# ## modified NPP
-# NPPplot <- function(spatialDT, NPP, masterRaster) {
-#   # Calculate the avgNPP (MgC/ha) by pixel group.
-#   npp <- as.data.table(copy(NPP))
-#   npp[,avgNPP := mean(NPP), by = c("pixelGroup")]
-#   cols <- c("simYear", "NPP")
-#   avgNPP <- unique(npp[, (cols) := NULL])
-#   # link that to the pixels
-#   t <- spatialDT[, .(pixelIndex, pixelGroup)]
-#   setkey(t,pixelGroup)
-#   setkey(avgNPP,pixelGroup)
-#   temp <- merge(t, avgNPP, on = "pixelGroup")
-#   setkey(temp, pixelIndex)
-#   #pixelCount[which(is.na(pixelCount$N)),"N"] <- 0
-#   # temp1 <- temp[which(!is.na(temp$simYear)),.(pixelIndex,NPP)]
-#   # temp1[order(pixelIndex)]
-#   #masterRaster[!masterRaster == 0] <- temp$NPP
-#   plotMaster <- raster(masterRaster)
-#   plotMaster[] <- 0
-#   # instead of tC/ha for each pixel,
-#   plotMaster[temp$pixelIndex] <- temp$avgNPP
-#   #pixel size in ha
-#   pixSize <- prod(res(masterRaster))/10000
-#   temp[,pixNPP := avgNPP*pixSize]
-#   overallAvgNpp <- sum(temp$pixNPP)/(nrow(temp)*pixSize)
-#   return(overallAvgNpp)
-# }
-#
-# quickPlot::Plot(plotMaster, new = TRUE,
-#                 title = paste0("Pixel-level average NPP MgC/ha/yr.",
-#                                "\n Landscape average: ", round(overallAvgNpp,3), "  MgC/ha/yr."))
-
-NPPplot(
-  spatialDT = RIAfriRuns$spatialDT,
-  NPP = RIAfriRuns$NPP,
-  masterRaster = RIAfriRuns$masterRaster
-)
-
-clearPlot()
-
-carbonOutPlot(
-  emissionsProducts = RIAfriRuns$emissionsProducts,
-  masterRaster = RIAfriRuns$masterRaster
-)
-
-
-# ploting the spinup resutls
-friSpinup <- data.table(RIAfriRuns$spinupResult)
-friSpinup[, simYear := 0]
-friSpinup[, ages := RIAfriRuns$level3DT$ages]
-friSpinup[, pixelGroup := RIAfriRuns$level3DT$pixelGroup]
-friSpinup
-neworder <- c(27, 1, 29, 28, 2:26)
-setcolorder(friSpinup, neworder)
-
-FRIspinupRaster <- spatialRaster(
-  pixelkeep = RIAfriRuns$pixelKeep,
-  cbmPools = friSpinup,
-  poolsToPlot = "totalCarbon",
-  years = 0,
-  masterRaster = RIAfriRuns$masterRaster)
-
-### fire runs results and fiddling ############################################
-
-#Outputs for Sam
-# getting the individual matrices used in the c-transactions in the sims
-fireSimTransferMatrices <- lapply(opMatrices, unique)
-fireReturnsDisturbancesMids <- fireSimTransferMatrices$disturbance
-fireReturnsDomTurnMids <- fireSimTransferMatrices$domturnover
-fireReturnsBioTurnMids <- fireSimTransferMatrices$bioturnover
-fireReturnsDomDecayMids <- fireSimTransferMatrices$domDecay
-fireReturnsSlowDecayMids <- fireSimTransferMatrices$`slow decay`
-fireReturnsSlowMixMids <- fireSimTransferMatrices$`slow mixing`
-
-
-# looking for old  stands to see what happens passed the oldest age on the growth curves
-fireReturnSims <- spadesCBMout
-fireReturnSims$cbmPools[simYear == 2540 & ages>400,]
-# pixel group 1 is 531 years old
-fireReturnSims$cbmPools[1:5,]
-# pixelGroup ==1 is in the 1st position in the $allProcesses$Growth1 list
-fireReturnSims$allProcesses$Growth1[[1]]
-
-# trying to find the right gcid - fireReturnsSims$growth_increments have id
-# column going from 1 to 310. These are factor levels created from  fireReturnSims$curveID
-# [1] "growth_curve_component_id" "ecozones". Need to figure out which is matching pixelGroup 1
-curveID <- fireReturnSims$curveID
-gcidsLevels <- levels(fireReturnSims$level3DT$gcids)
-# ecozone and growth_curve_component_id for pixelGroup 1
-fireReturnSims$pixelGroupC[pixelGroup == 1,]
-# find those
-which(gcidsLevels == "4001001_4")
-pg1gc <- as.data.table(fireReturnSims$growth_increments[
-  fireReturnSims$growth_increments[,1] == which(gcidsLevels == "4001001_4"),])
-pg1gc[age == max(age),]
-### fire runs results and fiddling END ############################################
-
-
-### presentDay runs checking ######################################################################
-
-presentDayResultRasters <- spatialRaster(
-  pixelkeep = RIApresentDayRuns$pixelKeep,
-  cbmPools = RIApresentDayRuns$cbmPools,
-  poolsToPlot = "totalCarbon",
-  years = c(1985, 2015),
-  masterRaster = RIApresentDayRuns$masterRaster)
-
-writeRaster(presentDayResultRasters$totalCarbon[[1]], filename = file.path(outputDir,"presentDay","TotalCarbon1985.tif"))
-writeRaster(presentDayResultRasters$totalCarbon[[2]], filename = file.path(outputDir,"presentDay","TotalCarbon2015.tif"))
-
-
-NPPplot(
-  spatialDT = RIApresentDayRuns$spatialDT,
-  NPP = RIApresentDayRuns$NPP,
-  masterRaster = RIApresentDayRuns$masterRaster
-)
-
-clearPlot()
-
-carbonOutPlot(
-  emissionsProducts = RIApresentDayRuns$emissionsProducts,
-  masterRaster = RIApresentDayRuns$masterRaster
-)
-
-
-presentDayTotCrasters <- CBMutils::plotCarbonRasters(
-  pixelkeep = RIApresentDayRuns$pixelKeep,
-  cbmPools = RIApresentDayRuns$cbmPools,
-  poolsToPlot = "totalCarbon",
-  years = c(1985, 2015),
-  masterRaster = RIApresentDayRuns$masterRaster
-)
-presentDayRunsAgeDist2015hist <- qplot(RIApresentDayRuns$spatialDT$ages, geom = "histogram")
-presentDayRunsAgeDist1985hist <- qplot(RIApresentDayRuns$allPixDT[!is.na(ages),]$ages, geom = "histogram")
-Plot(ageDist1985hist)
-Plot(ageDist2015hist, addTo = TRUE)
-### end presentDay runs checking ######################################################################
-
-### harvest1 runs checking ######################################################################
-harv1resultRasters <- spatialRaster(
-  pixelkeep = RIAharvest1Runs$pixelKeep,
-  cbmPools = RIAharvest1Runs$cbmPools,
-  poolsToPlot = "totalCarbon",
-  years = c(2020, 2099),
-  masterRaster = RIAharvest1Runs$masterRaster)
-
-Plot(harv1resultRasters$totalCarbon[[1]], title = "Total Carbon (t/ha) in 2020")
-Plot(harv1resultRasters$totalCarbon[[2]], title = "Total Carbon (t/ha) in 2099")
-
-writeRaster(harv1resultRasters$totalCarbon[[1]], filename = file.path(outputDir,"harvest1","TotalCarbon2020.tif"))
-writeRaster(harv1resultRasters$totalCarbon[[2]], filename = file.path(outputDir,"harvest1","TotalCarbon2099.tif"))
-
-harv1ageDist2099hist <- qplot(RIAharvest1Runs$spatialDT$ages, geom = "histogram")
-harv1ageDist2020hist <- qplot(RIAharvest1Runs$allPixDT[!is.na(ages),]$ages, geom = "histogram")
-clearPlot()
-Plot(harv1ageDist2099hist, title = "Age class Distribution 2099")
-Plot(harv1ageDist2020hist, title = "Age class Distribution 2020", addTo = TRUE)
-
-# ploting the spinup resutls
-harv1Spinup <- data.table(RIAharvest1Runs$spinupResult)
-harv1Spinup[, simYear := 0]
-harv1Spinup[, ages := RIAharvest1Runss$level3DT$ages]
-harv1Spinup[, pixelGroup := RIAharvest1Runs$level3DT$pixelGroup]
-harv1Spinup
-neworder <- c(27, 1, 29, 28, 2:26)
-setcolorder(harv1Spinup, neworder)
-
-harv1spinupRaster <- spatialRaster(
-  pixelkeep = RIAharvest1Runs$pixelKeep,
-  cbmPools = harv1Spinup,
-  poolsToPlot = "totalCarbon",
-  years = 0,
-  masterRaster = RIAharvest1Runs$masterRaster)
+# With the specific gravity around 1.5, solid wood "substance", or
+# lignocellulose as it is commonly called today, weighs around 1500 kg/m3
+# 1000kg/tonne
+RIAproducts[, m3 := ((Products*1000)/1500)]
+write.csv(RIAproducts, file = "C:/Celine/github/spadesCBM_RIA/results/RIAproducts.csv")
