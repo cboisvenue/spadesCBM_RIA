@@ -38,3 +38,5 @@ sampleVRI.csv
 *.png
 
 *.pdf
+
+results/
