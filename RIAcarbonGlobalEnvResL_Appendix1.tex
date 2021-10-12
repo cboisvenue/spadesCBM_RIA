@@ -1,0 +1,589 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Appendix 1 The Carbon Budget Model and simulations},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifluatex
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\title{Appendix 1 The Carbon Budget Model and simulations}
+\author{}
+\date{\vspace{-2.5em}}
+
+\begin{document}
+\maketitle
+
+\hypertarget{overview}{%
+\section{Overview}\label{overview}}
+
+Our study links three existing simulation models to explore their
+capacity to support forest carbon (C) management decisions using the
+current metrics of sustainable forest management practices (levels of
+\(m3/ha\)). Here, we describe the scripts used in our simulations. These
+scripts are R-based and are repeatable and transparent. The central
+model of our simulations is the Carbon Budget Model of the Canadian
+Forest Sector (CBM - Kurz et al., 2009). We implemented faithfully the
+logic, pools structure, equations, and default assumptions of the CBM
+into the meta R-package, \texttt{SpaDES} (Spatial Discrete Event
+Simulation - McIntire et al., 2019). This resulted in a spatialized
+version of the CBM used in simulations in conjunction with landscape
+modifications from a harvesting scheduler ws3 (Appendix 2) and a fire
+model (Appendix 3). The yearly processing of the entire landscape
+permits the link to our harvesting scheduling and fire model, which are
+also in \texttt{SpaDES}, via yearly landscape modifications. Linking
+these three models permits the assessment of carbon implication of
+harvesting and fire disturbances on our study area (see Figure 1). All
+scripts are R-based, providing a parameter and data handling platform,
+and a clear understanding of the model structure and parameters to any
+moderately R-proficient scientist.
+
+The four modules or \texttt{SpaDES}-deck can be called a global script
+(available below). In this project, four modules are run:
+\texttt{CBM\_defaults}, \texttt{CBM\_dataPrep\_RIA\_scenario},
+\texttt{CBM\_vol2biomass\_RIA}, and \texttt{CBM\_core}. The code
+environment is on a public repository. The interactions with other
+models in our simulations are all via the
+\texttt{CBM\_dataPrep\_scenario} modules. We simulate four scenarios and
+therefore have four \texttt{CBM\_dataPrep\_scenario} modules described
+in this appendix.
+
+\hypertarget{background}{%
+\section{Background}\label{background}}
+
+This adaptation of the CBM was developed as a R\&D tool for improving
+the science-basis for the CBM and applied carbon modelling in general.
+This \texttt{SpaDES}-deck was developed on the \texttt{SpaDES} platform
+(a package in R; \url{https://cran.r-project.org/package=SpaDES}) to
+make it transparent, spatial explicit, and able to link to other
+modules/models in \texttt{SpaDES}, striving towards a PERFICT approach.
+This \texttt{SpaDES}-deck enables the inclusion of carbon modelling with
+CBM in cumulative effects evaluation, and provides an environment in
+which science improvements can be explored and tested. \texttt{SpaDES}
+functions as a scheduler through space and time. Note that modules or
+models do not have to be written in R, but callable from R. More
+information on \texttt{SpaDES} and other openly available
+\texttt{SpaDES} modules can be found here
+\url{http://spades.predictiveecology.org/}.
+
+\hypertarget{four-module-spades-deck}{%
+\section{\texorpdfstring{Four-module
+\texttt{SpaDES}-deck}{Four-module SpaDES-deck}}\label{four-module-spades-deck}}
+
+By definition, a \texttt{SpaDES} environment is spatially explicit. In
+addition to that modification, this \texttt{SpaDES}-deck differs
+slightly from the CBM: the C transactions are calculated via matrix
+multiplications as opposed to the non-matrix multiplications used in the
+CBM. These multiplications are completed via a C++ script compiled in
+\texttt{CBM\_core}. Knowledge of the \texttt{SpaDES} structure would
+help an R-knowledgeable user to manipulate simulations but is not
+necessary to run the current simulations. Prior knowledge of CBM-CFS3
+would also help users understand the structure of these modules; the
+default parameters used, but is not necessary to run simulations. The
+simulations on which we base our research can be performed with the code
+block presented below once all the \texttt{SpaDES} modules have been
+cloned and access to all inputs confirmed. We describe all four modules
+necessary for simulations performed in our study with parameters
+described in Kurz et al.~(2009) and in Stinson et al.~(2011). Growth
+curves as the main change-agent (m\^{}3/ha) for the study area are
+available via URL in the \texttt{CBM\_vol2biomass\_RIA} module described
+below. GitHub.
+
+\hypertarget{cbm_defaults}{%
+\subsection{\texorpdfstring{\texttt{CBM\_defaults}}{CBM\_defaults}}\label{cbm_defaults}}
+
+This module loads all the CBM-CFS3 default parameters (Canadian defaults
+that is akin to the Archive Index access database in CBM-CFS3). These
+parameters are then stored in an S4 object
+\texttt{RIAscenarioRuns\$cbmData} and accessed throughout the
+simulations. This object has the following slot names:
+
+• turnoverRates • rootParameters • decayParameters • spinupParameters •
+classifierValues • climate • spatialUnitIds • slowAGtoBGTransferRate •
+biomassToCarbonRate • ecoIndicess • puIndices • stumpParameters •
+overmatureDeclineParameters • disturbanceMatrix.
+
+Default parameters are stored in an SQLite database in this RStudio
+project associated with the current simulations
+(\texttt{spadesCBM\_RIA.Rproj} -
+\emph{\textasciitilde spadesCBM\_RIA/data/modules/CBM\_defaults/data/cbm\_defaults}).
+All parameters used in these simulations are the general Canadian
+defaults, and can be accessed with common R functionality. In the
+\texttt{SpaDES} environment, this module modules have events that are
+scheduled for the simulation. This module has one event (\texttt{init})
+and does not schedule anything else. It requires the R-object
+\texttt{dbPath} and \texttt{sqlDir} to run, both specified in the global
+script below.
+
+\hypertarget{cbm_dataprep_studyarea_specifyscenario}{%
+\subsection{\texorpdfstring{\texttt{CBM\_dataPrep\_studyArea\_specifyScenario}}{CBM\_dataPrep\_studyArea\_specifyScenario}}\label{cbm_dataprep_studyarea_specifyscenario}}
+
+This module reads in user-provided information similarly to CBM-CFS3.
+User provided/expected input include: • the ages of the stands/pixels
+(in our case a raster), • study location information (in our case a
+raster) • disturbance information the user wants applied in the
+simulations (coma separated value (.csv) file) • the growth curves
+(.csv) and where they should be applied (which pixels - raster) on the
+land base, • growth curve meta data which includes at a minimum growth
+curve identification and leading species from which a six column table
+will be built in this module, OR the user can provide the six-column
+meta data directly we have done for these simulations (.csv).
+
+The \texttt{.inputObjects} section of this module provides links to all
+input data for the simulations used in our study.
+
+The user-provided study area is used to make a
+\texttt{RIAscenarioRuns\$masterRaster} (see \texttt{.inputObjects}
+section of this module) on which all maps and other calculations are
+based. The spatial unit raster as well as an ecozone raster are created
+using the \texttt{RIAscenarioRuns\$masterRaster}. Spatial units (SPUs)
+are an overlay of administrative boundaries (provinces and territories)
+and ecozones. SPUs are the link back to the default ecological
+parameters assembled for CBM-CFS3 simulations in Canada. These
+parameters are necessary to be able to perform a simulation; you either
+use the defaults or have to provide alternative values for all the
+parameters. The location information provided by SPU is used to narrow
+the parameter options from \texttt{CBM\_default} to the ones that are
+specific to this study area. The \texttt{CBM\_default} modules needs to
+have been run before \texttt{CBM\_dataPrep\_studyArea\_scenario}.
+Information and data provided are also used to create a table of similar
+pixels to increase processing speeds (\texttt{pixelGroup}). A
+\texttt{data.table} listing the \texttt{pixelGoup} in the initial
+landscape is saved in the simList as \texttt{RIAscenarioRuns\$level3DT}.
+All necessary vectors for annual processes (main part of the simulations
+that happen in the \texttt{CBM\_core} module) are created in this
+module. These vectors need to be in a specific format for the C++
+functions processing. A table stored in the simList
+(\texttt{RIAscenarioRuns\$mySpuDmid}) links the user-provided
+disturbance information to the disturbance matrix identification numbers
+in \texttt{CBM\_defaults}. The \texttt{.inputObjects} function at the
+end of this module provides quasi-automatic read-in of all the necessary
+rasters and tables for our simulations. This module is the most specific
+to a study area. Users should expect this module to contain all
+idiosyncratic data manipulations specific to the study area and to each
+simulated scenario. Each scenario requires its own data preparation
+modules. These are names as follows: \texttt{CBM\_dataPrep\_RIAfri},
+\texttt{CBM\_dataPrep\_RIApresentDay},
+\texttt{CBM\_dataPrep\_RIAharvest1}, and
+\texttt{CBM\_dataPrep\_RIAharvest2}.
+
+\hypertarget{cbm_vol2biomass_studyarea}{%
+\subsection{\texorpdfstring{\texttt{CBM\_vol2biomass\_studyArea}}{CBM\_vol2biomass\_studyArea}}\label{cbm_vol2biomass_studyarea}}
+
+This module is a translation module. It takes in the growth curves
+(cumulative \(m3/ha\)) and returns the biomass increments that drive the
+simulations. It is an implementation of the stand-level biomass
+conversion parameters published in Boudewyn et al.~(2007). Similarly to
+the \texttt{CBM\_dataPrep\_myStudyArea\_scenario} module, this module is
+specific to our study area.
+
+Following the CBM-CFS3 approach, the growth curves are cumulative
+\(m3/ha\). Each curves needs to have an identification number permitting
+the linking to its spatial application; it needs the range of ages from
+0 to the oldest ages represented on the landscape; it needs the volume
+associated with that age vector; and a leading species for that curve.
+Metadata for each curve was already provided in the data preparation
+module (\texttt{CBM\_dataPrep\_studyArea\_specifyScenario}). All
+\(m3/ha\) curves provided are plotted for visual inspection in a simList
+object named \texttt{RIAscenarioRuns\$volCurves}. The unaltered three
+above ground carbon pools directly out of the application of the
+Boudewyn et al.~(2007) parameters and caps, resulted in our in our study
+as in most cases, in some non-smooth curves, curves with odd shapes, or
+curves that to not go through a 0 intercept. For these reason, this
+script incorporates a smoothing procedure that uses a Chapman-Richards
+function to correct for non-plausible shapes and wiggles in the curves
+resulting from the translation process. Note that the purpose of the
+present SpaDES-deck is to emulate the CBM-CFS3 approach. This module
+saves figures for users to evaluate in
+\emph{\textasciitilde spadesCBM\_RIA/data/modules/CBM\_vol2biomass\_RIA/figures}.
+The \texttt{CBM\_dataPrep\_yourStudyArea\_specifyScenario} need to be
+run prior to running this module. This module, however, could be run
+independently for translation of single-species stand-level \(m3/ha\)
+into three increment columns for the aboveground live biomass pools.
+
+\hypertarget{cbm_core}{%
+\subsection{\texorpdfstring{\texttt{CBM\_core}}{CBM\_core}}\label{cbm_core}}
+
+This module uses all the information from the three other
+\texttt{SpaDES} modules to compute the C simulations. The
+\texttt{CBM\_default}, \texttt{CBM\_vol2biomass\_studyArea} and
+\texttt{CBM\_dataPrep\_studyArea\_specifyScenario} modules need to be
+run prior to this module. This module has six \texttt{SpaDES}-events
+that can be scheduled: \texttt{spinup}, \texttt{postSpinup},
+\texttt{saveSpinup}, \texttt{annual}, \texttt{plot}, and
+\texttt{savePools}. We do not schedule the \texttt{saveSpinup} event for
+our simulations. The \texttt{spinup} event is the \texttt{init} event
+run by default in \texttt{SpaDES} modules. This event call a C++ spinup
+function. This emulated the the traditional initialization procedure of
+the CBM where each stand (\texttt{pixelGroup} in our case) is disturbed
+using the disturbance specified in
+\texttt{RIAscenarioRuns\$historicDMIDs} (usually wildfire for the
+ecozone) and re-grown using the provided above ground biomass pools,
+repeatedly, until the dead organic matter (DOM) pools values stabilize
+or the maximum number of iteration is reached
+\texttt{RIAscenarioRuns\$maxRotations}. In this \texttt{spinup} event,
+carbon increment estimates from the biomass estimate of Boudewyn et
+al.~(2007)'s translation of the \(m3/ha\) curves from the
+\texttt{CBM\_vol2biomass} module are used for each of the aboveground
+live pools. The bark, branches, biomass nonmerch (equation 2 in
+Boudewyn) pools, and biomass sap (equation 3 in Boudewyn) are grouped
+under ``other'' in the CBM. Biomass in coarse and fine roots are
+estimated using the above ground estimates from the increments and
+default parameters, one set for softwood and one set for hardwood (see
+\texttt{root\_parameter} table in the SQLite default database). To
+estimate carbon in all other pools, the burn-grow cycle is repeated as
+described above. In all spatial units in Canada, the historical
+disturbance is set to fire. The \texttt{CBM\_default} module has fire
+return intervals for each ecozone in Canada that can be match with the
+ecozone of the study area via the ecozone raster, which is what we did
+for our simulations. Once the \texttt{spinup} is complete, the last
+cycle grows the pixelGroup (still using the same growth curve) to the
+user-provided age in the age raster. In the \texttt{postSpinup} event,
+matrices are set up for the processes that will happen in the
+\texttt{annual} event. In order, the processes are: disturbance, half
+growth, dead organic matter (DOM) turnover, biomass turnover, over
+mature decline calculations, second half of growth, DOM decay, slow
+decay, and slow soil mixing of dead pools' carbon. The \texttt{annual}
+event is where all the processes are applied. Most carbon transactions
+calculated via C++ functions compiled via Rcpp in this module.
+
+The current global script produces a series of default plots. The
+\texttt{plot} event uses three parameters: the initial plot time
+(\texttt{.plotInitialTime}), the interval to plot
+(\texttt{.plotInterval}), and the carbon pools to plot
+(\texttt{poolsToPlot}). The parameter \texttt{poolsToPlot} accepts a
+character vector consisting of any individual pools in the object
+\texttt{RIAscenarioRuns\$cbmPools} as well as totalCarbon for the sum of
+below ground and above ground carbon. The event \texttt{savePools} is
+scheduled last. It creates a \texttt{.csv} file
+(\texttt{cPoolsPixelYear.csv}) that contains the carbon pool values for
+each \texttt{pixelGroup} at the end of each simulation year, for all
+simulation years. The event \texttt{spinupDebug} is currently a place
+holder to explore spinup results, it is set to FALSE in our simulations.
+
+\hypertarget{current-simulations}{%
+\section{Current Simulations}\label{current-simulations}}
+
+The global script in this document will run by default, simulations for
+\(53.4Mha\) of managed forests in the northeastern corner of the
+province of British Colombia, Canada, running the following script, with
+all the defaults parameters, for four scenarios. The first scenario
+provides an estimate of the carbon carrying capacity (Liang et al.,
+2017) of the study area by simulating the landscape using the CBM and
+the fire model (Armstrong \& Cumming, 2003 - Appendix 3) from the year
+2020 to 20540 (FRI for Fire Return Interval). The second represents the
+present day landscape, where disturbances from 1985-2015 as presented in
+Hermosilla et al.~(2016) were applied annually and resulting C dynamics
+simulated with the CBM. The final two scenarios simulate two levels in
+resource removal as simulated by ws3 (Paradis et al., 2018- Appendix 2)
+, on representing a sustainable resource management extraction scenario
+(base harvest) and the other a lesser amount of resources removed (less
+harvest). Note that all scenarios use the same
+\texttt{CBM\_vol2biomass\_RIA} module, and that both the
+\texttt{CBM\_default} and \texttt{CBM\_core} modules are non-changing
+between scenario. Meta data for each scenario are created in the script
+below and this script runs four separate simulations.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(Require)}
+\FunctionTok{Require}\NormalTok{(}\StringTok{"magrittr"}\NormalTok{) }\CommentTok{\# this is needed to use "\%\textgreater{}\%" below}
+\FunctionTok{Require}\NormalTok{(}\StringTok{"SpaDES.core"}\NormalTok{)}
+
+\FunctionTok{install\_github}\NormalTok{(}\StringTok{"PredictiveEcology/CBMutils@development"}\NormalTok{)}
+\CommentTok{\#load\_all("\textasciitilde{}/GitHub/PredictiveEcology/CBMutils")}
+\FunctionTok{Require}\NormalTok{(}\StringTok{"PredictiveEcology/CBMutils (\textgreater{}= 0.0.6)"}\NormalTok{)}
+
+\FunctionTok{options}\NormalTok{(}\StringTok{"reproducible.useRequire"} \OtherTok{=} \ConstantTok{TRUE}\NormalTok{)}
+
+\NormalTok{cacheDir }\OtherTok{\textless{}{-}}\NormalTok{ reproducible}\SpecialCharTok{::}\FunctionTok{checkPath}\NormalTok{(}\StringTok{"cache"}\NormalTok{, }\AttributeTok{create =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{moduleDir }\OtherTok{\textless{}{-}}\NormalTok{ reproducible}\SpecialCharTok{::}\FunctionTok{checkPath}\NormalTok{(}\StringTok{"modules"}\NormalTok{)}
+\NormalTok{inputDir }\OtherTok{\textless{}{-}}\NormalTok{ reproducible}\SpecialCharTok{::}\FunctionTok{checkPath}\NormalTok{(}\StringTok{"inputs"}\NormalTok{, }\AttributeTok{create =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{outputDir }\OtherTok{\textless{}{-}}\NormalTok{ reproducible}\SpecialCharTok{::}\FunctionTok{checkPath}\NormalTok{(}\StringTok{"outputs"}\NormalTok{, }\AttributeTok{create =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{scratchDir }\OtherTok{\textless{}{-}} \FunctionTok{file.path}\NormalTok{(}\FunctionTok{tempdir}\NormalTok{(), }\StringTok{"scratch"}\NormalTok{, }\StringTok{"CBM"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ reproducible}\SpecialCharTok{::}\FunctionTok{checkPath}\NormalTok{(}\AttributeTok{create =} \ConstantTok{TRUE}\NormalTok{)}
+
+\DocumentationTok{\#\# }\AlertTok{TODO}\DocumentationTok{ fix this so we can run all the times with the appropriate sims below}
+\NormalTok{timesFRI }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}\AttributeTok{start =} \FloatTok{2020.00}\NormalTok{, }\AttributeTok{end =} \FloatTok{2540.00}\NormalTok{)}
+\NormalTok{timesPresentDay }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}\AttributeTok{start =} \FloatTok{1985.00}\NormalTok{, }\AttributeTok{end =} \FloatTok{2015.00}\NormalTok{)}
+\NormalTok{timesHarvest1 }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}\AttributeTok{start =} \FloatTok{2020.00}\NormalTok{, }\AttributeTok{end =} \FloatTok{2099.00}\NormalTok{)}
+
+
+\NormalTok{parameters }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}
+  \AttributeTok{CBM\_defaults =} \FunctionTok{list}\NormalTok{(}
+    \AttributeTok{.useCache =} \ConstantTok{TRUE}
+\NormalTok{  ),}
+  \AttributeTok{CBM\_vol2biomass\_RIA =} \FunctionTok{list}\NormalTok{(}
+    \AttributeTok{.useCache =} \ConstantTok{TRUE}
+\NormalTok{  )}
+\NormalTok{)}
+\CommentTok{\#Fire Return Interval}
+\NormalTok{parametersFRI }\OtherTok{\textless{}{-}}\NormalTok{ parameters}
+\NormalTok{parametersFRI}\SpecialCharTok{$}\NormalTok{CBM\_dataPrep\_RIAfri }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}
+                     \AttributeTok{.useCache =} \ConstantTok{TRUE}
+\NormalTok{                     )}
+\NormalTok{parametersFRI}\SpecialCharTok{$}\NormalTok{CBM\_core }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}
+                    \AttributeTok{.useCache =} \ConstantTok{FALSE}\NormalTok{, }\CommentTok{\#"init", \#c(".inputObjects", "init")}
+                    \CommentTok{\# .plotInterval = 5,}
+                    \AttributeTok{.plotInitialTime =}\NormalTok{ timesFRI}\SpecialCharTok{$}\NormalTok{start,}
+                    \AttributeTok{poolsToPlot =} \FunctionTok{c}\NormalTok{(}\StringTok{"totalCarbon"}\NormalTok{),}
+                    \AttributeTok{spinupDebug =} \ConstantTok{FALSE} \DocumentationTok{\#\# }\AlertTok{TODO}\DocumentationTok{: temporary}
+\NormalTok{                  )}
+\CommentTok{\#Present Day 1985{-}2015}
+\NormalTok{parametersPresentDay }\OtherTok{\textless{}{-}}\NormalTok{ parameters}
+\NormalTok{parametersPresentDay}\SpecialCharTok{$}\NormalTok{CBM\_dataPrep\_RIApresentDay }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}
+                    \AttributeTok{.useCache =} \ConstantTok{TRUE}
+\NormalTok{                    )}
+\NormalTok{parametersPresentDay}\SpecialCharTok{$}\NormalTok{CBM\_core }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}
+                    \AttributeTok{.useCache =} \ConstantTok{FALSE}\NormalTok{, }\CommentTok{\#"init", \#c(".inputObjects", "init")}
+                    \CommentTok{\# .plotInterval = 5,}
+                    \AttributeTok{.plotInitialTime =}\NormalTok{ timesPresentDay}\SpecialCharTok{$}\NormalTok{start,}
+                    \AttributeTok{poolsToPlot =} \FunctionTok{c}\NormalTok{(}\StringTok{"totalCarbon"}\NormalTok{),}
+                    \AttributeTok{spinupDebug =} \ConstantTok{FALSE} \DocumentationTok{\#\# }\AlertTok{TODO}\DocumentationTok{: temporary}
+\NormalTok{                  )}
+\CommentTok{\# harvest1 is the base case}
+\NormalTok{parametersHarvest1 }\OtherTok{\textless{}{-}}\NormalTok{ parameters}
+\NormalTok{parametersHarvest1}\SpecialCharTok{$}\NormalTok{CBM\_dataPrep\_RIAharvest1 }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}
+                    \AttributeTok{.useCache =} \ConstantTok{TRUE}
+\NormalTok{                    )}
+
+\NormalTok{parametersHarvest1}\SpecialCharTok{$}\NormalTok{CBM\_core }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}
+                    \CommentTok{\#.useCache = TRUE, \#"init", \#c(".inputObjects", "init")}
+                    \CommentTok{\# .plotInterval = 5,}
+                    \AttributeTok{.plotInitialTime =}\NormalTok{ timesHarvest1}\SpecialCharTok{$}\NormalTok{start,}
+                    \AttributeTok{poolsToPlot =} \FunctionTok{c}\NormalTok{(}\StringTok{"totalCarbon"}\NormalTok{),}
+                    \AttributeTok{spinupDebug =} \ConstantTok{FALSE}\NormalTok{) }\DocumentationTok{\#\# }\AlertTok{TODO}\DocumentationTok{: temporary}
+
+\NormalTok{modulesFRI }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}\StringTok{"CBM\_defaults"}\NormalTok{, }\StringTok{"CBM\_dataPrep\_RIAfri"}\NormalTok{, }\StringTok{"CBM\_vol2biomass\_RIA"}\NormalTok{, }\StringTok{"CBM\_core"}\NormalTok{)}
+\NormalTok{modulesPresentDay }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}\StringTok{"CBM\_defaults"}\NormalTok{, }\StringTok{"CBM\_dataPrep\_RIApresentDay"}\NormalTok{, }\StringTok{"CBM\_vol2biomass\_RIA"}\NormalTok{, }\StringTok{"CBM\_core"}\NormalTok{)}
+\NormalTok{modulesHarvest1 }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}\StringTok{"CBM\_defaults"}\NormalTok{, }\StringTok{"CBM\_dataPrep\_RIAharvest1"}\NormalTok{, }\StringTok{"CBM\_vol2biomass\_RIA"}\NormalTok{, }\StringTok{"CBM\_core"}\NormalTok{)}
+\CommentTok{\#harvest2 is the less{-}than{-}base case}
+\NormalTok{modulesHarvest2 }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}\StringTok{"CBM\_defaults"}\NormalTok{, }\StringTok{"CBM\_dataPrep\_RIAharvest2"}\NormalTok{, }\StringTok{"CBM\_vol2biomass\_RIA"}\NormalTok{, }\StringTok{"CBM\_core"}\NormalTok{)}
+
+\NormalTok{objects }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}
+  \AttributeTok{dbPath =} \FunctionTok{file.path}\NormalTok{(inputDir, }\StringTok{"cbm\_defaults"}\NormalTok{, }\StringTok{"cbm\_defaults.db"}\NormalTok{),}
+  \AttributeTok{sqlDir =} \FunctionTok{file.path}\NormalTok{(inputDir, }\StringTok{"cbm\_defaults"}\NormalTok{)}
+\NormalTok{)}
+
+\NormalTok{paths }\OtherTok{\textless{}{-}} \FunctionTok{list}\NormalTok{(}
+  \AttributeTok{cachePath =}\NormalTok{ cacheDir,}
+  \AttributeTok{modulePath =}\NormalTok{ moduleDir,}
+  \AttributeTok{inputPath =}\NormalTok{ inputDir,}
+  \AttributeTok{rasterPath =}\NormalTok{ scratchDir}
+\NormalTok{)}
+
+\NormalTok{pathsFRI }\OtherTok{\textless{}{-}}\NormalTok{ paths}
+\NormalTok{pathsFRI}\SpecialCharTok{$}\NormalTok{outputPath }\OtherTok{\textless{}{-}} \FunctionTok{file.path}\NormalTok{(outputDir,}\StringTok{"FRI"}\NormalTok{)}
+
+\NormalTok{pathsPresentDay }\OtherTok{\textless{}{-}}\NormalTok{ paths}
+\NormalTok{pathsPresentDay}\SpecialCharTok{$}\NormalTok{outputPath }\OtherTok{\textless{}{-}} \FunctionTok{file.path}\NormalTok{(outputDir,}\StringTok{"presentDay"}\NormalTok{)}
+
+\NormalTok{pathsHarvest1 }\OtherTok{\textless{}{-}}\NormalTok{ paths}
+\NormalTok{pathsHarvest1}\SpecialCharTok{$}\NormalTok{outputPath }\OtherTok{\textless{}{-}} \FunctionTok{file.path}\NormalTok{(outputDir,}\StringTok{"harvest1"}\NormalTok{)}
+
+\NormalTok{pathsHarvest2 }\OtherTok{\textless{}{-}}\NormalTok{ paths}
+\NormalTok{pathsHarvest2}\SpecialCharTok{$}\NormalTok{outputPath }\OtherTok{\textless{}{-}} \FunctionTok{file.path}\NormalTok{(outputDir,}\StringTok{"harvest2"}\NormalTok{)}
+
+
+\NormalTok{quickPlot}\SpecialCharTok{::}\FunctionTok{dev.useRSGD}\NormalTok{(}\ConstantTok{FALSE}\NormalTok{)}
+\FunctionTok{dev}\NormalTok{()}
+\FunctionTok{clearPlot}\NormalTok{()}
+\FunctionTok{options}\NormalTok{(}\AttributeTok{spades.moduleCodeChecks =} \ConstantTok{FALSE}\NormalTok{,}
+        \AttributeTok{reproducible.useMemoise =} \ConstantTok{FALSE}\NormalTok{,}
+        \AttributeTok{spades.recoveryMode =} \ConstantTok{FALSE}\NormalTok{)}
+        \CommentTok{\#reproducible.useNewDigestAlgorithm = 2)}
+
+\CommentTok{\# this is the whens for the 540 years of fire runs}
+\NormalTok{whensFRI }\OtherTok{\textless{}{-}} \FunctionTok{sort}\NormalTok{(}\FunctionTok{c}\NormalTok{(timesFRI}\SpecialCharTok{$}\NormalTok{start, timesFRI}\SpecialCharTok{$}\NormalTok{start }\SpecialCharTok{+} \DecValTok{1}\SpecialCharTok{:}\DecValTok{4} \SpecialCharTok{*} \DecValTok{100}\NormalTok{, timesFRI}\SpecialCharTok{$}\NormalTok{end }\SpecialCharTok{{-}} \DecValTok{2}\SpecialCharTok{:}\DecValTok{0}\NormalTok{))}
+\CommentTok{\# this is for the presentDay runs}
+\NormalTok{whensPresentDay }\OtherTok{\textless{}{-}} \FunctionTok{sort}\NormalTok{(}\FunctionTok{c}\NormalTok{(timesPresentDay}\SpecialCharTok{$}\NormalTok{start, timesPresentDay}\SpecialCharTok{$}\NormalTok{start }\SpecialCharTok{+} \FunctionTok{c}\NormalTok{(}\DecValTok{5}\NormalTok{, }\DecValTok{10}\NormalTok{, }\DecValTok{15}\NormalTok{, }\DecValTok{20}\NormalTok{, }\DecValTok{25}\NormalTok{), }
+\NormalTok{                          timesPresentDay}\SpecialCharTok{$}\NormalTok{end }\SpecialCharTok{{-}} \DecValTok{2}\SpecialCharTok{:}\DecValTok{0}\NormalTok{))}
+\CommentTok{\# this is for the harvest runs}
+\NormalTok{whensHarvest1 }\OtherTok{\textless{}{-}} \FunctionTok{sort}\NormalTok{(}\FunctionTok{c}\NormalTok{(timesHarvest1}\SpecialCharTok{$}\NormalTok{start, timesHarvest1}\SpecialCharTok{$}\NormalTok{start }\SpecialCharTok{+} \FunctionTok{c}\NormalTok{(}\DecValTok{10}\NormalTok{, }\DecValTok{30}\NormalTok{, }\DecValTok{50}\NormalTok{, }\DecValTok{60}\NormalTok{), }
+\NormalTok{                          timesHarvest1}\SpecialCharTok{$}\NormalTok{end }\SpecialCharTok{{-}} \DecValTok{1}\SpecialCharTok{:}\DecValTok{0}\NormalTok{))}
+
+
+\NormalTok{outputsFRI }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(}\FunctionTok{expand.grid}\NormalTok{(}\AttributeTok{objectName =} \FunctionTok{c}\NormalTok{(}\StringTok{"cbmPools"}\NormalTok{, }\StringTok{"NPP"}\NormalTok{), }\AttributeTok{saveTime =}\NormalTok{ whensFRI))}
+\NormalTok{outputsPresentDay }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(}\FunctionTok{expand.grid}\NormalTok{(}\AttributeTok{objectName =} \FunctionTok{c}\NormalTok{(}\StringTok{"cbmPools"}\NormalTok{, }\StringTok{"NPP"}\NormalTok{), }\AttributeTok{saveTime =}\NormalTok{ whensPresentDay))}
+\NormalTok{outputsHarvest1 }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(}\FunctionTok{expand.grid}\NormalTok{(}\AttributeTok{objectName =} \FunctionTok{c}\NormalTok{(}\StringTok{"cbmPools"}\NormalTok{, }\StringTok{"NPP"}\NormalTok{), }\AttributeTok{saveTime =}\NormalTok{ whensHarvest1))}
+
+\DocumentationTok{\#\# All simulation parameters are set{-}up above this line.}
+\DocumentationTok{\#\# All simulations are set{-}up (simInit) and performed (spades) below this line}
+
+\NormalTok{RIApresentDayRuns }\OtherTok{\textless{}{-}} \FunctionTok{simInitAndSpades}\NormalTok{(}\AttributeTok{times =}\NormalTok{ timesPresentDay,}
+                               \AttributeTok{params =}\NormalTok{ parametersPresentDay,}
+                               \AttributeTok{modules =}\NormalTok{ modulesPresentDay,}
+                               \AttributeTok{objects =}\NormalTok{ objects,}
+                               \AttributeTok{paths =}\NormalTok{ pathsPresentDay,}
+                               \AttributeTok{outputs =}\NormalTok{ outputsPresentDay,}
+                               \AttributeTok{loadOrder =} \FunctionTok{unlist}\NormalTok{(modulesPresentDay),}
+                               \AttributeTok{debug =} \ConstantTok{TRUE}\NormalTok{)}
+
+\NormalTok{RIAfriRuns }\OtherTok{\textless{}{-}} \FunctionTok{simInitAndSpades}\NormalTok{(}\AttributeTok{times =}\NormalTok{ timesFRI,}
+                               \AttributeTok{params =}\NormalTok{ parametersFRI,}
+                               \AttributeTok{modules =}\NormalTok{ modulesFRI,}
+                               \AttributeTok{objects =}\NormalTok{ objects,}
+                               \AttributeTok{paths =}\NormalTok{ pathsFRI,}
+                               \AttributeTok{outputs =}\NormalTok{ outputsFRI,}
+                               \AttributeTok{loadOrder =} \FunctionTok{unlist}\NormalTok{(modulesFRI),}
+                               \AttributeTok{debug =} \ConstantTok{TRUE}\NormalTok{)}
+
+\NormalTok{RIAharvest1Runs }\OtherTok{\textless{}{-}} \FunctionTok{simInitAndSpades}\NormalTok{(}\AttributeTok{times =}\NormalTok{ timesHarvest1,}
+                               \AttributeTok{params =}\NormalTok{ parametersHarvest1,}
+                               \AttributeTok{modules =}\NormalTok{ modulesHarvest1,}
+                               \AttributeTok{objects =}\NormalTok{ objects,}
+                               \AttributeTok{paths =}\NormalTok{ pathsHarvest1,}
+                               \AttributeTok{outputs =}\NormalTok{ outputsHarvest1,}
+                               \AttributeTok{loadOrder =} \FunctionTok{unlist}\NormalTok{(modulesHarvest1),}
+                               \AttributeTok{debug =} \ConstantTok{TRUE}\NormalTok{)}
+
+\NormalTok{RIAharvest2Runs }\OtherTok{\textless{}{-}} \FunctionTok{simInitAndSpades}\NormalTok{(}\AttributeTok{times =}\NormalTok{ timesHarvest1,}
+                               \AttributeTok{params =}\NormalTok{ parametersHarvest1,}
+                               \AttributeTok{modules =}\NormalTok{ modulesHarvest2,}
+                               \AttributeTok{objects =}\NormalTok{ objects,}
+                               \AttributeTok{paths =}\NormalTok{ pathsHarvest2,}
+                               \AttributeTok{outputs =}\NormalTok{ outputsHarvest1,}
+                               \AttributeTok{loadOrder =} \FunctionTok{unlist}\NormalTok{(modulesHarvest2),}
+                               \AttributeTok{debug =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{cbmutils}{%
+\section{\texorpdfstring{\texttt{CBMutils}}{CBMutils}}\label{cbmutils}}
+
+In the spirit of PERFICT, we developed a series of utility functions, to
+support simulations using this \texttt{SpaDES}-deck. This are in the
+package \texttt{CBMutils} and are available on a public github
+repository.
+
+\hypertarget{references}{%
+\section{References}\label{references}}
+
+Armstrong, G. W., \& Cumming, S. G. (2003). Estimating the Cost of Land
+Base Changes Due to Wildfire Using Shadow Prices. Forest Science, 49(5),
+719--730. \url{https://doi.org/10.1093/forestscience/49.5.719} Boudewyn,
+P., Song, X., Magnussen, S., \& Gillis, M. D. (2007). Model-based,
+volume-to-biomass conversion for forested and vegetated land in Canada
+(P. F. C. Canadian Forest Service, Trans.; ISSN 0830-0453 ISBN
+978-0-662-46513-3; Information Report BC-X-411). Natural Resources
+Canada. Hermosilla, T., Wulder, M. A., White, J. C., Coops, N. C.,
+Hobart, G. W., \& Campbell, L. B. (2016). Mass data processing of time
+series Landsat imagery: Pixels to data products for forest monitoring.
+International Journal of Digital Earth, 1--20.
+\url{https://doi.org/10.1080/17538947.2016.1187673} Kurz, W. A., Dymond,
+C. C., White, T. M., Stinson, G., Shaw, C. H., Rampley, G. J., Smyth,
+C., Simpson, B. N., Neilson, E. T., Trofymow, J. A., Metsaranta, J., \&
+Apps, M. J. (2009). CBM-CFS3: A model of carbon-dynamics in forestry and
+land-use change implementing IPCC standards. Ecological Modelling,
+220(4), 480--504. Liang, S., Hurteau, M. D., \& Westerling, A. L.
+(2017). Potential decline in carbon carrying capacity under projected
+climate-wildfire interactions in the Sierra Nevada. Scientific Reports,
+7(1), 2420. \url{https://doi.org/10.1038/s41598-017-02686-0} McIntire,
+E. J. B., Chubaty, A., Luo, Y., \& Cumming, S. G. (2019). Develop and
+Run Spatially Explicit Discrete Event Simulation Models (2.07) {[}R
+language{]}. \url{https://spades.predictiveecology.org},
+\url{https://github.com/PredictiveEcology/SpaDES} Paradis, G., Bouchard,
+M., LeBel, L., \& D'Amours, S. (2018). A bi-level model formulation for
+the distributed wood supply planning problem. Canadian Journal of Forest
+Research, 48(2), 160--171. \url{https://doi.org/10.1139/cjfr-2017-0240}
+Stinson, G., Kurz, W. A., Smyth, C. E., Neilson, E. T., Dymond, C. C.,
+Metsaranta, J. M., Boisvenue, C., Rampley, G. J., Li, Q., White, T. M.,
+\& Blain, D. (2011). An inventory-based analysis of Canada's managed
+forest carbon dynamics, 1990 to 2008. Global Change Biology, 17(6),
+2227--2244. \url{https://doi.org/10.1111/j.1365-2486.2010.02369.x}
+
+\end{document}
