@@ -1,15 +1,6 @@
 ---
-title: "Appendix 1 The Carbon Budget Model and simulations"
-author:
-date:
-output:
-  pdf_document: default
-  html_document:
-    df_print: paged
-  word_document: default
-bibliography: references.bib
-editor_options:
-  chunk_output_type: console
+title: "Appendix 1"
+output: pdf_document
 ---
 
 # Overview
@@ -235,13 +226,21 @@ In the spirit of PERFICT (see McIntire et al 2021), we developed a series of uti
 # References
 
   Armstrong, G. W., & Cumming, S. G. (2003). Estimating the Cost of Land Base Changes Due to Wildfire Using Shadow Prices. Forest Science, 49(5), 719–730. https://doi.org/10.1093/forestscience/49.5.719
+  
   Boudewyn, P., Song, X., Magnussen, S., & Gillis, M. D. (2007). Model-based, volume-to-biomass conversion for forested and vegetated land in Canada (P. F. C. Canadian Forest Service, Trans.; ISSN 0830-0453 ISBN 978-0-662-46513-3; Information Report BC-X-411). Natural Resources Canada.
+  
   Hermosilla, T., Wulder, M. A., White, J. C., Coops, N. C., Hobart, G. W., & Campbell, L. B. (2016). Mass data processing of time series Landsat imagery: Pixels to data products for forest monitoring. International Journal of Digital Earth, 1–20. https://doi.org/10.1080/17538947.2016.1187673
+  
   Kurz, W. A., Dymond, C. C., White, T. M., Stinson, G., Shaw, C. H., Rampley, G. J., Smyth, C., Simpson, B. N., Neilson, E. T., Trofymow, J. A., Metsaranta, J., & Apps, M. J. (2009). CBM-CFS3: A model of carbon-dynamics in forestry and land-use change implementing IPCC standards. Ecological Modelling, 220(4), 480–504.
+  
   Liang, S., Hurteau, M. D., & Westerling, A. L. (2017). Potential decline in carbon carrying capacity under projected climate-wildfire interactions in the Sierra Nevada. Scientific Reports, 7(1), 2420. https://doi.org/10.1038/s41598-017-02686-0
+  
   McIntire, E. J. B., Chubaty, A., Cumming, S. G., Andison, D. W., Barros, C., Boisvenue, C., Hache, S., Luo, Y., Micheletti, T., & Stewart, F. (2021). Predictive Ecology: A Re-imagined Foundation and Toolkit for Ecological Models. Authorea (Submitted to Ecology Letters). https://doi.org/DOI: 10.22541/au.161709444.40008325/v1
+  
   McIntire, E. J. B., Chubaty, A., Luo, Y., & Cumming, S. G. (2019). Develop and Run Spatially Explicit Discrete Event Simulation Models (2.07) [R language]. https://spades.predictiveecology.org, https://github.com/PredictiveEcology/SpaDES
+  
   Paradis, G., Bouchard, M., LeBel, L., & D’Amours, S. (2018). A bi-level model formulation for the distributed wood supply planning problem. Canadian Journal of Forest Research, 48(2), 160–171. https://doi.org/10.1139/cjfr-2017-0240
+  
   Stinson, G., Kurz, W. A., Smyth, C. E., Neilson, E. T., Dymond, C. C., Metsaranta, J. M., Boisvenue, C., Rampley, G. J., Li, Q., White, T. M., & Blain, D. (2011). An inventory-based analysis of Canada’s managed forest carbon dynamics, 1990 to 2008. Global Change Biology, 17(6), 2227–2244. https://doi.org/10.1111/j.1365-2486.2010.02369.x
 
 
