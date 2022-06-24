@@ -222,7 +222,7 @@ Require("SpaDES.core")
 
 #install_github("PredictiveEcology/CBMutils@development")
 #load_all("~/GitHub/PredictiveEcology/CBMutils")
-Require("PredictiveEcology/CBMutils (>= 0.0.6)")
+#Require("PredictiveEcology/CBMutils (>= 0.0.6)")
 
 options("reproducible.useRequire" = TRUE)
 
@@ -352,7 +352,7 @@ outputsHarvest1 <- as.data.frame(expand.grid(objectName = c("cbmPools", "NPP"), 
 #                                paths = pathsPresentDay,
 #                                outputs = outputsPresentDay,
 #                                loadOrder = unlist(modulesPresentDay))
-
+opts <- options("spades.useRequire" = FALSE)
 RIApresentDayRuns <- simInitAndSpades(times = timesPresentDay,
                                params = parametersPresentDay,
                                modules = modulesPresentDay,
@@ -361,7 +361,7 @@ RIApresentDayRuns <- simInitAndSpades(times = timesPresentDay,
                                outputs = outputsPresentDay,
                                loadOrder = unlist(modulesPresentDay),
                                debug = TRUE)
-
+options(opts)
 RIAfriRuns <- simInitAndSpades(times = timesFRI,
                                params = parametersFRI,
                                modules = modulesFRI,

@@ -15,10 +15,10 @@ library(raster)
 library(ggplot2)
 
 # read-in all the results from the paper simulations
-RIAfriRuns <- loadSimList("C:/Celine/github/spadesCBM_RIA/outputs/FRI/RIAfriRuns")
-RIApresentDayRuns <- loadSimList("C:/Celine/github/spadesCBM_RIA/outputs/presentDay/RIApresentDayRuns")
-RIAharvest1Runs <- loadSimList("C:/Celine/github/spadesCBM_RIA/outputs/harvest1/RIAharvest1Runs.rds")
-RIAharvest2Runs <- loadSimList("C:/Celine/github/spadesCBM_RIA/outputs/harvest2/RIAharvest2Runs.rds")
+RIAfriRuns <- loadSimList("C:/Celine/github/spadesCBM_RIA/outputs/FRI/RIAfriRuns.qs")
+RIApresentDayRuns <- loadSimList("C:/Celine/github/spadesCBM_RIA/outputs/presentDay/RIApresentDayRuns.qs")
+RIAharvest1Runs <- loadSimList("C:/Celine/github/spadesCBM_RIA/outputs/harvest1/RIAharvest1Runs.qs")
+RIAharvest2Runs <- loadSimList("C:/Celine/github/spadesCBM_RIA/outputs/harvest2/RIAharvest2Runs.qs")
 
 #----------------------------------------------------------------------------
 
@@ -135,27 +135,24 @@ harv2lessResultRasters <- spatialRaster(
 
 ## Total C raster figures
 ## start + present day end
+dev()
 clearPlot()
-Plot(FRIresultRasters$totalCarbon[[1]], title = "a) Carrying capacity scenario (year 2020)
+Plot(FRIresultRasters$totalCarbon[[1]], title = "a) C-holding capacity scenario
      Total Carbon t/ha C")
-Plot(presentDayResultRasters$totalCarbon[[2]], title = "b) Present day scenario (year 2015)
+Plot(presentDayResultRasters$totalCarbon[[2]], title = "b) Present day scenario (start - 1985)
      Total Carbon t/ha C")
-Plot(harv1baseResultRasters$totalCarbon[[1]], title = "c) Base harvest scenario (year 2020)
+Plot(harv1baseResultRasters$totalCarbon[[1]], title = "c) Base harvest scenario (start - 2020)
      Total Carbon t/ha C")
-Plot(harv2lessResultRasters$totalCarbon[[1]], title = "d) Less harvest scenario (year 2020)
+Plot(harv2lessResultRasters$totalCarbon[[1]], title = "d) Less harvest scenario (start - 2020)
      Total Carbon t/ha C")
 savePlot(filename = "C:/Celine/github/spadesCBM_RIA/results/rasters/totCstartFor3presenDayEnd", type = "png")
 # all end of sims
 clearPlot()
-Plot(FRIresultRasters$totalCarbon[[2]],  title = "a) Carrying capacity scenario (year 2540)
-     Total Carbon t/ha C")
-Plot(presentDayResultRasters$totalCarbon[[2]], title = "b) Present scenario (year 2015)
-     Total Carbon t/ha C")
-Plot(harv1baseResultRasters$totalCarbon[[2]], title = "c) Base harvest scenario (year 2099)
-     Total Carbon t/ha C")
-Plot(harv2lessResultRasters$totalCarbon[[2]], title = "d) Less harvest scenario (year 2099)
-     Total Carbon t/ha C")
-savePlot(filename = "C:/Celine/github/spadesCBM_RIA/results/rasters/totCend", type = "png")
+Plot(FRIresultRasters$totalCarbon[[2]],  title = "a) C-holding capacity scenario")
+Plot(presentDayResultRasters$totalCarbon[[2]], title = "b) Present day scenario")
+Plot(harv1baseResultRasters$totalCarbon[[2]], title = "c) Base harvest scenario")
+Plot(harv2lessResultRasters$totalCarbon[[2]], title = "d) Less harvest scenario")
+savePlot(filename = "C:/Celine/github/spadesCBM_RIA/results/rasters/figure2", type = "png")
 ## aboveGround raster figures
 ## start + present day end
 clearPlot()
@@ -237,7 +234,8 @@ savePlot(filename = "C:/Celine/github/spadesCBM_RIA/results/rasters/AGend", type
 
 FRIageDist2540hist <- qplot(RIAfriRuns$spatialDT$ages, geom = "histogram",
                             main = "a) Carrying capacity scenario year 2540",
-                            xlab = "Ages")
+                            xlab = "Ages",
+                            ylab = "Frequency")
 FRIageDist2020hist <- qplot(RIAfriRuns$allPixDT[!is.na(ages),]$ages, geom = "histogram",
                             main = "c) Initialized landscape year 2020",
                             xlab = "Ages")
@@ -247,11 +245,12 @@ Plot(FRIageDist2540hist, presentDayAgeDist1985hist)
 savePlot(filename = "C:/Celine/github/spadesCBM_RIA/results/ageClassDists/AgeClassDistsFRI", type = "png")
 
 presentDayAgeDist2015hist <- qplot(RIApresentDayRuns$spatialDT$ages, geom = "histogram",
-                                   main = "b) Initialized landscape year 2015",
-                                   xlab = "Ages")
+                                   main = "b) Present Day landscape (2015)",
+                                   xlab = "Ages",
+                                   ylab = "Frequency")
 presentDayAgeDist1985hist <- qplot(RIApresentDayRuns$allPixDT[!is.na(ages),]$ages,
                                    geom = "histogram",
-                                   main = "b) Present scenario year 1985",
+                                   main = "b) Initialized scenario year 1985",
                                    xlab = "Ages")
 clearPlot()
 Plot(presentDayAgeDist1985hist, presentDayAgeDist2015hist)
@@ -263,7 +262,8 @@ harv1ageDist2099hist <- qplot(RIAharvest1Runs$spatialDT$ages, geom = "histogram"
 harv1ageDist2020hist <- qplot(RIAharvest1Runs$allPixDT[!is.na(ages),]$ages,
                               geom = "histogram",
                               main =  "c) Base harvest scenario year 2020",
-                              xlab = "Ages")
+                              xlab = "Ages",
+                              ylab = "Frequency")
 clearPlot()
 Plot(harv1ageDist2020hist, harv1ageDist2099hist)
 savePlot(filename = "C:/Celine/github/spadesCBM_RIA/results/ageClassDists/AgeClassDistsHarv1", type = "png")
@@ -292,15 +292,24 @@ savePlot(filename = "C:/Celine/github/spadesCBM_RIA/results/ageClassDists/AgeCla
 
 # for discussion Figure 3
 FRIageDist2540hist <- qplot(RIAfriRuns$spatialDT$ages, geom = "histogram",
-                            xlab = "Ages")
+                            xlab = "Ages",
+                            ylab = "Frequency")
 FRIageDist2020hist <- qplot(RIAfriRuns$allPixDT[!is.na(ages),]$ages, geom = "histogram",
-                            xlab = "Ages")
-presentDayAgeDist1985hist <- qplot(RIApresentDayRuns$allPixDT[!is.na(ages),]$ages,
-                                   geom = "histogram",
-                                   xlab = "Ages")
+                            xlab = "Ages",
+                            ylab = "Frequency")
+# presentDayAgeDist1985hist <- qplot(RIApresentDayRuns$allPixDT[!is.na(ages),]$ages,
+#                                    geom = "histogram",
+#                                    xlab = "Ages")
+
+presentDayAgeDist2015hist <- qplot(RIApresentDayRuns$spatialDT$ages, geom = "histogram",
+                                   #main = "b) Present Day landscape (2015)",
+                                   xlab = "Ages",
+                                   ylab = "Frequency")
+dev()
+
 clearPlot()
-Plot(FRIageDist2540hist, title = "a) Carrying capacity scenario year 2540")
-Plot(presentDayAgeDist1985hist, addTo = TRUE, title = "b) Initialized landscape year 2015")
+Plot(FRIageDist2540hist, title = "a) C-holding capacity - 520 year simulation")
+Plot(presentDayAgeDist2015hist, addTo = TRUE, title = "b) Present Day year 2015")
 Plot(FRIageDist2020hist, addTo = TRUE, title = "c) Initialized landscape year 2020")
 savePlot(filename = "C:/Celine/github/spadesCBM_RIA/results/ageClassDists/figure3", type = "png")
 
