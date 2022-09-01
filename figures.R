@@ -153,6 +153,23 @@ Plot(presentDayResultRasters$totalCarbon[[2]], title = "b) Present day scenario"
 Plot(harv1baseResultRasters$totalCarbon[[2]], title = "c) Base harvest scenario")
 Plot(harv2lessResultRasters$totalCarbon[[2]], title = "d) Less harvest scenario")
 savePlot(filename = "C:/Celine/github/spadesCBM_RIA/results/rasters/figure2", type = "png")
+
+# ALL END SIMS PLAYING WITH COLOURS FOR 3RD SUBMISSION
+# all end of sims
+clearPlot()
+Plot(FRIresultRasters$totalCarbon[[2]],
+     cols = c("pink", "blue"),
+     title = "a) C-holding capacity scenario (405.5 MtC)")
+Plot(presentDayResultRasters$totalCarbon[[2]],
+     cols = c("pink", "blue"),
+     title = "b) Present day scenario (477.2 MtC")
+Plot(harv1baseResultRasters$totalCarbon[[2]],
+     cols = c("pink", "blue"),
+     title = "c) Base harvest scenario (367.3 MtC")
+Plot(harv2lessResultRasters$totalCarbon[[2]],
+     cols = c("pink", "blue"),
+     title = "d) Less harvest scenario (400.9 MtC")
+
 ## aboveGround raster figures
 ## start + present day end
 clearPlot()
