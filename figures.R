@@ -154,21 +154,49 @@ Plot(harv1baseResultRasters$totalCarbon[[2]], title = "c) Base harvest scenario"
 Plot(harv2lessResultRasters$totalCarbon[[2]], title = "d) Less harvest scenario")
 savePlot(filename = "C:/Celine/github/spadesCBM_RIA/results/rasters/figure2", type = "png")
 
-# ALL END SIMS PLAYING WITH COLOURS FOR 3RD SUBMISSION
+#### ALL END SIMS PLAYING WITH COLOURS FOR 3RD SUBMISSION
 # all end of sims
+dev()
 clearPlot()
 Plot(FRIresultRasters$totalCarbon[[2]],
-     cols = c("pink", "blue"),
+     col = c("blue","yellow","red"),
+     speedup = 0.0005,
      title = "a) C-holding capacity scenario (405.5 MtC)")
 Plot(presentDayResultRasters$totalCarbon[[2]],
-     cols = c("pink", "blue"),
-     title = "b) Present day scenario (477.2 MtC")
+     col = c("blue","yellow","red"),
+     speedup = 0.0005,
+     title = "b) Present day scenario (477.2 MtC)")
 Plot(harv1baseResultRasters$totalCarbon[[2]],
-     cols = c("pink", "blue"),
-     title = "c) Base harvest scenario (367.3 MtC")
+     col = c("blue","yellow","red"),
+     speedup = 0.0005,
+     title = "c) Base harvest scenario (367.3 MtC)")
 Plot(harv2lessResultRasters$totalCarbon[[2]],
-     cols = c("pink", "blue"),
-     title = "d) Less harvest scenario (400.9 MtC")
+     col = c("blue","yellow","red"),
+     speedup = 0.0005,
+     title = "d) Less harvest scenario (400.9 MtC)")
+savePlot(filename = "C:/Celine/github/spadesCBM_RIA/results/rasters/figure2_sub3speedupLow", type = "tiff")
+
+#### Trying the differences between present day, harv1, harv2 and c-hold
+theNAs <- is.na(RIAfriRuns$masterRaster[])
+presentDayDiff <- presentDayResultRasters$totalCarbon[[2]]-FRIresultRasters$totalCarbon[[2]]
+presentDayDiff[theNAs] <- NA
+
+harv1diff <- harv1baseResultRasters$totalCarbon[[2]]-FRIresultRasters$totalCarbon[[2]]
+harv1diff[theNAs] <- NA
+harv2diff <- harv2lessResultRasters$totalCarbon[[2]]-FRIresultRasters$totalCarbon[[2]]
+harv2diff[theNAs] <- NA
+clearPlot()
+Plot(presentDayDiff,
+     cols = c("PRGn"),
+     title = "a) Present Day minus C-holding capacity",
+     arr = c(3,1))
+Plot(harv1diff,
+     cols = c("PRGn"),
+     title = "b) Base harvest minus C-holding capacity")
+Plot(harv2diff,
+     cols = c("PRGn"),
+     title = "c) Less harvest minus C-holding capacity")
+savePlot(filename = "C:/Celine/github/spadesCBM_RIA/results/rasters/NewFigure2_submission3", type = "tiff")
 
 ## aboveGround raster figures
 ## start + present day end
