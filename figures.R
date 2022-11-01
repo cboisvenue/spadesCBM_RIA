@@ -1,13 +1,36 @@
 ## Figure for RIA runs -------------------------------------------------------
 
+Rversion <- gsub(".+(4..).+", "\\1", R.version.string)
+rlib <- file.path("R", Rversion)
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+if (!dir.exists(rlib)) dir.create(rlib, recursive = TRUE); .libPaths(rlib, include.site = FALSE)
+
+### In this section, only load the minimum of packages (Require, SpaDES.install) so all packages can be installed with
+#    correct version numbering. If we load a package too early and it is an older version that what may be required by
+#    a module, then we get an inconsistency
+if (!require("remotes")) {
+  install.packages("remotes")
+}
+remotes::install_github("PredictiveEcology/Require@f2c791eb05fb0ad99b278619198ef925f85cbb9d")
 library(Require)
-Require("magrittr") # this is needed to use "%>%" below
-Require("SpaDES.core")
+Require(c("PredictiveEcology/SpaDES.project@transition"), require = FALSE)
+
+      # library(Require)
+      # Require("magrittr") # this is needed to use "%>%" below
+      # Require("SpaDES.core")
 
 #install_github("PredictiveEcology/CBMutils@development")
 #load_all("~/GitHub/PredictiveEcology/CBMutils")
 #Require("PredictiveEcology/CBMutils (>= 0.0.6)")
+install.packages("devtools")
+library("devtools")
 devtools::load_all("C:/Celine/github/CBMutils")
+
+Require(c("SpaDES.core (>=1.1.0)", "SpaDES.tools (>= 1.0.0)",
+          "googledrive", 'RCurl', 'XML', "stars", "shiny", "data.table"),
+        require = FALSE, # call `require` only on this package (same as `library`)
+        verbose = 1)
+library(SpaDES.core)
 
 options("reproducible.useRequire" = TRUE)
 library(data.table)
@@ -34,7 +57,7 @@ spatialRaster <- function(pixelkeep, cbmPools, poolsToPlot, years, masterRaster)
   # totalCarbon
   if ("totalCarbon" %in% poolsToPlot) {
     totalCarbon <- apply(cbmPools[, SoftwoodMerch:HardwoodBranchSnag], 1, "sum")
-    cbmPools <- cbind(cbmPools, totalCarbon)
+    cbmPools <- cbind(cbmPools, totalCarbon)CBM_spec
   }
 ## Add AG and BG options here
   if ("aboveGround" %in% poolsToPlot) {
@@ -174,7 +197,7 @@ Plot(harv2lessResultRasters$totalCarbon[[2]],
      col = c("blue","yellow","red"),
      speedup = 0.0005,
      title = "d) Less harvest scenario (400.9 MtC)")
-savePlot(filename = "C:/Celine/github/spadesCBM_RIA/results/rasters/figure2_sub3speedupLow", type = "tiff")
+savePlot(filename = "C:/Celine/github/spadesCBM_RIA/results/rasters/figure3_sub3speedupLow", type = "tiff")
 
 #### Trying the differences between present day, harv1, harv2 and c-hold
 theNAs <- is.na(RIAfriRuns$masterRaster[])
@@ -222,6 +245,47 @@ Plot(harv2lessResultRasters$aboveGround[[2]], title = "d) Less harvest scenario 
      Above Ground Carbon t/ha C")
 savePlot(filename = "C:/Celine/github/spadesCBM_RIA/results/rasters/AGend", type = "png")
 
+## Total carbon histograms
+FRIresultRasters$totalCarbon[[2]][theNAs] <- NA
+presentDayResultRasters$totalCarbon[[2]][theNAs] <- NA
+harv1baseResultRasters$totalCarbon[[2]][theNAs] <- NA
+harv2lessResultRasters$totalCarbon[[2]][theNAs] <- NA
+
+cHoldVals <- values(FRIresultRasters$totalCarbon[[2]])
+presentDayVals <- values(presentDayResultRasters$totalCarbon[[2]])
+harv1Vals <- values(harv1baseResultRasters$totalCarbon[[2]])
+harv2Vals <- values(harv2lessResultRasters$totalCarbon[[2]])
+
+tChaValues <- c(cHoldVals[!is.na(cHoldVals)],
+                presentDayVals[!is.na(presentDayVals)],
+                harv1Vals[!is.na(harv1Vals)],
+                harv2Vals[!is.na(harv2Vals)])
+groups <- c(rep("C-holding capacity", length(cHoldVals[!is.na(cHoldVals)])),
+            rep("Present Day", length(presentDayVals[!is.na(presentDayVals)])),
+            rep("Base Harvest", length(harv1Vals[!is.na(harv1Vals)])),
+            rep("Less Harvest", length(harv2Vals[!is.na(harv2Vals)])))
+#preDf <- cbind(tChaValues,groups)
+df <- data.frame(tChaValues,groups)
+
+dev()
+clearPlot()
+#ggplot(df, aes(x=tChaValues, fill = groups, stat = "count")) + geom_histogram()
+ggplot(df, aes(tChaValues, colour = groups)) +
+  geom_density(lwd = 1.2, linetype = 1, adjust = 2.0) +
+  labs(title="Distribution of C across the landscape",x="tC/ha per pixel", y = "Density") +
+  theme(plot.title=element_text(hjust=0.5))
+savePlot(filename = "C:/Celine/github/spadesCBM_RIA/results/rasters/Figure2", type = "tiff")
+
+
+cHoldTothist <- qplot(cHoldVals[!is.na(cHoldVals)], geom = "density",
+                            main = "a) Carrying capacity scenario",
+                            xlab = "t/ha per pixel")
+presentDayTothist <- qplot(presentDayVals[!is.na(presentDayVals)], geom = "density",
+                      main = "b) Present Day (year 2015)",
+                      xlab = "t/ha per pixel")
+
+Plot(cHoldTothist)
+Plot(), presentDayTothist)
 ## make rasters, plot rasters and save plots ----------------------
 
 ## plot age class distributions and save plots ----------------------
