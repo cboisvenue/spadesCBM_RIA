@@ -62,7 +62,9 @@ library(Require)
 ## installs development branch of SpaDES.core from https://predictiveecology.r-universe.dev
 pkgsToInstall <- c("googledrive", "magrittr", "SpaDES.core")
 #Install(pkgsToInstall), upgrade = FALSE, standAlone = TRUE) ## TODO: fails with spatial pkgs + quickPlot
-install.packages(pkgsToInstall)
+if (!all(pkgsToInstall %in% rownames(installed.packages(lib.loc = .libPaths()[1])))) {
+  install.packages(pkgsToInstall)
+}
 
 if (.user == "cboisven") {
   ## TODO CBMutils does not seem to load - I am connected to the development branch of CBMutils
