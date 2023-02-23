@@ -4,26 +4,86 @@
 # CBoisvenue
 # Feb. 22 2023
 
-## PFC work-around
-## this is a work-around for working from PFC...R cannot connect to URL
+# project basic setup -------------------------------------------------------------------------
 
-options("download.file.method" = "wininet")
+if (file.exists("~/.Renviron")) readRenviron("~/.Renviron") ## GITHUB_PAT
+if (file.exists("spadesCBM_RIA.Renviron")) readRenviron("spadesCBM_RIA.Renviron") ## database credentials
 
-## This gives me the development branche of SpaDES.core
-install.packages("SpaDES.core", repos = "https://predictiveecology.r-universe.dev")
+.ncores <- min(parallel::detectCores() / 2, 32L) ## default number of CPU cores to use, e.g. for pkg install
+.nodename <- Sys.info()[["nodename"]] ## current computer name; used to configure machine-specific settings
+.user <- Sys.info()[["user"]] ## current computer username; used to configure user-specific settings
 
-if (!require("remotes")) {
+## define project directory - this code expects it is being run from this location
+## **do not change the paths defined here**
+## if you need to add a machine- or user-specific path, please do so _conditionally_
+prjDir <- switch(.user,
+                 cboisven = "C:/Celine/github/spadesCBM_RIA",
+                 "~/GitHub/spadesCBM_RIA")
+
+## ensure script being run from the project directory
+stopifnot(identical(normalizePath(prjDir), normalizePath(getwd())))
+
+options(
+  Ncpus = .ncores,
+  repos = c(PE = "https://predictiveecology.r-universe.dev",
+            CRAN = "https://cloud.r-project.org"),
+  Require.RPackageCache = "default" ## will use default package cache directory: `RequirePkgCacheDir()`
+)
+
+## work-around for working from PFC...R cannot connect to certain urls
+## TODO: improve conditional by only using wininet if *at* PFC, not just on a PFC machine
+if ((.Platform$OS.type == "windows") && grepl("[L|W]-VIC", .nodename)) {
+  options("download.file.method" = "wininet")
+}
+
+# install and load packages -------------------------------------------------------------------
+
+## use project-specific location for packages to avoid conflicts with other projects
+pkgDir <- file.path(tools::R_user_dir(basename(prjDir), "data"), "packages",
+                    version$platform, getRversion()[, 1:2])
+dir.create(pkgDir, recursive = TRUE, showWarnings = FALSE)
+.libPaths(pkgDir, include.site = FALSE)
+message("Using libPaths:\n", paste(.libPaths(), collapse = "\n"))
+
+## package installation only; do not load module packages until after install
+if (!"remotes" %in% rownames(installed.packages(lib.loc = .libPaths()[1]))) {
   install.packages("remotes")
 }
-remotes::install_github("PredictiveEcology/Require@development")
+
+if (!"Require" %in% rownames(installed.packages(lib.loc = .libPaths()[1])) ||
+    packageVersion("Require", lib.loc = .libPaths()[1]) < "0.2.6") {
+  remotes::install_github("PredictiveEcology/Require@development")
+}
+
 library(Require)
 
-Require("magrittr")
-Require("SpaDES.core")
+# setLinuxBinaryRepo() ## setup binary package installation for linux users; currently interferes with remotes installation
+
+## installs development branch of SpaDES.core from https://predictiveecology.r-universe.dev
+pkgsToInstall <- c("googledrive", "magrittr", "SpaDES.core")
+#Install(pkgsToInstall), upgrade = FALSE, standAlone = TRUE) ## TODO: fails with spatial pkgs + quickPlot
+install.packages(pkgsToInstall)
+
+if (.user == "cboisven") {
+  ## TODO CBMutils does not seem to load - I am connected to the development branch of CBMutils
+  devtools::load_all("C:/Celine/github/CBMutils")
+} else {
+  remotes::install_github("PredictiveEcology/CBMutils@development", repos = "https://cloud.r-project.org", upgrade = FALSE) ## TODO: Require fails to install
+  Require("PredictiveEcology/CBMutils@development", dependencies = TRUE, standAlone = TRUE, upgrade = FALSE)
+}
+
+library(magrittr) ## TODO: remove and use base pipe
+library(SpaDES.core)
+
+# setting up harvest1 scenarios ---------------------------------------------------------------
 
 ## pulling out all the harvest1 scenario objects from spadesCBMglobal.Rmd needed
 ## to run a sim
-options("reproducible.useRequire" = TRUE)
+options(reproducible.useMemoise = FALSE,
+        reproducible.useTerra = TRUE,
+        spades.moduleCodeChecks = FALSE,
+        spades.recoveryMode = FALSE,
+        spades.useRequire = TRUE)
 
 cacheDir <- reproducible::checkPath("cache", create = TRUE)
 moduleDir <- reproducible::checkPath("modules")
@@ -70,27 +130,17 @@ paths <- list(
 )
 
 pathsHarvest1 <- paths
-pathsHarvest1$outputPath <- file.path(outputDir,"harvest1")
+pathsHarvest1$outputPath <- file.path(outputDir, "harvest1")
 
 quickPlot::dev.useRSGD(FALSE)
-dev()
+#dev()
 clearPlot()
-options(spades.moduleCodeChecks = FALSE,
-        reproducible.useMemoise = FALSE,
-        spades.recoveryMode = FALSE)
 
 whensHarvest1 <- sort(c(timesHarvest1$start, timesHarvest1$start + c(10, 30, 50, 60),
                         timesHarvest1$end - 1:0))
 outputsHarvest1 <- as.data.frame(expand.grid(objectName = c("cbmPools", "NPP"), saveTime = whensHarvest1))
 
-opts <- options("spades.useRequire" = FALSE)
-options(opts)
-
-##TODO CBMutils does not seem to load - I am connected to the development branch
-##of CBMutils
-library("devtools")
-devtools::load_all("C:/Celine/github/CBMutils")
-
+## TODO: need to automatically get cbm_defaults data
 RIAharvest1Runs <- simInitAndSpades(times = timesHarvest1,
                                     params = parametersHarvest1,
                                     modules = modulesHarvest1,
